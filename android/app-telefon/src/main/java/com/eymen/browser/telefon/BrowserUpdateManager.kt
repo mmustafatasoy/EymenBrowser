@@ -3,6 +3,7 @@ package com.eymen.browser.telefon
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -33,12 +34,14 @@ internal class BrowserUpdateManager(private val activity: Activity) {
         activity.getSharedPreferences("eymen_browser_updates", Activity.MODE_PRIVATE)
     }
     private val downloading = AtomicBoolean(false)
+    private val checking = AtomicBoolean(false)
     private var pendingInstall: File? = null
     private var cancelled: AtomicBoolean? = null
     private var disposed = false
 
     fun checkOnForeground() {
-        if (disposed || !activity.getSharedPreferences("eymen_browser_setup", Activity.MODE_PRIVATE)
+        if (disposed || isDebuggableInstall() ||
+            !activity.getSharedPreferences("eymen_browser_setup", Activity.MODE_PRIVATE)
                 .getBoolean("setup_completed", false)) return
         if (System.currentTimeMillis() - prefs.getLong("last_check", 0L) < CHECK_INTERVAL_MS) return
         check(manual = false)
@@ -46,6 +49,11 @@ internal class BrowserUpdateManager(private val activity: Activity) {
 
     fun check(manual: Boolean) {
         if (disposed || downloading.get()) return
+        if (isDebuggableInstall()) {
+            if (manual) showInfo(R.string.update_debug_build, R.string.settings_about_update)
+            return
+        }
+        if (!checking.compareAndSet(false, true)) return
         if (manual) toast(R.string.update_checking)
         executor.execute {
             try {
@@ -60,9 +68,14 @@ internal class BrowserUpdateManager(private val activity: Activity) {
             } catch (_: Exception) {
                 // Network, rate limits and absent releases are non-fatal to browsing.
                 if (manual) ui { showInfo(R.string.update_check_failed, R.string.settings_about_update) }
+            } finally {
+                checking.set(false)
             }
         }
     }
+
+    private fun isDebuggableInstall(): Boolean =
+        (activity.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private fun fetchCandidate(): Candidate? {
         val conn = openTrustedHttps("https://api.github.com/repos/mmustafatasoy/EymenBrowser/releases/latest")
