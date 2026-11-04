@@ -46,7 +46,11 @@ private data class Palette(
     val text: Color, val muted: Color, val disabled: Color, val accent: Color,
     val accentText: Color, val protection: Color
 )
-private fun colors(day: Boolean) = if (day) Palette(
+private fun colors(day: Boolean, privateMode: Boolean = false) = if (privateMode) Palette(
+    T.gizli_zemin, T.gizli_yuzey1, T.gizli_yuzey2, T.gizli_yuzey2,
+    T.gizli_yazi, T.gizli_yaziIkincil, T.gizli_yaziPasif,
+    T.gizli_vurgu, T.gizli_vurguUstu, T.gizli_vurgu
+) else if (day) Palette(
     T.gunduz_zemin, T.gunduz_yuzey1, T.gunduz_yuzey2, T.gunduz_cizgi,
     T.gunduz_yazi, T.gunduz_yaziIkincil, T.gunduz_yaziPasif,
     T.gunduz_vurgu, T.gunduz_vurguUstu, T.gunduz_koruma
@@ -274,6 +278,8 @@ internal fun BrowserToolbar(
     home: Boolean,
     day: Boolean,
     addressBottom: Boolean,
+    privateMode: Boolean,
+    tabCount: Int,
     onGo: (String) -> Unit,
     onBack: () -> Unit,
     onForward: () -> Unit,
@@ -283,12 +289,13 @@ internal fun BrowserToolbar(
     onMenu: () -> Unit,
     onShield: () -> Unit
 ) {
-    val p = colors(day)
+    val p = colors(day, privateMode)
     var input by remember(currentUrl, home) {
         mutableStateOf(if (home) "" else currentUrl)
     }
     val keyboard = LocalSoftwareKeyboardController.current
     val tabLabel = stringResource(R.string.tabs)
+    val privateHint = stringResource(R.string.private_address_hint)
     val addressBox: @Composable () -> Unit = {
         Row(
             Modifier.fillMaxWidth().height(T.telefon_yukseklik_adresCubugu.dp)
@@ -303,8 +310,8 @@ internal fun BrowserToolbar(
                 contentAlignment = Alignment.Center
             ) {
                 EymenVector(
-                    if (home) EymenPaths.ara else EymenPaths.kalkan,
-                    color = if (home) p.muted else p.protection,
+                    if (privateMode) EymenPaths.gizli else if (home) EymenPaths.ara else EymenPaths.kalkan,
+                    color = if (privateMode) p.accent else if (home) p.muted else p.protection,
                     iconSize = 20.dp
                 )
             }
@@ -324,7 +331,7 @@ internal fun BrowserToolbar(
                     Box {
                         if (input.isBlank()) {
                             ChromeText(
-                                stringResource(R.string.address_hint), 16, p.muted
+                                if (privateMode) privateHint else stringResource(R.string.address_hint), 16, p.muted
                             )
                         }
                         field()
@@ -372,7 +379,7 @@ internal fun BrowserToolbar(
                         1.8.dp, p.text, RoundedCornerShape(7.dp)
                     ), contentAlignment = Alignment.Center
                 ) {
-                    ChromeText("1", 12, p.text, weight = FontWeight.SemiBold)
+                    ChromeText(tabCount.toString(), 12, p.text, weight = FontWeight.SemiBold)
                 }
             }
             ToolbarButton(
