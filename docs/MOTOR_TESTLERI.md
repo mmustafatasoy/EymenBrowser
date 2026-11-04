@@ -24,7 +24,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
 | Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
 | Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| e-Devlet | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | PDF ve dosya indirme | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -97,3 +97,10 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Başarılı:** Google HTTPS giriş sayfasının ve formunun görüntülenmesi.
 - **Denenmedi:** Gerçek hesap kimlik doğrulaması, oturum çerezi ve Electron oturum açma.
 - Sıradaki test: `https://www.turkiye.gov.tr/` resmî e-Devlet sitesinin **herkese açık** ana sayfası. Chrome'dan bağlantıyı EymenBrowser'a paylaş. Yalnız sayfa açılma sonucunu bildir; **T.C. kimlik numarası, parola, SMS kodu veya özel belge paylaşma**.
+
+## e-Devlet herkese açık sayfa testi — 2026-11-04
+
+- Kullanıcı, `https://www.turkiye.gov.tr/` resmî ana sayfasının EymenBrowser Android telefon uygulamasında **sorunsuz açıldığını** doğruladı.
+- **Başarılı:** Herkese açık e-Devlet ana sayfasının GeckoView ile yüklenmesi.
+- **Denenmedi:** T.C. kimlik numarası/şifreyle oturum açma, kişisel hizmetler, TV/masaüstü/iOS.
+- **Sıradaki test:** Ziraat Bankası `https://www.ziraatbank.com.tr/tr` ve Türkiye İş Bankası `https://www.isbank.com.tr/` herkese açık ana sayfaları. Hesaba giriş, ödeme veya kart/şifre/SMS bilgisi girişi yapılmayacak.
