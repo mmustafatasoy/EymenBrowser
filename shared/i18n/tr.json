@@ -1,0 +1,20 @@
+{
+  "app_name": "EymenBrowser",
+  "back": "Geri",
+  "forward": "İleri",
+  "home": "Ana sayfa",
+  "tabs": "Sekmeler",
+  "menu": "Menü",
+  "search": "Ara",
+  "new_tab": "Yeni sekme",
+  "protection": "Kalkan",
+  "history": "Geçmiş",
+  "downloads": "İndirmeler",
+  "settings": "Ayarlar",
+  "start": "Başla",
+  "bookmarks": "Yer imleri",
+  "private_tab": "Gizli sekme",
+  "devices": "Cihazlar",
+  "address": "Web adresi",
+  "tv_hint": "Kumandayla gezin"
+}

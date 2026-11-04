@@ -1,0 +1,20 @@
+{
+  "app_name": "EymenBrowser",
+  "back": "Back",
+  "forward": "Forward",
+  "home": "Home",
+  "tabs": "Tabs",
+  "menu": "Menu",
+  "search": "Search",
+  "new_tab": "New tab",
+  "protection": "Shield",
+  "history": "History",
+  "downloads": "Downloads",
+  "settings": "Settings",
+  "start": "Start",
+  "bookmarks": "Bookmarks",
+  "private_tab": "Private tab",
+  "devices": "Devices",
+  "address": "Web address",
+  "tv_hint": "Navigate with the remote"
+}

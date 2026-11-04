@@ -1,0 +1,33 @@
+[project]
+version = "0.0.1"
+
+[android]
+gradle = "8.13"
+agp = "8.11.1"
+kotlin = "2.2.20"
+compose_bom = "2025.06.01"
+activity_compose = "1.10.1"
+tv_material = "1.1.0"
+compile_sdk = 35
+target_sdk = 35
+min_sdk = 26
+java = 17
+
+[ios]
+deployment_target = "15.0"
+swift = "5.9"
+
+[desktop]
+node = "22"
+electron = "v44.9.3+wvcus"
+react = "19.1.1"
+react_dom = "19.1.1"
+typescript = "5.8.3"
+vite = "7.0.0"
+electron_builder = "26.0.12"
+node_types = "22.15.0"
+react_types = "19.1.6"
+react_dom_types = "19.1.6"
+
+[checks]
+max_installer_mb = 500

@@ -1,0 +1,54 @@
+{
+  "name": "eymenbrowser-desktop",
+  "version": "0.0.1",
+  "private": true,
+  "description": "EymenBrowser desktop Chromium skeleton - Phase 0",
+  "main": "dist-main/main.js",
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.main.json",
+    "build": "npm run check && tsc -p tsconfig.main.json && vite build",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis --publish never",
+    "dist:mac": "npm run build && electron-builder --mac dmg --publish never"
+  },
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
+  "devDependencies": {
+    "electron": "github:castlabs/electron-releases#v44.9.3+wvcus",
+    "electron-builder": "26.0.12",
+    "typescript": "5.8.3",
+    "vite": "7.0.0",
+    "@types/node": "22.15.0",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.6"
+  },
+  "build": {
+    "appId": "com.atasoyyazilim.eymenbrowser",
+    "productName": "EymenBrowser",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-main/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network"
+    },
+    "asar": true
+  }
+}

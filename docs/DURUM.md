@@ -2,9 +2,14 @@
 
 Son güncelleme: 2026-11-04
 
-- Aşama: 0, devam ediyor
-- Biten iş: Başlangıç paketindeki 41 dosya orijinal içerikleriyle `main` dalına yüklendi (17 ekran/marka PNG, 2 şema PNG, 17 HTML kaynağı, tokens.json, BENI-OKU.md ve 3 proje belgesi). Mevcut README.md korundu.
-- Sıradaki iş: Aşama 0 — platform klasörleri, boş Android/TV/iOS/Electron uygulamaları, sürüm kilitleri, tema token üretici, i18n kaynakları ve GitHub Actions derleme/denetim iş akışları.
-- Açık sorun: yok
-- Kabul ölçütleri: Henüz çalıştırılmadı; boş uygulama derlemeleri, üç platformda token üretimi, 500 MB boyut ve yasak bağımlılık denetimleri **denenmedi**.
-- Not: Aşama 1 motor testlerine ve ekran kodlamasına başlanmadı. `docs/SARTNAME.md` değişmedi.
+- Aşama: **0 — hazırlık, devam ediyor**.
+- Biten iş: 41 dosyalık başlangıç paketi orijinal biçimde aktarıldı. Telefon/TV için Kotlin/Compose, iOS için SwiftUI, masaüstü için TypeScript/React/castLabs Electron boş proje iskeletleri eklendi. Sürüm kilidi, ortak i18n, tema ve simge üretici, boyut ve yasak bağımlılık kontrolleri, GitHub Actions iş akışları hazırlandı.
+- Sıradaki iş: GitHub Actions'ta Android, TV, iOS ve bilgisayar boş uygulama derlemelerinin sonuçlarını doğrula; hataları şartnameye uygun şekilde gider.
+- Açık sorun: CI denetimleri ve gerçek derlemeler **henüz doğrulanmadı**. İmzalı üretim sürümleri bu aşamanın kapsamı dışındadır.
+- Aşama 0 kabul:
+  - [ ] Boş Android, TV, iOS ve Electron uygulamaları GitHub Actions'ta derlendi.
+  - [ ] design/tokens.json değişince Android, iOS ve bilgisayar temaları otomatik üretildi (CI henüz denenmedi).
+  - [ ] 500 MB sınırı ve yasak bağımlılık denetimi çalıştı (CI henüz denenmedi).
+  - [x] DURUM.md ilk kayıtla duruyor.
+- Aşama 1 motor denemesine ve 16 ekranın kodlanmasına **başlanmadı**.
+- Değişmeyen dosya: `docs/SARTNAME.md`.

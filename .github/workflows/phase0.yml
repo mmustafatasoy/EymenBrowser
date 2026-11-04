@@ -1,0 +1,133 @@
+name: Aşama 0 - İskelet ve kapı denetimleri
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    name: Tasarım token, metin ve bağımlılık denetimi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Ortak kaynaklardan üç platform teması ve metinleri üret
+        run: python tools/generate.py
+      - name: Üretilen dosyaların güncelliği
+        run: python tools/generate.py --check
+      - name: Şartname, sürüm ve yasak bağımlılık denetimi
+        run: python tools/verify.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-generated-themes
+          path: |
+            android/core-tema/src/main/java/com/eymen/browser/tema/EymenTokens.kt
+            ios/EymenBrowser/Generated/EymenTokens.swift
+            desktop/src/generated/tokens.css
+            shared/ikon/eymen-icons.svg
+
+  android:
+    name: Android telefon ve TV (boş uygulama)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: "8.13"}
+      - run: python tools/generate.py
+      - name: Android SDK kurulumunu kontrol et
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME/platforms"
+      - name: Boş telefon ve TV APK'larını derle
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:assembleDebug :app-tv:assembleDebug --stacktrace
+      - name: APK'ları 500 MB sınırına karşı ölç
+        run: |
+          python tools/verify.py --artifact android/app-telefon/build/outputs/apk/debug/app-telefon-debug.apk --artifact android/app-tv/build/outputs/apk/debug/app-tv-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-Phase0-Android-Debug
+          path: android/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS 15 SwiftUI (simülatör için boş uygulama)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: XcodeGen'i kur
+        run: brew install xcodegen
+      - name: Tema ve yerelleştirme üret
+        run: python3 tools/generate.py
+      - name: Xcode projesini üret
+        working-directory: ios
+        run: xcodegen generate
+      - name: İmzasız iOS simülatör derlemesi
+        working-directory: ios
+        run: |
+          xcodebuild -project EymenBrowser.xcodeproj -scheme EymenBrowser -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Simülatör .app dosyasını arşivle
+        run: |
+          cd ios/build/Build/Products/Debug-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent EymenBrowser.app EymenBrowser-iOS-Simulator.zip
+          python ../../../../../tools/verify.py --artifact EymenBrowser-iOS-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-Phase0-iOS-Simulator
+          path: ios/build/Build/Products/Debug-iphonesimulator/EymenBrowser-iOS-Simulator.zip
+          if-no-files-found: error
+
+  desktop:
+    name: Bilgisayar - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cmd: dist:linux
+            artifact: Linux
+          - os: windows-latest
+            cmd: dist:win
+            artifact: Windows
+          - os: macos-15
+            cmd: dist:mac
+            artifact: macOS
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: python tools/generate.py
+      - name: Pinned castLabs Electron ve React bağımlılıklarını kur
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Derle ve kurulum dosyasını üret
+        working-directory: desktop
+        run: npm run ${{ matrix.cmd }}
+      - name: Her kurulum dosyasının boyutunu kontrol et
+        shell: bash
+        run: |
+          python tools/verify.py
+          python - <<'PY'
+          import sys, pathlib
+          sys.path.insert(0,"tools")
+          from verify import check_artifacts
+          files=[x for x in pathlib.Path("desktop/release").iterdir() if x.is_file() and x.suffix.lower() in (".exe",".dmg",".deb",".appimage")]
+          assert files, "Kurulum dosyası üretilmedi"
+          check_artifacts(files)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-Phase0-${{ matrix.artifact }}
+          path: desktop/release/*
+          if-no-files-found: error
