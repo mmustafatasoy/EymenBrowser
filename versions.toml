@@ -12,6 +12,8 @@ compile_sdk = 35
 target_sdk = 35
 min_sdk = 26
 java = 17
+geckoview = "159.0.20261022150525"
+geckoview_channel = "stable"
 
 [ios]
 deployment_target = "15.0"
