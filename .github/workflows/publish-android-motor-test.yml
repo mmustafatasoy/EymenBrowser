@@ -58,6 +58,9 @@ jobs:
           cat > RELEASE_NOTES.md <<'EOF'
           # EymenBrowser Android Telefon - PDF / Download Stream Test
 
+          Android 10+ İndirilenler, Android 8/9 dosya seçicisi desteği.
+          İndirme dosyası hatasında yarım kalan kayıt temizlenir.
+
           GeckoView PDF viewer Download düğmesinden gelen WebResponse.body
           artık Android indirme işlemine bağlanır.
           - Android 10+: Kullanıcı onayından sonra İndirilenler klasörüne

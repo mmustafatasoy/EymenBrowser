@@ -97,3 +97,5 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Platform kararı korunur:** TV, PC ve Apple çalışmaları kullanıcı iznine kadar bekletilir. Kapı 1 açıktır.
 
 - **CI denetimi düzeltmesi (2026-11-04):** İlk statik indirme kontrolü `HttpURLConnection` adının yalnız kod açıklamasında geçmesini hatalı olarak yasaklı çağrı saydı. Açıklama düzeltilerek işlevsel kod değiştirilmeden kontrol yeniden çalıştırıldı.
+
+- **Derleyici düzeltmesi:** İlk Kotlin derlemesinde arka plan lambda'sından yakalanan `createdDownload` değişkeni için akıllı tür dönüşümü hatası oluştu. Nullable URI kullanımı yerel değişmez `downloadUri` ile düzeltildi; indirme özelliğinin gerçek cihaz sonucu hâlâ bekleniyor.

@@ -150,11 +150,11 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                 }
                 if (bytes <= 0L) throw IOException("Empty response")
 
-                if (createdDownload != null) {
+                createdDownload?.let { downloadUri ->
                     val publish = ContentValues().apply {
                         put(MediaStore.MediaColumns.IS_PENDING, 0)
                     }
-                    check(resolver.update(createdDownload, publish, null, null) > 0)
+                    check(resolver.update(downloadUri, publish, null, null) > 0)
                 }
 
                 activity.runOnUiThread {
@@ -163,8 +163,8 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                 }
             } catch (_: Exception) {
                 request.body.closeSafely()
-                if (createdDownload != null) {
-                    try { resolver.delete(createdDownload, null, null) } catch (_: Exception) {}
+                createdDownload?.let { downloadUri ->
+                    try { resolver.delete(downloadUri, null, null) } catch (_: Exception) {}
                 }
                 activity.runOnUiThread {
                     busy = false
