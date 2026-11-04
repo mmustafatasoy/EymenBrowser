@@ -63,5 +63,19 @@
   "browser_menu_title": "EymenBrowser",
   "theme_day": "Gündüz teması",
   "theme_night": "Gece teması",
-  "menu_current_page": "Mevcut sayfayı yenile"
+  "menu_current_page": "Mevcut sayfayı yenile",
+  "tab_all": "Tümü",
+  "tab_groups_pending": "Gruplar daha sonra eklenecek",
+  "normal_tabs_empty": "Açık sekme yok",
+  "private_tabs_empty": "Gizli sekmen yok",
+  "tab_add_hint": "Yeni sekme açmak için aşağıdaki düğmeyi kullan.",
+  "close_all_tabs": "Tümünü kapat",
+  "new_private_tab": "Gizli sekme aç",
+  "private_address_hint": "Gizli olarak ara",
+  "private_intro": "Gizli sekmeler kapanınca bu oturumun yerel geçmişi tutulmaz.",
+  "private_does_not_keep_title": "Bu cihazda kalmaz",
+  "private_does_not_keep_desc": "Gizli tarama geçmişi, çerezler ve form bilgileri oturum kapanınca saklanmaz.",
+  "private_still_visible_title": "Yine de görülebilir",
+  "private_still_visible_desc": "Girdiğin siteler, internet sağlayıcın ve iş ya da okul ağın. İndirdiğin dosyalar cihazda kalır.",
+  "private_lock_unavailable": "Geri dönünce kilitleme henüz hazır değil."
 }
