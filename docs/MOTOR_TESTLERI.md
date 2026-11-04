@@ -147,7 +147,7 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 
 ## Sıradaki hedef — Philips Android TV GeckoView motor denemesi
 
-- GitHub Releases içindeki `v0.0.1-tv-motor-test.1` ön sürümünde **iki ayrı APK** yayımlanacak: `arm64-v8a` ve `armeabi-v7a`. ZIP gerekmez. TV işlemci mimarisine uygun **tek** APK kurulmalı.
+- **GitHub Releases [v0.0.1-tv-motor-test.1](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-tv-motor-test.1)** üzerinde **iki ayrı APK yayımlandı**: `EymenBrowser-TV-arm64-v8a-MOTOR-TEST.apk` (**205425920 bayt**) ve `EymenBrowser-TV-armeabi-v7a-MOTOR-TEST.apk` (**166230996 bayt**). ZIP gerekmez. TV işlemci mimarisine uygun **tek** APK kurulmalı.
 - Yalnız Android TV / Google TV (Android 8+) kapsamda; LG webOS, Samsung Tizen, Whale OS gibi diğer sistemler bu APK'yı doğrudan çalıştırmayabilir.
 - Uygulama açılınca `https://example.org/` sayfası görüntülenirse **yalnız başlangıç HTTPS motor testi** başarılı sayılır. Daha fazla site açma ve TV kumanda testleri ayrıca yapılır.
 - TV APK'sı **debug/test imzalıdır**, üretim sürümü değildir; Google hesabı/banka bilgileri TV üzerinde test amacıyla girilmemelidir.
