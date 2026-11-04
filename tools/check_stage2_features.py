@@ -71,7 +71,9 @@ assert 'Modifier.navigationBarsPadding()' in chrome
 assert 'navigationInsetPx' in main
 assert 'insets.getInsets(WindowInsets.Type.navigationBars()).bottom' in main
 assert 'if (addressBottom && !videoFullScreen) navigationInsetPx else 0' in main
-assert 'getPackageInfo(packageName, 0).versionName' in main
+assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
+assert 'updater.onResumed()' in main
+assert 'updater.dispose()' in main
 
 for label in ('T05-Kalkan','T08-Indirmeler','T10-Ayarlar'):
     assert (root / f'design/ekranlar/{label}.png').exists()
