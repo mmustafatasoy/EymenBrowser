@@ -26,7 +26,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| YouTube, video, sosyal medya | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | PDF ve dosya indirme | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 
 Samsung Android 14, Tecno Android 16, Philips Android TV ve Android TV emülatörü
@@ -72,5 +72,12 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 
 - 2026-11-04: Kullanıcı, yeni Android telefon motor testi APK'sını kurduğunu ve Chrome'dan **Paylaş → EymenBrowser** ile Google sayfasının açıldığını doğruladı.
 - **Başarılı:** Android ACTION_SEND HTTPS bağlantı kabulü, GeckoView'de Google sayfası görüntüleme.
-- **Denenmedi:** Google hesabına giriş, YouTube video oynatma, DRM, banka/e-Devlet oturumları ve indirme.
-- Sonraki kullanıcı testi: YouTube bağlantısını Paylaş → EymenBrowser ile aç; video oynatma, ses, tam ekran ve sayfa gezinmesini ayrı ayrı doğrula. Telif hakkı korumalı/DRM akışına dair sonuç çıkarma.
+- **Denenmedi:** Google hesabına giriş, DRM, banka/e-Devlet oturumları ve indirme. YouTube video oynatma sonraki testte başarılı doğrulandı.
+- Sonraki kullanıcı testi: YouTube videosunda tam ekranı ayrı kontrol et; diğer video hizmetleri ve DRM ayrıca test edilecek. Telif hakkı korumalı/DRM akışına dair sonuç çıkarma.
+
+## Güncel kullanıcı testi — YouTube video ve ses
+
+- 2026-11-04: Kullanıcı, YouTube video bağlantısını EymenBrowser içinde test edip **çalıştığını** bildirdi. Bu yanıt, sorulan görüntülü ve sesli oynatma denemesi için başarılı kabul edildi.
+- **Başarılı:** Android telefon GeckoView üzerinden YouTube videosunun görüntülü ve sesli oynatılması (kullanıcı geri bildirimi).
+- **Henüz doğrulanmadı:** YouTube tam ekranı, arka planda oynatma, oturum açma, korumalı video/DRM, TV ve diğer platformlarda video.
+- **Sıradaki deneme:** Aynı videonun tam ekran düğmesini kullanarak ekranda gerçekten tam ekran açıldığını test et.
