@@ -23,6 +23,11 @@ assert 'tab.blockedTab += 1' in main
 assert 'if (enabled) T.gece_koruma else T.gece_uyari' in shield
 assert 'canToggle = tab != null' in main
 assert 'getSharedPreferences("eymen_browser_shield_sites"' in main
+assert 'private val privateShieldOverrides = mutableMapOf<String, Boolean>()' in main
+assert 'if (current.privateMode)' in main
+assert 'privateShieldOverrides[host] = enabled' in main
+assert 'if (tab.privateMode && tabs.none { it.privateMode }) privateShieldOverrides.clear()' in main
+assert 'tab.privateMode == current.privateMode' in main
 assert 'tab.gecko.settings.setUseTrackingProtection(enabled)' in main
 assert 'pageBlocked.toString()' in shield
 assert 'tabBlocked.toString()' in shield
