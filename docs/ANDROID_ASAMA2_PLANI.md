@@ -1,6 +1,6 @@
 # Android Aşama 2 uygulama planı
 
-Durum: 2026-11-04 — hazırlık tamamlandı, [S-001 kapsam kararı](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) bekleniyor. Bu belge uygulama kodu veya aşama kabulü değildir.
+Durum: 2026-11-04 — [S-001 kapsam kararı](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) onaylandı; yalnız Android telefon Aşama 2'ye geçildi. Bu belge tek başına aşama kabulü değildir.
 
 ## Başlangıç kanıtı
 
