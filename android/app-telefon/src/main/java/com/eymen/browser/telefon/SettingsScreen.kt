@@ -148,7 +148,7 @@ internal fun SettingsScreen(
                     SettingsAction.APPEARANCE -> stringResource(
                         if (dayMode) R.string.theme_day else R.string.theme_night
                     )
-                    SettingsAction.ABOUT -> stringResource(R.string.settings_version_label)
+                    SettingsAction.ABOUT -> stringResource(R.string.update_manual_check)
                     else -> if (row.implemented) "" else stringResource(R.string.menu_not_available)
                 }
                 Row(
