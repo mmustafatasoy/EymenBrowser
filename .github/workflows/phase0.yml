@@ -1,4 +1,4 @@
-name: Aşama 0 - İskelet ve kapı denetimleri
+name: EymenBrowser - Motor iskelet derlemeleri ve CI denetimi
 on:
   push:
     branches: [main]
@@ -33,7 +33,7 @@ jobs:
             shared/ikon/eymen-icons.svg
 
   android:
-    name: Android telefon ve TV (boş uygulama)
+    name: Android telefon ve TV GeckoView motor denemesi
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,20 +48,32 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME/platforms"
-      - name: Boş telefon ve TV APK'larını derle
+      - name: GeckoView telefon ve TV APK'larını derle
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug :app-tv:assembleDebug --stacktrace
-      - name: APK'ları 500 MB sınırına karşı ölç
+      - name: ABI APK dosyalarını ölç ve doğrula
         run: |
-          python tools/verify.py --artifact android/app-telefon/build/outputs/apk/debug/app-telefon-debug.apk --artifact android/app-tv/build/outputs/apk/debug/app-tv-debug.apk
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "tools")
+          from verify import verify, check_artifacts
+          verify()
+          for module in ("app-telefon", "app-tv"):
+              files = list(Path(f"android/{module}/build/outputs/apk/debug").glob("*.apk"))
+              assert len(files) == 3, f"{module}: 3 ABI APK bekleniyordu, bulunan: {len(files)}"
+              for abi in ("arm64-v8a", "armeabi-v7a", "x86_64"):
+                  assert any(abi in f.name for f in files), f"{module}: {abi} APK eksik"
+              check_artifacts(files)
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: EymenBrowser-Phase0-Android-Debug
+          name: EymenBrowser-Phase1-GeckoView-ABI-Debug
           path: android/**/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   ios:
-    name: iOS 15 SwiftUI (simülatör için boş uygulama)
+    name: iOS 15 WKWebView motor denemesi
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +95,7 @@ jobs:
           python ../../../../../tools/verify.py --artifact EymenBrowser-iOS-Simulator.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: EymenBrowser-Phase0-iOS-Simulator
+          name: EymenBrowser-Phase1-iOS-WKWebView-Simulator
           path: ios/build/Build/Products/Debug-iphonesimulator/EymenBrowser-iOS-Simulator.zip
           if-no-files-found: error
 
@@ -130,6 +142,6 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: EymenBrowser-Phase0-${{ matrix.artifact }}
+          name: EymenBrowser-Phase1-${{ matrix.artifact }}
           path: desktop/release/*
           if-no-files-found: error

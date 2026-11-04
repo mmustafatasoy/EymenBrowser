@@ -3,8 +3,9 @@
 Son güncelleme: 2026-11-04
 
 - Aşama: **1 — motor denemesi, devam ediyor.**
-- Aşama 0: GitHub Actions [#41801213920](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41801213920) altı iş başarılı.
-- Biten iş: GeckoView Stable 159.0.20261022150525 sürümü ayrı commit ile `versions.toml` dosyasına sabitlendi. Android/TV için GeckoView motor modülü, üç ABI'ye ayrılmış APK yapılandırması ve HTTPS deneme Activity'leri yazıldı.
-- Sıradaki iş: Motor modülünü GitHub Actions'ta derle, APK boyutlarını ölç, iOS WKWebView ve masaüstü Chromium deneme kodlarını ekle.
-- Açık sorun / denenmedi: Yeni motor APK derlemesi ve cihaz testleri, iOS ve masaüstü motor denemesi, Google girişi, DRM, e-Devlet, bankalar, Kapı 1 kullanıcı onayı.
-- Kabul: Aşama 1 **tamamlanmadı**; şartname ve `design/` dosyaları değiştirilmedi.
+- Aşama 0: [Başarılı GitHub Actions #41801213920](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41801213920); altı iş geçti.
+- Biten iş: GeckoView 159.0.20261022150525 sürümü `versions.toml` dosyasında sabitlendi; Android telefon ve Android TV GeckoView oturumları ve üç ABI ayrımı; iOS WKWebView; bilgisayarda sandbox'lı castLabs Electron WebContentsView motor denemeleri kodlandı.
+- CI: Motorlu Android APK derlemesi ve ABI başına 500 MB kontrolü, iOS ve masaüstü kurulum testleri yapılandırıldı; **sonuç henüz doğrulanmadı**.
+- Sıradaki iş: GitHub Actions motor derleme sonuçlarını kontrol et, hataları düzelt, motorlu paketlerin gerçek boyutlarını kaydet.
+- Açık sorunlar/denenmedi: Google girişi, korumalı video, banka, e-Devlet, gerçek cihaz ve emülatör testi, Kapı 1 kullanıcı onayı.
+- Şartname: `docs/SARTNAME.md` ve onaylı `design/` kaynakları değiştirilmedi; Aşama 2 ekran kodlamasına başlanmadı.

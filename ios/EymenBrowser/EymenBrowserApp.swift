@@ -4,8 +4,8 @@ import SwiftUI
 struct EymenBrowserApp: App {
     var body: some Scene {
         WindowGroup {
-            // Aşama 0: yalnız token temelli boş SwiftUI uygulaması.
-            EymenTokens.gece_zemin.ignoresSafeArea()
+            // Aşama 1 WKWebView motor denemesi; tasarım ekranları henüz yazılmadı.
+            MotorDenemesiView().ignoresSafeArea()
         }
     }
 }
