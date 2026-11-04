@@ -29,5 +29,18 @@
   "download_missing": "İndirilecek dosya verisi bulunamadı.",
   "download_cancelled": "İndirme iptal edildi.",
   "download_failed": "Dosya kaydedilemedi.",
-  "download_saved": "Dosya kaydedildi: %1$s"
+  "download_saved": "Dosya kaydedildi: %1$s",
+  "onboarding_brand": "EymenBrowser",
+  "onboarding_author": "M. Muhammet Atasoy",
+  "onboarding_channel": "Globalworkm",
+  "onboarding_headline": "Üç seçim, sonra hazırsın.",
+  "onboarding_caption": "Hepsini sonra Ayarlar'dan değiştirebilirsin.",
+  "onboarding_shield": "Reklam ve izleyici engeli",
+  "onboarding_shield_caption": "Sayfalar daha hızlı açılır. İstediğin sitede kapatabilirsin.",
+  "onboarding_shield_pending": "Koruma motoru henüz etkin değil; tercihin kaydedilecek.",
+  "onboarding_search_engine": "Arama motoru",
+  "onboarding_address_position": "Adres çubuğu nerede olsun?",
+  "onboarding_bottom": "Altta",
+  "onboarding_top": "Üstte",
+  "onboarding_default_browser": "Varsayılan tarayıcım yap"
 }
