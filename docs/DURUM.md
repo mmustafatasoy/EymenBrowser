@@ -95,3 +95,5 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Yeni sürüm hedefi:** `v0.0.1-motor-test.4`, yalnız arm64 Android telefon **tek doğrudan APK**. CI ve kullanıcı testi sonuçları doğrulanana kadar indirme **başarılı sayılmıyor**.
 - **Sonraki test:** Yeni APK kur, `dummy.pdf` bağlantısını paylaş, PDF görüntüleyicide `Download` düğmesine bas, EYMEN Browser indirme onayını kabul et, Dosyalar → İndirilenler içinde `dummy.pdf` dosyasının varlığını doğrula.
 - **Platform kararı korunur:** TV, PC ve Apple çalışmaları kullanıcı iznine kadar bekletilir. Kapı 1 açıktır.
+
+- **CI denetimi düzeltmesi (2026-11-04):** İlk statik indirme kontrolü `HttpURLConnection` adının yalnız kod açıklamasında geçmesini hatalı olarak yasaklı çağrı saydı. Açıklama düzeltilerek işlevsel kod değiştirilmeden kontrol yeniden çalıştırıldı.
