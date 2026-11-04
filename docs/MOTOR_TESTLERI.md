@@ -79,7 +79,7 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 
 - 2026-11-04: Kullanıcı, YouTube video bağlantısını EymenBrowser içinde test edip **çalıştığını** bildirdi. Bu yanıt, sorulan görüntülü ve sesli oynatma denemesi için başarılı kabul edildi.
 - **Başarılı:** Android telefon GeckoView üzerinden YouTube videosunun görüntülü ve sesli oynatılması (kullanıcı geri bildirimi).
-- **Doğrulanan:** YouTube tam ekran düğmesi çalışıyor. **Hatalı:** Yatay döndürme sırasında YouTube sayfası kapanıp Google'a dönüyor. **Henüz doğrulanmadı:** Yeni düzeltmenin sonucu, arka planda oynatma, oturum açma, DRM, TV ve diğer platformlarda video.
+- **Doğrulanan:** YouTube video/ses ve tam ekran çalışıyor; `v0.0.1-motor-test.2` ile yatay dönüşte Google sayfasına atma sorunu kullanıcı testinde **giderildi**. **Henüz doğrulanmadı:** Arka planda oynatma, oturum açma, DRM, TV ve diğer platformlarda video.
 - **Sıradaki deneme:** Aynı videonun tam ekran düğmesini kullanarak ekranda gerçekten tam ekran açıldığını test et.
 
 ## Tam ekran dönüş hatası ve yeni regresyon testi (2026-11-04)
@@ -88,5 +88,5 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Olası teknik kök neden: Android ekran yönü değişiminde Activity/GeckoSession yeniden oluşturuluyor; başlangıç/paylaşım bağlantısı yükleniyor.
 - Kod düzeltmesi: Android manifest `configChanges` (orientation/screenSize/smallestScreenSize/screenLayout/keyboardHidden), `onConfigurationChanged`, GeckoRuntime orientasyon bildirimi ve `ContentDelegate.onFullScreen` ile pencere/yatay mod yönetimi.
 - `tools/check_rotation.py` statik yapılandırma regresyon denetimidir; cihaz testi yerine geçmez.
-- Yeni `v0.0.1-motor-test.2` doğrudan indirilebilir arm64 telefon APK'sı planlandı; üretim imzalı değildir.
-- **Tekrar test:** Chrome veya YouTube'dan Paylaş > EymenBrowser ile aynı videoyu aç, tam ekranı seç, yataya çevir, 10 saniye oynat. YouTube sayfası/oynatım konumu korunuyor mu? Tam ekrandan çıkıp portreye dönüyor mu? Sonuç kullanıcıdan bekleniyor.
+- Yeni [`v0.0.1-motor-test.2`](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.2) tek arm64 telefon APK'sı yayımlandı; üretim imzalı değildir.
+- **Tekrar test sonucu (kullanıcı, 2026-11-04):** Yeni APK'da YouTube tam ekran ve yataya dönme sırasında Google sayfasına geri atma sorunu **giderildi**. Video oturumu korunuyor. Tam ekrandan portreye dönüş ve başka platformlardaki davranış ayrıca ölçülmedi.
