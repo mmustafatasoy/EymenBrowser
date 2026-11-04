@@ -5,7 +5,7 @@ Son güncelleme: 2026-11-04
 ## Mevcut aşama
 - **Aşama 1 motor denemesi genel Kapı 1 açısından açık; S-001 kullanıcı onayıyla yalnız Android telefon Aşama 2 arayüz kodlaması BAŞLADI.**
 - **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, **Google hesabıyla giriş ve aynı bağlantı yeniden açıldığında oturumun korunmasını**, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını**, **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** ve **sosyal medya web kullanımını** doğruladı. Banka/e-Devlet kişisel oturumları, diğer cihaz/platform testleri ve tüm platformları kapsayan Kapı 1 kabulü tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
-- Aşama 2 T01/T02 açılış ve ilk kurulum Compose kodlamasına **başlandı**. `docs/SARTNAME.md` ve `design/` dosyaları değiştirilmedi; kalan T03–T11 ekranları henüz yazılmadı.
+- Aşama 2 T01/T02 açılış ve ilk kurulum, T03 yeni sekme, T04 gerçek GeckoView sayfası ve T11 gündüz teması için **Android Compose başlangıç kodu eklendi**. T05–T10 ekranları henüz tamamlanmadı. `docs/SARTNAME.md` ve onaylı `design/` dosyaları değiştirilmedi.
 
 ## Tamamlanan adımlar
 - Aşama 0'ın altı işi [GitHub Actions #41801213920](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41801213920) üzerinde geçti.
@@ -139,3 +139,15 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Sıradaki iş:** T01/T02'yi 780×1688 onaylı kaynaklarla eşleştir, yazı tiplerini ve token ikonlarını yerleştir; gerçek telefonda test et. Sonra T03/T04/T11'e geç; çalışan motoru koru. Genel Kapı 1 açık; TV, masaüstü ve Apple beklemede.
 
 - **Derleme onarımı:** Yeni onboarding metinlerindeki kesme işaretleri nedeniyle AAPT kaynak derlemesi ilk denemede hata verdi. `tools/generate.py` içindeki Android string kaçışlama sırası düzeltildi; son otomatik CI bu hatanın giderildiğini doğruladı.
+
+## Android telefon Aşama 2 — T03/T04/T11 kabuk bağlantısı (2026-11-04)
+
+- `BrowserChrome.kt`: Onaylı `design/kaynak/T03-Yeni-sekme.html`, `T04-Sayfa.html`, `T11-Gunduz.html` kaynaklarından üst marka alanı, sekiz kısayollu 4×2 ızgara, gerçek ziyaret edilen son iki HTTPS URL'si bölümü, Kalkan durum kartı, 48 birim adres alanı ve beş düğmeli alt gezinme satırı Compose ile başlatıldı.
+- `tools/generate.py` doğrudan `design/tokens.json` içindeki ikon yollarından `EymenPaths.kt` üretir. `EymenVector` bu yolları kullanır; tasarım resimleri ve kaynakları değişmedi.
+- `MainActivity`: Gerçek GeckoSession korunarak HTTPS adres açma, dört seçili arama motoruyla metin araması, geri/ileri, yenileme ve ana sayfaya dönüş bağlandı. Android paylaşım/açma niyetleri yeni arayüzden de korunur. Tam ekranda gezinme çubuğu gizlenir ve GeckoView alanı açılır. Gündüz/gece teması yerel ayarda tutulur, ilk kurulumdaki adres çubuğu konumu artık Compose durumuna bağlıdır.
+- T03 tasarımında yer alan **örnek senkron bilgisayar sekmeleri** ve örnek `1.284` engel sayısı **gerçek veriymiş gibi gösterilmedi**. Uygulamanın mevcut oturumunda açılan son iki HTTPS adresi gösterilir; Kalkan motoru henüz kurulmadığı açıkça yazılır. T06 sekme, T07 menü, eşitleme ve Kalkan için işlev gösteren geçici mesajlar dışında üretim işlevi yoktur. Örnek kısayol başlıklarının dış bağlantı URL'leri ilk varsayılanlardır; kullanıcı tarafından seçilmiş yer imleri değildir.
+- Gündüz teması T11 tasarım tokenlarından `gunduz_` değerleriyle çizilir, geçici Android menü diyalogundan seçilir. Gerçek T07 menü görünümü sonraki adımdır.
+- Ekran okuyucuya alt gezinme düğmeleri için TR/EN etiketler eklendi. Metinler `shared/i18n` kaynaklarında; çevrilen XML'ler CI sırasında üretilir.
+- Android telefon ABI derlemesi ve mevcut statik motor kontrolü [Actions #41842138955](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41842138955) üzerinde **başarılı**. Erişilebilirlik ve sonraki küçük düzeltmeler için ayrı iş akışı sonuçları ayrıca kontrol edilmeli.
+- **Eksikler:** T01–T02 ve T03–T04–T11 ekranlarının 780×1688 görselleriyle cihaz ekran görüntüsü üzerinden piksel eşleştirmesi **denenmedi**. Inter/Sora yazı tipi dosyaları henüz uygulamaya eklenmedi; sistem yazı tipi yedeği kullanılır. Tablet, Android 8/11/14/16 cihaz matrisi, gerçek telefon regresyonu, performans ve erişilebilirlik testleri **denenmedi**. VPN tüneli, gerçek Kalkan reklam filtresi, gerçek T06/T07/T08/T09/T10 ve üretim imzalı kararlı sürüm **hazır değildir**. Android Aşama 2 kabulü tamamlanmadı.
+- **Sıradaki iş:** T01–T04/T11 görsel eşleştirme ve gerçek cihaz testleri, ardından T06 çoklu sekme ve T09 gizli oturumun gerçek GeckoSession yaşam döngüsüyle uygulanması. TV, masaüstü ve Apple beklemede; genel Kapı 1 açıktır.
