@@ -13,6 +13,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -83,9 +84,17 @@ internal class BrowserUpdateManager(private val activity: Activity) {
             if (conn.responseCode == 404) return null
             if (conn.responseCode != 200) throw IOException("Release metadata unavailable")
             conn.inputStream.use { stream ->
-                val data = stream.readBytes()
-                if (data.size > MAX_METADATA_BYTES) throw IOException("Release metadata too large")
-                JSONObject(String(data, Charsets.UTF_8))
+                val limited = ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    if (limited.size() + count > MAX_METADATA_BYTES) {
+                        throw IOException("Release metadata too large")
+                    }
+                    limited.write(buffer, 0, count)
+                }
+                JSONObject(String(limited.toByteArray(), Charsets.UTF_8))
             }
         } finally {
             conn.disconnect()
