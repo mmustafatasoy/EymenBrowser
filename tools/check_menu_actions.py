@@ -30,7 +30,9 @@ assert 'BrowserMenu(' in main and 'menuLayer.visibility = View.GONE' in main
 assert 'MenuAction.BOOKMARKS -> showBookmarks()' in main
 assert 'getSharedPreferences("eymen_browser_bookmarks"' in main
 assert 'MenuAction.HISTORY -> showRecentPages()' in main
-assert 'DownloadManager.ACTION_VIEW_DOWNLOADS' in main
+assert 'MenuAction.DOWNLOADS -> showDownloads()' in main
+assert 'DownloadsScreen(' in main
+assert 'downloadRegistry.items()' in main
 assert 'MenuAction.PRIVATE -> createTab(privateMode = true)' in main
 assert 'tab.gecko.finder.find(term, 0)' in main
 assert 'GeckoSessionSettings.USER_AGENT_MODE_DESKTOP' in main
