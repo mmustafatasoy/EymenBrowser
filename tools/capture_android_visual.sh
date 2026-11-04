@@ -52,4 +52,23 @@ check_browser_foreground
 adb exec-out screencap -p > visual-captures/T03-Yeni-sekme.png
 test -s visual-captures/T03-Yeni-sekme.png
 
-echo "Browser process and resumed foreground activity checked for both screenshots."
+# A white Gecko about:blank viewport is NOT the approved dark T03 homepage.
+# Do not produce misleading pixel metrics if internal Gecko navigation hid it.
+python - <<'PY'
+from PIL import Image
+from pathlib import Path
+
+path = Path("visual-captures/T03-Yeni-sekme.png")
+with Image.open(path) as image:
+    sample = image.convert("RGB").crop((0, 55, image.width, image.height - 135))
+    sample.thumbnail((90, 130))
+    pixels = list(sample.getdata())
+bright_fraction = sum(
+    1 for red, green, blue in pixels if min(red, green, blue) >= 235
+) / len(pixels)
+print(f"T03 bright-background fraction: {bright_fraction:.3f}")
+if bright_fraction > 0.35:
+    raise SystemExit("T03 is predominantly white; refused to compare blank Gecko content as homepage")
+PY
+
+echo "Browser foreground, Turkish locale and T03 dark homepage validated."
