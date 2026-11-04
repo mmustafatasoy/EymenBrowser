@@ -44,6 +44,10 @@ def produce():
         kt.append(f"    const val {name} = {value}")
         swift.append(f"    static let {name}: CGFloat = {value}")
         css.append(f"  --{group}-{section}-{key}: {value}px;")
+    for key, value in TOKENS["hareket"].items():
+        kt.append(f"    const val hareket_{key} = {value}")
+        swift.append(f"    static let hareket_{key}: Int = {value}")
+        css.append(f"  --hareket-{key}: {value}ms;")
     kt.append("}")
     swift.append("}")
     css.append("}")
