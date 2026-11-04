@@ -75,6 +75,8 @@ class MainActivity : ComponentActivity() {
     private val savedFiles = mutableStateListOf<SavedDownload>()
     private val downloadRegistry by lazy { DownloadRegistry(this) }
     private val downloads = AndroidDownloadDenemesi(this)
+    // Safe to create only when onCreate/onResume has attached the Activity Context.
+    private val updater by lazy { BrowserUpdateManager(this) }
     private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
     private var searchEngine by mutableStateOf("Google")
@@ -617,16 +619,7 @@ class MainActivity : ComponentActivity() {
                 hideSettings()
                 showDownloads()
             }
-            SettingsAction.ABOUT -> {
-                val version = try {
-                    packageManager.getPackageInfo(packageName, 0).versionName ?: "—"
-                } catch (_: Exception) { "—" }
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.settings_about_update)
-                    .setMessage(getString(R.string.settings_about_text, version))
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show()
-            }
+            SettingsAction.ABOUT -> updater.check(manual = true)
             else -> Unit
         }
     }
@@ -988,7 +981,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::prefs.isInitialized) updater.onResumed()
+    }
+
     override fun onDestroy() {
+        updater.dispose()
         downloads.dispose()
         if (::view.isInitialized) view.releaseSession()
         tabs.forEach { it.gecko.close() }
