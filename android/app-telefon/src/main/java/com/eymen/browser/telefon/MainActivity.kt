@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
     private var addressBottom by mutableStateOf(true)
     private var searchEngine = "Google"
     private var overviewShowing = false
+    private val devicesRequested = mutableStateOf(false)
 
     private val activeTab: BrowserTab?
         get() = tabs.firstOrNull { it.id == activeId.value }
@@ -107,7 +108,7 @@ class MainActivity : ComponentActivity() {
                     recentUrls = recent,
                     addressBottom = addressBottom,
                     onOpen = ::openUrl,
-                    onDevices = ::showTabs,
+                    onDevices = ::showDevices,
                     onShield = { notice(R.string.shield_not_ready) }
                 )
             }
@@ -164,6 +165,7 @@ class MainActivity : ComponentActivity() {
                     )
                 },
                 activePrivate = activeTab?.privateMode == true,
+                openDevices = devicesRequested.value,
                 day = dayMode.value,
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
@@ -311,8 +313,13 @@ class MainActivity : ComponentActivity() {
         if (tabs.isEmpty()) createTab(privateMode = false)
     }
 
-    private fun showTabs() {
+    private fun showTabs() = openTabOverview(false)
+
+    private fun showDevices() = openTabOverview(true)
+
+    private fun openTabOverview(devices: Boolean) {
         if (!::tabsLayer.isInitialized || videoFullScreen) return
+        devicesRequested.value = devices
         overviewShowing = true
         tabsLayer.visibility = View.VISIBLE
     }
