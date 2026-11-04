@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "com.eymen.browser.telefon"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.eymen.browser.telefon"
         minSdk = 26

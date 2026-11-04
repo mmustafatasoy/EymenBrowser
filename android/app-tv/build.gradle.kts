@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "com.eymen.browser.tv"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.eymen.browser.tv"
         minSdk = 26

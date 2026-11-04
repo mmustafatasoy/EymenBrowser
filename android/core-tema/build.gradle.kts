@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "com.eymen.browser.tema"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig { minSdk = 26 }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
