@@ -161,5 +161,19 @@
   "settings_change_address": "Address bar position",
   "settings_shield_global_msg": "Change default GeckoView tracking protection for all sites? Per-site exceptions are kept.",
   "settings_shield_global_on": "Enable shield",
-  "settings_shield_global_off": "Disable shield"
+  "settings_shield_global_off": "Disable shield",
+  "update_checking": "Checking for updates…",
+  "update_no_release": "No stable Android phone release is published yet. The browser can still be used.",
+  "update_check_failed": "Unable to check for updates. Check your connection and retry later.",
+  "update_available_title": "New version: %1$s",
+  "update_available_message": "Stable version %1$s is available (%2$d MB). Download it in the app; Android will still request installation approval.",
+  "update_download_install": "Download and update",
+  "update_later": "Later",
+  "update_downloading": "Downloading update: %1$s",
+  "update_failed": "The update failed verification or download. APK checksum, package version and signing certificate must match. A debug APK signed with a different key cannot be upgraded in place.",
+  "update_install_permission_title": "Installation permission required",
+  "update_install_permission_message": "Android requires you to allow this app to request installations and confirm the APK installation. Silent installation isn't possible.",
+  "update_open_permissions": "Open permission settings",
+  "update_installer_unavailable": "Android couldn't open the APK installer.",
+  "update_manual_check": "Check for updates"
 }
