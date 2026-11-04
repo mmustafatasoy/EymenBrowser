@@ -65,9 +65,11 @@ internal fun BrowserMenu(
     onAction: (MenuAction) -> Unit
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
+        val disabledText = stringResource(R.string.menu_not_available)
+        val dismissText = stringResource(R.string.menu_dismiss)
         Box(
             Modifier.fillMaxSize().clickable(onClick = onDismiss)
-                .semantics { contentDescription = "Dismiss browser menu" }
+                .semantics { contentDescription = dismissText }
         )
         Column(
             Modifier.align(Alignment.BottomCenter)
@@ -91,6 +93,7 @@ internal fun BrowserMenu(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         row.forEach { tile ->
+                            val itemTitle = stringResource(tile.title)
                             val allowed = tile.supported && (
                                 tile.action !in listOf(
                                     MenuAction.FIND, MenuAction.DESKTOP, MenuAction.SHARE
@@ -103,14 +106,16 @@ internal fun BrowserMenu(
                                         onAction(tile.action)
                                     }
                                     .semantics {
-                                        contentDescription =
-                                            if (allowed) "" else "Coming later"
+                                        contentDescription = if (allowed) itemTitle
+                                            else itemTitle + " · " + disabledText
                                     },
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Box(
                                     Modifier.size(52.dp).background(
-                                        T.gece_yuzey2, RoundedCornerShape(16.dp)
+                                        if (isDesktop && tile.action == MenuAction.DESKTOP)
+                                            T.gece_yuzey3 else T.gece_yuzey2,
+                                        RoundedCornerShape(16.dp)
                                     ),
                                     contentAlignment = Alignment.Center
                                 ) {
