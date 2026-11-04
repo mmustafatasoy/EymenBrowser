@@ -65,6 +65,12 @@ assert 'SettingsAction.SHIELD ->' in main
 assert 'SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()' in main
 assert 'SettingsAction.DOWNLOADS ->' in main
 assert 'MenuAction.SETTINGS -> showSettings()' in main
+# Navigation-bar safety for API 35 edge-to-edge and older 3-button devices.
+chrome = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt").read_text()
+assert 'Modifier.navigationBarsPadding()' in chrome
+assert 'navigationInsetPx' in main
+assert 'insets.getInsets(WindowInsets.Type.navigationBars()).bottom' in main
+assert 'if (addressBottom && !videoFullScreen) navigationInsetPx else 0' in main
 assert 'getPackageInfo(packageName, 0).versionName' in main
 
 for label in ('T05-Kalkan','T08-Indirmeler','T10-Ayarlar'):
