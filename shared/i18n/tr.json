@@ -161,5 +161,19 @@
   "settings_change_address": "Adres çubuğu konumu",
   "settings_shield_global_msg": "GeckoView izleyici koruması tüm siteler için varsayılan olarak değiştirilsin mi? Site istisnaları ayrı kalır.",
   "settings_shield_global_on": "Kalkanı aç",
-  "settings_shield_global_off": "Kalkanı kapat"
+  "settings_shield_global_off": "Kalkanı kapat",
+  "update_checking": "Yeni sürüm denetleniyor…",
+  "update_no_release": "Henüz yayımlanmış kararlı Android telefon sürümü yok. Tarayıcı çalışmaya devam eder.",
+  "update_check_failed": "Güncelleme denetlenemedi. İnternet bağlantısını kontrol edip daha sonra yeniden deneyin.",
+  "update_available_title": "Yeni sürüm: %1$s",
+  "update_available_message": "%1$s kararlı sürümü bulundu (%2$d MB). APK uygulamanın içinde indirilecek; Android'in kurulum onayı gerekecek.",
+  "update_download_install": "İndir ve güncelle",
+  "update_later": "Daha sonra",
+  "update_downloading": "Güncelleme indiriliyor: %1$s",
+  "update_failed": "Güncelleme yüklenemedi. Dosya, SHA-256, paket sürümü ve imza sertifikası doğrulanmalıdır. Yüklü test APK'sı farklı bir anahtarla imzalıysa doğrudan yükseltilemez.",
+  "update_install_permission_title": "Kurulum izni gerekiyor",
+  "update_install_permission_message": "Android güvenliği gereği EymenBrowser için uygulama yükleme izni vermeniz ve kurulum ekranında onaylamanız gerekir. Otomatik sessiz kurulum yapılmaz.",
+  "update_open_permissions": "İzin ayarlarını aç",
+  "update_installer_unavailable": "Android APK kurulum ekranı açılamadı.",
+  "update_manual_check": "Güncellemeleri denetle"
 }
