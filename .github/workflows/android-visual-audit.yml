@@ -9,7 +9,12 @@ on:
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
       - 'tools/capture_android_visual.sh'
       - 'tools/compare_approved_screenshots.py'
+      - 'shared/i18n/tr.json'
+      - 'shared/i18n/en.json'
   workflow_dispatch:
+concurrency:
+  group: eymen-android-ui-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
