@@ -109,5 +109,6 @@
   "menu_bookmark_prompt": "Bookmark this page",
   "menu_bookmark_open": "Open bookmarks",
   "menu_search_not_found": "No matches on this page",
-  "menu_dismiss": "Close menu"
+  "menu_dismiss": "Close menu",
+  "menu_pdf_error": "Could not save this page as a PDF."
 }
