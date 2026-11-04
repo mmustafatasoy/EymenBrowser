@@ -72,3 +72,10 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Test APK'sı açıldığında `https://example.org/` görüntülenmesi **beklenir**, gerçek TV'de başarılı olduğu henüz doğrulanmadı.
 - **TV kumandasıyla tam gezinti, video DRM, giriş ekranları denenmedi**; bu aşama yalnız motor doğrulamasıdır ve V01–V03 ekranları Kapı 1 öncesi yapılmaz.
 - **Android TV APK'ları yayımlandı:** [GitHub Releases v0.0.1-tv-motor-test.1](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-tv-motor-test.1) üzerinde **iki ayrı ZIP'siz APK** var: arm64-v8a **205425920 bayt**, armeabi-v7a **166230996 bayt**. GitHub Releases varlık durumları yüklenmiş ve yayın herkese açık; gerçek TV testleri **henüz denenmedi**. GitHub Actions iş akışı [#41826501884](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41826501884).
+
+## Platform önceliği — 2026-11-04 (kullanıcı kararı)
+
+- **Şimdilik yalnız Android telefon** çalışmalarına devam edilecek.
+- **Android TV, Windows/Linux/macOS ve iOS/iPadOS çalışmaları duraklatıldı.** Kullanıcı açıkça "başlayalım" demedikçe bu platformlar için yeni kodlama, derleme veya test talebi başlatılmayacak. Mevcut kod ve yayınlar korunur.
+- Aşama 1 Android telefon için sıradaki testler: sosyal medya web sayfası, PDF açma/indirme, kullanıcı verisi gerektirmeyen site uyumluluğu ve gerekli diğer motor kontrolleri.
+- **Şartname değişmedi:** Kapı 1'in tüm platformları kapsayan kabul ölçütleri tamamlanmadan Aşama 2'nin resmî olarak tamamlandığı iddia edilmeyecek; onaylı arayüzlere başlamak için gerekli aşama onayı ayrıca alınmalı.
