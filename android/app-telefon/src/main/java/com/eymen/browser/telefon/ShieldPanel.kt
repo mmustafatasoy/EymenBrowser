@@ -54,6 +54,8 @@ internal fun ShieldPanel(
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
         val close = stringResource(R.string.shield_close)
+        val stateDescription = stringResource(if (enabled) R.string.shield_active else R.string.shield_inactive)
+        val switchLabel = stringResource(R.string.shield_toggle)
         Box(
             Modifier.fillMaxSize().clickable(onClick = onDismiss)
                 .semantics { contentDescription = close }
@@ -111,7 +113,7 @@ internal fun ShieldPanel(
                         .clickable(enabled = canToggle) { onToggle(!enabled) }
                         .semantics {
                             role = Role.Switch
-                            contentDescription = if (enabled) "Protection on" else "Protection off"
+                            contentDescription = "$switchLabel · $stateDescription"
                         }
                         .padding(4.dp),
                     contentAlignment = if (enabled) Alignment.CenterEnd else Alignment.CenterStart
