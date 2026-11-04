@@ -74,7 +74,7 @@ internal fun BrowserMenu(
         Column(
             Modifier.align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .heightIn(max = 628.dp)
+                .height(628.dp)
                 .background(
                     T.gece_yuzey1, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                 )
