@@ -17,7 +17,11 @@ assert 'EymenPaths.' in menu
 assert 'tile.supported' in menu and '.clickable(enabled = allowed)' in menu
 assert 'MenuAction.TRANSLATE, false' in menu
 assert 'MenuAction.READER, false' in menu
-assert 'MenuAction.PDF)' in menu\nassert 'MenuAction.PDF -> saveCurrentPageAsPdf()' in main\nassert 'tab.gecko.saveAsPdf().accept(' in main\nassert 'downloads.savePdfStream(stream)' in main\nassert 'private fun offerDownload(request: Pending)' in (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt").read_text()
+assert 'MenuAction.PDF)' in menu
+assert 'MenuAction.PDF -> saveCurrentPageAsPdf()' in main
+assert 'tab.gecko.saveAsPdf().accept(' in main
+assert 'downloads.savePdfStream(stream)' in main
+assert 'private fun offerDownload(request: Pending)' in (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt").read_text()
 assert 'MenuAction.SEND_TO_DEVICE, false' in menu
 assert 'MenuAction.QR, false' in menu
 assert 'MenuZoomPlaceholder' in menu
