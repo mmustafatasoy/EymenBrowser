@@ -72,7 +72,23 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
             } else "application/octet-stream"
 
         val filename = safeName(response, mime)
-        val request = Pending(filename, mime, body)
+        offerDownload(Pending(filename, mime, body))
+    }
+
+    /** Native GeckoSession.saveAsPdf() supplies the original PDF stream. */
+    fun savePdfStream(stream: InputStream) {
+        offerDownload(Pending(
+            "EymenBrowser-" + System.currentTimeMillis() + ".pdf",
+            "application/pdf", stream
+        ))
+    }
+
+    private fun offerDownload(request: Pending) {
+        if (busy || activity.isFinishing || activity.isDestroyed) {
+            request.body.closeSafely()
+            if (busy) message(R.string.download_busy)
+            return
+        }
         busy = true
         choosing = request
         try {
