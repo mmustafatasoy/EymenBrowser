@@ -3,9 +3,9 @@
 Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
-- **Aşama 1 — Motor denemesi: devam ediyor.**
+- **Aşama 1 motor denemesi genel Kapı 1 açısından açık; S-001 kullanıcı onayıyla yalnız Android telefon Aşama 2 arayüz kodlaması BAŞLADI.**
 - **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, **Google hesabıyla giriş ve aynı bağlantı yeniden açıldığında oturumun korunmasını**, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını**, **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** ve **sosyal medya web kullanımını** doğruladı. Banka/e-Devlet kişisel oturumları, diğer cihaz/platform testleri ve tüm platformları kapsayan Kapı 1 kabulü tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
-- Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
+- Aşama 2 T01/T02 açılış ve ilk kurulum Compose kodlamasına **başlandı**. `docs/SARTNAME.md` ve `design/` dosyaları değiştirilmedi; kalan T03–T11 ekranları henüz yazılmadı.
 
 ## Tamamlanan adımlar
 - Aşama 0'ın altı işi [GitHub Actions #41801213920](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41801213920) üzerinde geçti.
@@ -127,3 +127,13 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Güncel sonuç:** Google hesabıyla giriş ve aynı uygulama oturumunda bağlantıyı yeniden açarken girişin korunması kullanıcı teyidiyle başarılı. Hesap bilgileri veya doğrulama kodları alınmadı. Soğuk başlatma, süreç ölümü ve diğer platformlar için sonuç çıkarılmadı.
 - **Hazırlanan iş:** T01–T11'in 11 PNG/HTML çiftinin tamamı bulundu; PNG'lerin her biri 780 × 1688 piksel. [Aşama 2 planı](ANDROID_ASAMA2_PLANI.md) kaynakları ve uygulama sırasını gösterir. Bu inceleme mevcut uygulamanın görsellerle eşleştiği anlamına gelmez; ekranlar henüz uygulanmadı.
 - **Sıradaki iş:** [S-001](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) için kullanıcı kararı. Android test sonuçları hazır; tüm platformları kapsayan Kapı 1 açık. TV, bilgisayar ve Apple beklemede.
+
+## Android telefon — S-001 onayıyla Aşama 2 başlangıcı (2026-11-04)
+
+- Kullanıcı önceki VPN/tarayıcı sohbetinde **"Onay verildi"** diyerek S-001 Seçenek 1'i kabul etti. Eski **S-001 bekliyor** kayıtları tarihçedir, güncel karar `docs/SAPMA.md` içindedir.
+- Yalnızca Android telefon: `OnboardingScreens.kt` dosyasında T01 açılış marka/halka düzeni ve T02 üç seçenekli ilk kurulum başlangıcı eklendi. Renk/ölçüler `design/tokens.json` üretilmiş değerlerinden kullanılır; süre de token üreticisinden alınır. Türkçe/İngilizce yeni metinler `shared/i18n` içinde tanımlandı.
+- `MainActivity`, ilk kurulum üst katmanını çalışan GeckoView üstünde açar; seçilen reklam engeli tercihi, arama motoru ve adres çubuğu konumunu yerel tercih dosyasına kaydeder. **Henüz gerçek reklam filtresi, seçilen arama motoruyla arama ve adres çubuğu yoktur.** Filtre gerçek olmadığı için ilk kurulumda açık uyarı gösterilir. Varsayılan tarayıcı düğmesi yalnız Android sistem seçim ekranını açmayı dener; varsayılan olduğu iddia edilmez.
+- GeckoSession'ın DRM, tam ekran dönüş, paylaşım/HTTPS açma ve PDF indirme bağlantıları korunmuştur. Ancak yeni ekranlar için cihaz üstünde regresyon testi **denenmedi**.
+- Otomatik GitHub Actions denetiminde yeni Android telefon derlemesi hedeflendi; TV, bilgisayar ve Apple işleri kullanıcı istemi doğrultusunda yalnız manuel iş akışına alındı. Yeni Android telefon CI sonucu **beklemede**, üretim imzalı APK/Release **yayımlanmadı**.
+- **Görsel eşleşme eksikleri:** T01/T02 için Inter ve Sora yazı tiplerinin lisanslı yerel dosyaları henüz eklenmedi, sistem yazı tipi kullanılıyor; ikonların bazıları ilk geçici yer tutucudur. Ekranların PNG ile birebir karşılaştırması ve cihaz üzeri denetimleri henüz **denenmedi**. Bu dilim tasarımın tamamı veya kararlı sürüm değildir.
+- **Sıradaki iş:** Android telefon CI derleme hatası varsa gider, T01/T02'yi 780×1688 onaylı kaynaklarla eşleştir, yazı tiplerini ve token ikonlarını yerleştir. Sonra T03/T04/T11'e geç; çalışan motoru koru. Genel Kapı 1 açık; TV, masaüstü ve Apple beklemede.
