@@ -9,3 +9,5 @@ Son güncelleme: 2026-11-04
 - Sıradaki iş: GitHub Actions motor derleme sonuçlarını kontrol et, hataları düzelt, motorlu paketlerin gerçek boyutlarını kaydet.
 - Açık sorunlar/denenmedi: Google girişi, korumalı video, banka, e-Devlet, gerçek cihaz ve emülatör testi, Kapı 1 kullanıcı onayı.
 - Şartname: `docs/SARTNAME.md` ve onaylı `design/` kaynakları değiştirilmedi; Aşama 2 ekran kodlamasına başlanmadı.
+
+- Son teknik düzeltme: AGP 9.1 new DSL ile bağımsız Kotlin Android eklentisi bağdaşmadığı için resmî AGP 9 yerleşik Kotlin modeline geçildi. Android kütüphane eklentisi de 9.1.1'e eşitlendi. Kotlin 2.4.20 Compose sürümü korunuyor; GitHub Actions doğrulaması henüz yapılmadı.
