@@ -448,6 +448,7 @@ class MainActivity : ComponentActivity() {
             }
             MenuAction.PRIVATE -> createTab(privateMode = true)
             MenuAction.FIND -> showFindDialog()
+            MenuAction.PDF -> saveCurrentPageAsPdf()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.THEME -> {
@@ -516,6 +517,22 @@ class MainActivity : ComponentActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun saveCurrentPageAsPdf() {
+        val tab = activeTab ?: return
+        if (tab.home || GeckoMotorDenemesi.verifiedHttpsUrl(tab.url) == null) {
+            notice(R.string.menu_pdf_error)
+            return
+        }
+        tab.gecko.saveAsPdf().accept(
+            { stream ->
+                runOnUiThread { downloads.savePdfStream(stream) }
+            },
+            { _ ->
+                runOnUiThread { notice(R.string.menu_pdf_error) }
+            }
+        )
     }
 
     private fun toggleDesktopSite() {
