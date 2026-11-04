@@ -109,6 +109,7 @@ private val shortcuts = listOf(
 internal fun BrowserHome(
     day: Boolean,
     recentUrls: List<String>,
+    addressBottom: Boolean,
     onOpen: (String) -> Unit,
     onDevices: () -> Unit,
     onShield: () -> Unit
@@ -117,7 +118,9 @@ internal fun BrowserHome(
     Column(
         Modifier.fillMaxSize().background(p.base)
             .verticalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 148.dp),
+            .padding(start = 20.dp, end = 20.dp,
+                top = if (addressBottom) 32.dp else 162.dp,
+                bottom = if (addressBottom) 148.dp else 32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Row(
