@@ -45,6 +45,24 @@ check_browser_foreground
 adb exec-out screencap -p > visual-captures/T02-Ilk-kurulum.png
 test -s visual-captures/T02-Ilk-kurulum.png
 
+# Android can layer a system ANR dialog OVER the foreground app. Such a
+# capture is not comparable to the approved dark T02 design.
+python - <<'PY'
+from PIL import Image, ImageChops
+from pathlib import Path
+reference = Path("design/ekranlar/T02-Ilk-kurulum.png")
+capture = Path("visual-captures/T02-Ilk-kurulum.png")
+with Image.open(reference) as image:
+    expected = image.convert("RGB")
+with Image.open(capture) as image:
+    observed = image.convert("RGB").resize(expected.size, Image.Resampling.LANCZOS)
+diff = ImageChops.difference(expected, observed)
+fraction = sum(max(pixel) >= 25 for pixel in diff.getdata()) / (expected.width * expected.height)
+print(f"T02 screen identity error fraction: {fraction:.3f}")
+if fraction > 0.35:
+    raise SystemExit("T02 capture does not resemble the approved page; possibly a system dialog")
+PY
+
 # The approved T02 button sits near the bottom of a 390x844 viewport.
 adb shell input tap 190 734
 sleep 4
@@ -69,6 +87,16 @@ bright_fraction = sum(
 print(f"T03 bright-background fraction: {bright_fraction:.3f}")
 if bright_fraction > 0.35:
     raise SystemExit("T03 is predominantly white; refused to compare blank Gecko content as homepage")
+with Image.open("design/ekranlar/T03-Yeni-sekme.png") as image:
+    expected = image.convert("RGB")
+with Image.open(path) as image:
+    observed = image.convert("RGB").resize(expected.size, Image.Resampling.LANCZOS)
+from PIL import ImageChops
+diff = ImageChops.difference(expected, observed)
+fraction = sum(max(pixel) >= 25 for pixel in diff.getdata()) / (expected.width * expected.height)
+print(f"T03 screen identity error fraction: {fraction:.3f}")
+if fraction > 0.20:
+    raise SystemExit("T03 capture resembles a different page (e.g. onboarding); refused wrong-page metric")
 PY
 
 echo "Browser foreground, Turkish locale and T03 dark homepage validated."
