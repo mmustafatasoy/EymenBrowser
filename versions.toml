@@ -2,13 +2,13 @@
 version = "0.0.1"
 
 [android]
-gradle = "8.13"
-agp = "8.11.1"
-kotlin = "2.2.20"
+gradle = "9.3.1"
+agp = "9.1.1"
+kotlin = "2.2.10"
 compose_bom = "2025.06.01"
 activity_compose = "1.10.1"
 tv_material = "1.1.0"
-compile_sdk = 36
+compile_sdk = 37
 target_sdk = 35
 min_sdk = 26
 java = 17

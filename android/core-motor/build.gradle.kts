@@ -1,6 +1,5 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 val versionsText = rootDir.resolve("../versions.toml").readText()
@@ -10,10 +9,9 @@ val geckoVersion = Regex("""(?m)^geckoview\s*=\s*"([^"]+)"""")
 
 android {
     namespace = "com.eymen.browser.motor"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig { minSdk = 26 }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
     api("org.mozilla.geckoview:geckoview:$geckoVersion")
