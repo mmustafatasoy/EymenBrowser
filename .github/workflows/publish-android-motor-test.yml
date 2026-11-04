@@ -60,6 +60,7 @@ jobs:
 
           Android 10+ İndirilenler, Android 8/9 dosya seçicisi desteği.
           İndirme dosyası hatasında yarım kalan kayıt temizlenir.
+          Kullanıcıya indirme sonucunda Türkçe bildirim gösterilir.
 
           GeckoView PDF viewer Download düğmesinden gelen WebResponse.body
           artık Android indirme işlemine bağlanır.

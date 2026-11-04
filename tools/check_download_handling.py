@@ -16,7 +16,7 @@ assert "source.copyTo(output" in handler
 assert "MediaStore.Downloads.getContentUri" in handler
 assert "MediaStore.MediaColumns.IS_PENDING, 1" in handler
 assert "MediaStore.MediaColumns.IS_PENDING, 0" in handler
-assert "resolver.delete(createdDownload" in handler
+assert "resolver.delete(downloadUri" in handler
 assert "Intent.ACTION_CREATE_DOCUMENT" in handler
 assert "VERSION_CODES.Q" in handler
 assert "DownloadManager" not in handler.split("internal class")[1]
