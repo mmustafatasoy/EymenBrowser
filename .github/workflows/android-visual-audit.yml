@@ -1,0 +1,85 @@
+name: EymenBrowser Android tasarim ekran goruntusu denetimi
+on:
+  push:
+    paths:
+      - '.github/workflows/android-visual-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emulator-visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+      - name: Kurum ici tasarim karsilastirma araclarini kur
+        run: python -m pip install Pillow==11.3.0
+      - name: Ortak Android kaynaklarini uret
+        run: python tools/generate.py
+      - name: Android SDK 37 platformunu kur
+        run: |
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Android telefon x86_64 test APK derle
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:assembleDebug
+      - name: KVM erisimini etkinlestir
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Android emulatorunde ilk kurulum ve yeni sekme ekrani yakala
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            set -e
+            APK=$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' | head -1)
+            test -f "$APK"
+            adb shell wm size 390x844
+            adb shell wm density 160
+            adb install -r "$APK"
+            adb shell am force-stop com.eymen.browser.telefon || true
+            adb shell am start -n com.eymen.browser.telefon/.MainActivity
+            sleep 8
+            mkdir -p visual-captures
+            adb shell screencap -p /sdcard/T02.png
+            adb pull /sdcard/T02.png visual-captures/T02-Ilk-kurulum.png
+            adb shell input tap 190 730
+            sleep 5
+            adb shell screencap -p /sdcard/T03.png
+            adb pull /sdcard/T03.png visual-captures/T03-Yeni-sekme.png
+      - name: Tasarim fark raporlarini olustur
+        if: always()
+        run: |
+          if test -s visual-captures/T02-Ilk-kurulum.png; then
+            python tools/compare_approved_screenshots.py --screen T02-Ilk-kurulum --capture visual-captures/T02-Ilk-kurulum.png --output visual-report
+          fi
+          if test -s visual-captures/T03-Yeni-sekme.png; then
+            python tools/compare_approved_screenshots.py --screen T03-Yeni-sekme --capture visual-captures/T03-Yeni-sekme.png --output visual-report
+          fi
+      - name: Yakalanan gercek ekranlar ve fark raporlari
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-Android-Real-UI-Visual-Audit
+          path: |
+            visual-captures/*.png
+            visual-report/*.png
+            visual-report/*.json
+          if-no-files-found: warn
