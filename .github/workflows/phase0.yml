@@ -49,8 +49,8 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME/platforms"
-          if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
-            sdkmanager --install "platforms;android-37"
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
           fi
       - name: GeckoView telefon ve TV APK'larını derle
         working-directory: android
