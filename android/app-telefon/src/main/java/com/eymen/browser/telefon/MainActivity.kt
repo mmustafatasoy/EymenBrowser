@@ -8,10 +8,12 @@ import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.Toast
 import android.widget.EditText
@@ -89,6 +91,7 @@ class MainActivity : ComponentActivity() {
     private val activeTab: BrowserTab?
         get() = tabs.firstOrNull { it.id == activeId.value }
 
+    private var navigationInsetPx = 0
     private var videoFullScreen = false
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
@@ -103,6 +106,19 @@ class MainActivity : ComponentActivity() {
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
+        // Keep Gecko content clear of the actual OS navigation bar when the
+        // Compose toolbar grows by navigationBarsPadding().
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            @Suppress("DEPRECATION")
+            val bottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            } else insets.systemWindowInsetBottom
+            if (navigationInsetPx != bottom) {
+                navigationInsetPx = bottom
+                updateChromeMargins()
+            }
+            insets
+        }
         view = GeckoView(this)
         root.addView(view, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -506,7 +522,8 @@ class MainActivity : ComponentActivity() {
 
     private fun updateChromeMargins() {
         if (!::chrome.isInitialized) return
-        val barHeight = (130f * resources.displayMetrics.density).roundToInt()
+        val barHeight = (130f * resources.displayMetrics.density).roundToInt() +
+            if (addressBottom && !videoFullScreen) navigationInsetPx else 0
         val body = view.layoutParams as FrameLayout.LayoutParams
         body.topMargin = if (videoFullScreen || addressBottom) 0 else barHeight
         body.bottomMargin = if (videoFullScreen || !addressBottom) 0 else barHeight
