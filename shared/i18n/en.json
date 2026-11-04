@@ -130,5 +130,16 @@
   "shield_scope_explanation": "Blocked counts are GeckoView events reported in this session. This isn't a VPN and cannot guarantee blocking every ad.",
   "shield_global": "Gecko tracking protection",
   "shield_site_exception": "Exception for this site",
-  "shield_summary_counter": "%1$d blocking events in this session"
+  "shield_summary_counter": "%1$d blocking events in this session",
+  "download_filter_all": "All",
+  "download_filter_video": "Video",
+  "download_filter_document": "Document",
+  "download_filter_other": "File",
+  "download_none": "No completed downloads yet.",
+  "download_folder": "Recorded downloads",
+  "download_recorded_size": "Total %1$s",
+  "download_clear_records": "Clear completed list",
+  "download_clear_confirm": "This clears only the list, not the files. Continue?",
+  "download_open_error": "File couldn't be opened or was moved.",
+  "download_clear_done": "Download list cleared."
 }
