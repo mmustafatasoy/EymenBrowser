@@ -81,6 +81,17 @@ def produce():
                     + f'<path d="{html.escape(path, quote=True)}" fill="none" stroke="currentColor" stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round"/></symbol>')
     icon.append('</svg>')
     results["shared/ikon/eymen-icons.svg"] = "\n".join(icon) + "\n"
+    # Compose icons use the same exact SVG paths as the approved HTML/PNG design.
+    compose_paths = [
+        "// GENERATED from design/tokens.json - DO NOT EDIT",
+        "package com.eymen.browser.tema",
+        "",
+        "object EymenPaths {",
+    ]
+    for name, path_data in TOKENS["ikon"]["yollar"].items():
+        compose_paths.append(f"    const val {name} = {json.dumps(path_data, ensure_ascii=False)}")
+    compose_paths.append("}")
+    results["android/core-tema/src/main/java/com/eymen/browser/tema/EymenPaths.kt"] = "\n".join(compose_paths) + "\n"
     return results
 
 def main():
