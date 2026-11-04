@@ -2,14 +2,16 @@
 
 Son güncelleme: 2026-11-04
 
-- Aşama: **0 — hazırlık, devam ediyor**.
-- Biten iş: 41 dosyalık başlangıç paketi orijinal biçimde aktarıldı. Telefon/TV için Kotlin/Compose, iOS için SwiftUI, masaüstü için TypeScript/React/castLabs Electron boş proje iskeletleri eklendi. Sürüm kilidi, ortak i18n, tema ve simge üretici, boyut ve yasak bağımlılık kontrolleri, GitHub Actions iş akışları hazırlandı.
-- Sıradaki iş: GitHub Actions'ta Android, TV, iOS ve bilgisayar boş uygulama derlemelerinin sonuçlarını doğrula; hataları şartnameye uygun şekilde gider.
-- Açık sorun: Token/çeviri üretimi ve bağımlılık denetimi GitHub Actions'ta **geçti**. İlk Windows derlemesinde Windows terminali UTF-8 hatası ve Linux derlemesinde castLabs Electron indirme adresi hatası gözlendi; CI ayarı düzeltildi. Linux AppImage üretildi ancak .deb için paket bakımcısı bilgileri eksikti; bu alan GitHub profilinin gizli yanıt vermeyen e-posta biçimiyle dolduruldu. Android ve iOS sonuçları bekleniyor. İmzalı üretim sürümleri bu aşamanın kapsamı dışındadır.
+- Aşama: **0 — tamamlandı.**
+- Tamamlanan iş: Başlangıç paketindeki 41 dosya orijinal biçimiyle korundu. Android telefon ve TV için ayrı Kotlin/Compose uygulama iskeletleri; iOS/iPadOS 15+ SwiftUI uygulama iskeleti; Windows, macOS ve Linux için TypeScript/React/castLabs Electron iskeleti oluşturuldu.
+- Ortak kaynaklar: `versions.toml`, `shared/i18n/tr.json`, `shared/i18n/en.json`, `design/tokens.json` kaynaklı Android/iOS/masaüstü tema ve simge üreteci, bağımlılık/500 MB denetimi çalışır durumdadır.
+- Doğrulama: [GitHub Actions Aşama 0, çalıştırma #41801213920](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41801213920) — **altı işin tamamı başarılı:** tema/metin/simge üretimi ve kontroller; Android telefon+TV derlemesi; iOS simülatör derlemesi; Windows, macOS ve Linux kurulum paketleri.
 - Aşama 0 kabul:
-  - [ ] Boş Android, TV, iOS ve Electron uygulamaları GitHub Actions'ta derlendi.
-  - [ ] design/tokens.json değişince Android, iOS ve bilgisayar temaları otomatik üretildi (CI henüz denenmedi).
-  - [ ] Yasak bağımlılık denetimi ve sürüm kontrolü çalıştı; gerçek kurulum dosyalarında 500 MB ölçümü **henüz denenmedi**.
-  - [x] DURUM.md ilk kayıtla duruyor.
-- Aşama 1 motor denemesine ve 16 ekranın kodlanmasına **başlanmadı**.
-- Değişmeyen dosya: `docs/SARTNAME.md`.
+  - [x] Boş Android, TV, iOS ve Electron uygulamaları GitHub Actions'ta derlendi.
+  - [x] `design/tokens.json` üzerinden Android, iOS ve bilgisayar temaları otomatik üretildi; `--check` denetimi geçti.
+  - [x] 500 MB kurulum dosyası sınırı ve yasak bağımlılık denetimi çalıştı ve derlemelerde geçti.
+  - [x] DURUM.md güncel kabul kaydıyla duruyor.
+- Üretilenler yalnızca **Aşama 0 test çıktılarıdır**: Android debug APK, iOS imzasız simülatör paketi, masaüstü imzasız paketleri. Bunlar kararlı veya tamamlanmış tarayıcı olarak yayımlanmadı.
+- Sıradaki iş: **Aşama 1 — motor denemesi**. Android/TV GeckoView, iOS WKWebView, masaüstü castLabs Electron/Chromium için arayüzsüz deneme ve gerçek cihaz/site/DRM/Google giriş testleri.
+- Açık sorunlar ve henüz denenmeyenler: Google hesabı oturum açma, korumalı video, e-Devlet/bankalar, gerçek telefon/TV/iPhone çalıştırma, motor kurulum boyutları ve Kapı 1 kullanıcı onayı **denenmedi**. Aşama 1 şartname ölçütleri yerine gelmeden ekran kodlarına geçilmeyecek.
+- Şartname: `docs/SARTNAME.md` değiştirilmedi; orijinal `design/` dosyaları korunuyor.
