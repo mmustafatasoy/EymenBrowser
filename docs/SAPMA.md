@@ -10,7 +10,7 @@ Burada kayıt yoksa şartnameden sapma yoktur. Yazılım aracı onay almadan sap
 - Neden olmuyor: Mevcut telefonda HTTPS, Google hesap girişi, YouTube/tam ekran/dönüş, Sintel Widevine, sosyal medya ve PDF indirme kontrolleri başarılı bildirildi. Diğer cihaz/platform testleri tamamlanmadı; TV, bilgisayar ve Apple kullanıcı tarafından beklemeye alındı. Tüm platformları kapsayan Kapı 1 tamamlanmış sayılamaz.
 - Seçenek 1: Kullanıcı mevcut Android telefon sonuçlarını başlangıç için kabul eder ve yalnız Android Aşama 2 uygulamasına geçişi onaylar. Diğer platformlar bekler; denenmeyen cihaz/site/performans kontrolleri açık kalır. Genel Kapı 1 veya nihai ürün kabulü geçmiş sayılmaz.
 - Seçenek 2: Mevcut aşama korunur; ekran kodlaması tüm platformları kapsayan Kapı 1'in tamamlanmasını bekler. Diğer platformlar kullanıcı yeniden başlatana kadar beklemede kalır.
-- Karar: **Bekliyor.** Kullanıcının son "Tamam oldu" yanıtı Google test sonucu olarak kaydedildi. Android Aşama 2'ye erken geçiş için henüz kapsam onayı kaydedilmedi; ekran kodu yazılmadı.
+- Karar: **Seçenek 1 ONAYLANDI — 2026-11-04.** Kullanıcı önceki sohbette açıkça "Onay verildi" diyerek yalnız Android telefon için Aşama 2 arayüz uygulamasına erken geçişi kabul etti. Android TV, bilgisayar ve Apple beklemede kalır. Genel Kapı 1 geçilmiş sayılmaz. Şartname, tasarım kaynakları ve çalışan motor özellikleri korunur.
 
 ## Şablon
 
