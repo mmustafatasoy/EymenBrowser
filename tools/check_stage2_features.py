@@ -37,6 +37,9 @@ assert 'shield_scope_explanation' in shield
 assert 'bytes = bytes' in download_engine
 assert 'savedAt = System.currentTimeMillis()' in download_engine
 assert 'registry.record(SavedDownload(' in download_engine
+# Activity's ContextWrapper has no base Context during MainActivity property initialization.
+assert 'private val registry by lazy { DownloadRegistry(activity.applicationContext) }' in download_engine
+assert 'private val registry = DownloadRegistry(activity.applicationContext)' not in download_engine
 assert 'if (!file.uri.startsWith("content://")' in registry
 assert 'fun clearListOnly()' in registry
 assert 'prefs.edit().remove("completed").apply()' in registry
