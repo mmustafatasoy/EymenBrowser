@@ -38,7 +38,7 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 
 ## Sıradaki iş
 1. Fiziksel Android telefon ve Android TV'ye işlemciye uygun test APK'sı kurulup varsayılan HTTPS sayfası açma denenmeli.
-2. Android telefonda YouTube video/ses, tam ekran ve yatay dönüşte aynı sayfada kalma **başarılı**. Google hesabına gerçek giriş (yalnız form açılışı başarılı), korumalı video/DRM, e-Devlet kişisel oturumları (ana sayfa başarılı), iki banka, PDF/indirme ve diğer platform testleri ayrı ayrı kaydedilmeli.
+2. Android telefonda YouTube video/ses, tam ekran ve yatay dönüşte aynı sayfada kalma **başarılı**. Google hesabına gerçek giriş (yalnız form açılışı başarılı), korumalı video/DRM, e-Devlet kişisel oturumları (ana sayfa başarılı), banka hesap/ödeme uyumu (iki herkese açık ana sayfa başarılı), PDF/indirme ve diğer platform testleri ayrı ayrı kaydedilmeli.
 3. Gerçek motor testleri ve kullanıcı onayı olmadan Kapı 1 kapanmayacak.
 
 ## Açık konular
@@ -51,7 +51,8 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Muhtemel neden:** Android konfigürasyon değişiminde Activity yeniden yaratılması ve GeckoSession'ın başlangıç/paylaşım URL'sinden yeniden yüklenmesi. Test cihazı üzerinde hata günlüğü henüz alınmadı.
 - **Düzeltme:** Android telefon ve TV Activity manifestlerine ekran yönü/boyutu konfigürasyon yönetimi eklendi. GeckoRuntime'a konfigürasyon değişimi iletiliyor. GeckoView tam ekran ContentDelegate geri çağrısı uygulama penceresini tam ekran yapıyor; telefonda tam ekran video yatay yön istemek için mevcut oturum korunuyor.
 - **Yeni test sürümü:** [v0.0.1-motor-test.2](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.2) GitHub Releases üzerinde doğrudan indirilen **tek arm64 APK** olarak yayımlandı (204171344 bayt). GitHub Actions derlemesi başarılı ve kullanıcı gerçek Android telefonunda YouTube tam ekran/yatay dönüş sırasında Google sayfasına geri atma hatasının **giderildiğini doğruladı**. Debug/test imzalıdır.
-- **Kapı 1:** Android telefonda tam ekran yatay dönüş ve oturum korunması başarılı; Google giriş formu açıldı; e-Devlet herkese açık ana sayfası **başarıyla açıldı**. Hesapla giriş, DRM, iki banka ve diğer platform testleri yapılmadığından **Kapı 1 açık**.
+- **Kapı 1:** Android telefonda tam ekran yatay dönüş ve oturum korunması başarılı; Google giriş formu açıldı; e-Devlet herkese açık ana sayfası **başarıyla açıldı**. Hesapla giriş, DRM ve diğer platform testleri yapılmadığından **Kapı 1 açık**. İki banka ana sayfası görüntüleme testi başarılıdır; banka girişi/ödeme denenmedi.
 - **Google giriş formu testi (2026-11-04):** Kullanıcı, EymenBrowser Android telefonunda `accounts.google.com` giriş ekranının açıldığını doğruladı. Giriş formu yüklemesi başarılı; hesapla oturum açma **denenmedi**.
 - **e-Devlet ana sayfa testi (2026-11-04):** Kullanıcı, resmî e-Devlet ana sayfasının EymenBrowser Android telefonda sorunsuz açıldığını doğruladı. Oturum açma denenmedi.
-- **Sonraki iş:** Ziraat Bankası ve Türkiye İş Bankası resmî kamuya açık ana sayfaları. Hesaba giriş, kart/şifre/SMS kodu girme veya ödeme yok. Sonra DRM ve diğer platformlar.
+- **Banka ana sayfaları testi (2026-11-04):** Kullanıcı, EymenBrowser Android telefonda **Ziraat Bankası** ve **Türkiye İş Bankası** herkese açık ana sayfalarının her ikisinin de sorunsuz açıldığını doğruladı. Banka oturumu, ödeme, SMS ve kimlik doğrulama **denenmedi**.
+- **Sonraki iş:** [Shaka Player Demo](https://shaka-project.github.io/shaka-player/demo/) üzerindeki **Sintel** Widevine DRM korumalı örneği EymenBrowser Android telefonunda denenecek. Sitenin açılması ile şifrelenmiş videonun gerçekten oynatılması ayrı ayrı değerlendirilecek. Bir hata çıkması tek başına tarayıcının DRM desteğinin kesin bulunmadığı anlamına gelmez.
