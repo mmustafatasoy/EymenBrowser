@@ -32,6 +32,11 @@ assert 'apk.packageName != activity.packageName' in updater
 assert 'a.isEmpty() || a != b' in updater
 assert 'MAX_APK_BYTES = 500L * 1024 * 1024' in updater
 assert 'CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L' in updater
+assert 'private val checking = AtomicBoolean(false)' in updater
+assert 'checking.compareAndSet(false, true)' in updater
+assert 'checking.set(false)' in updater
+assert 'ApplicationInfo.FLAG_DEBUGGABLE' in updater
+assert 'update_debug_build' in updater
 
 # Android's normal APK installer always asks for user action and authority.
 assert "android.permission.REQUEST_INSTALL_PACKAGES" in manifest
