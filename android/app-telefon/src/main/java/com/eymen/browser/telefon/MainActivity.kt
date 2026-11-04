@@ -3,6 +3,7 @@ package com.eymen.browser.telefon
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.content.Intent
+import android.net.Uri
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var tabsLayer: ComposeView
     private lateinit var menuLayer: ComposeView
     private lateinit var shieldLayer: ComposeView
+    private lateinit var downloadsLayer: ComposeView
     private lateinit var prefs: SharedPreferences
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -67,6 +69,8 @@ class MainActivity : ComponentActivity() {
     private val currentUrl = mutableStateOf("")
     private val dayMode = mutableStateOf(false)
     private val recent = mutableStateListOf<String>()
+    private val savedFiles = mutableStateListOf<SavedDownload>()
+    private val downloadRegistry by lazy { DownloadRegistry(this) }
     private val downloads = AndroidDownloadDenemesi(this)
     private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
@@ -74,6 +78,7 @@ class MainActivity : ComponentActivity() {
     private var overviewShowing = false
     private var menuShowing = false
     private var shieldShowing = false
+    private var downloadsShowing = false
     private val globalShieldWanted = mutableStateOf(true)
     private val devicesRequested = mutableStateOf(false)
 
@@ -227,12 +232,27 @@ class MainActivity : ComponentActivity() {
             )
         }
         shieldLayer.visibility = View.GONE
+        downloadsLayer = ComposeView(this)
+        root.addView(downloadsLayer, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        downloadsLayer.setContent {
+            DownloadsScreen(
+                files = savedFiles,
+                onBack = ::hideDownloads,
+                onOpen = ::openDownloadedFile,
+                onClear = ::confirmClearDownloadedFiles
+            )
+        }
+        downloadsLayer.visibility = View.GONE
         updateChromeMargins()
         updateHomeVisibility()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    downloadsShowing -> hideDownloads()
                     shieldShowing -> hideShield()
                     menuShowing -> hideBrowserMenu()
                     overviewShowing -> hideTabs()
@@ -510,6 +530,47 @@ class MainActivity : ComponentActivity() {
         if (::shieldLayer.isInitialized) shieldLayer.visibility = View.GONE
     }
 
+    private fun showDownloads() {
+        if (!::downloadsLayer.isInitialized || videoFullScreen) return
+        if (menuShowing) hideBrowserMenu()
+        if (shieldShowing) hideShield()
+        if (overviewShowing) hideTabs()
+        savedFiles.clear()
+        savedFiles.addAll(downloadRegistry.items())
+        downloadsShowing = true
+        downloadsLayer.visibility = View.VISIBLE
+    }
+
+    private fun hideDownloads() {
+        downloadsShowing = false
+        if (::downloadsLayer.isInitialized) downloadsLayer.visibility = View.GONE
+    }
+
+    private fun openDownloadedFile(file: SavedDownload) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.parse(file.uri), file.mimeType)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {
+            notice(R.string.download_open_error)
+        }
+    }
+
+    private fun confirmClearDownloadedFiles() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.download_clear_records)
+            .setMessage(R.string.download_clear_confirm)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                downloadRegistry.clearListOnly()
+                savedFiles.clear()
+                notice(R.string.download_clear_done)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private fun showBrowserMenu() {
         if (!::menuLayer.isInitialized || videoFullScreen) return
         menuShowing = true
@@ -526,13 +587,7 @@ class MainActivity : ComponentActivity() {
         when (action) {
             MenuAction.BOOKMARKS -> showBookmarks()
             MenuAction.HISTORY -> showRecentPages()
-            MenuAction.DOWNLOADS -> {
-                try {
-                    startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
-                } catch (_: Exception) {
-                    notice(R.string.menu_downloads_error)
-                }
-            }
+            MenuAction.DOWNLOADS -> showDownloads()
             MenuAction.PRIVATE -> createTab(privateMode = true)
             MenuAction.FIND -> showFindDialog()
             MenuAction.PDF -> saveCurrentPageAsPdf()
@@ -729,6 +784,7 @@ class MainActivity : ComponentActivity() {
         if (enabled) {
             hideBrowserMenu()
             hideShield()
+            hideDownloads()
         }
         if (::chrome.isInitialized) {
             chrome.visibility = if (enabled) View.GONE else View.VISIBLE
