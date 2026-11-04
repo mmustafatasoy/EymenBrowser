@@ -53,9 +53,10 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
-          target: google_apis
+          # Lightweight AOSP launcher avoids Google Pixel Launcher ANR overlays.
+          target: default
           arch: x86_64
-          profile: pixel_6
+          profile: Nexus 5X
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash tools/capture_android_visual.sh
