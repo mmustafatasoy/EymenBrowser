@@ -45,7 +45,7 @@ private val tiles = listOf(
     MenuTile(R.string.menu_find, EymenPaths.ara, MenuAction.FIND),
     MenuTile(R.string.menu_reader, EymenPaths.okuma, MenuAction.READER, false),
     MenuTile(R.string.menu_desktop, EymenPaths.masaustu, MenuAction.DESKTOP),
-    MenuTile(R.string.menu_save_pdf, EymenPaths.belge, MenuAction.PDF, false),
+    MenuTile(R.string.menu_save_pdf, EymenPaths.belge, MenuAction.PDF),
     MenuTile(R.string.menu_share, EymenPaths.paylas, MenuAction.SHARE),
     MenuTile(R.string.menu_send_device, EymenPaths.cihazlar, MenuAction.SEND_TO_DEVICE, false),
     MenuTile(R.string.menu_scan_qr, EymenPaths.qr, MenuAction.QR, false)
@@ -96,7 +96,7 @@ internal fun BrowserMenu(
                             val itemTitle = stringResource(tile.title)
                             val allowed = tile.supported && (
                                 tile.action !in listOf(
-                                    MenuAction.FIND, MenuAction.DESKTOP, MenuAction.SHARE
+                                    MenuAction.FIND, MenuAction.DESKTOP, MenuAction.PDF, MenuAction.SHARE
                                 ) || hasPage
                             )
                             Column(
