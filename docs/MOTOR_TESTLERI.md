@@ -23,7 +23,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | --- | --- | --- | --- | --- |
 | Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
 | Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
-| Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| Korumalı video/DRM | Shaka Player açıldı; Sintel **NOT AVAILABLE**, oynatılmadı (kullanıcı fotoğrafı) | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -121,3 +121,11 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Ayrı raporla:** (1) demo sayfası yüklendi mi, (2) DRM korumalı Sintel video görüntülü/sesli oynadı mı, (3) varsa hata mesajı.
 - YouTube videosunun daha önce açılmış olması Widevine DRM uyumluluğunun kanıtı değildir. DRM lisans sunucusunun veya içerik dağıtım altyapısının geçici hatası da olasıdır.
 - DRM'yi aşmaya yönelik denetim kapatma, lisans müdahalesi veya koruma devre dışı bırakma yapılmayacak. Sonuç **kullanıcı testine kadar denenmedi**.
+
+## Shaka Player Sintel — gerçek kullanıcı ekranı (2026-11-04)
+
+- Kullanıcının fotoğrafında resmî Shaka Player demo ana sayfası ve Widevine şifreli Sintel kartı görünür.
+- **Sonuç:** Web sayfası başarılı yükleniyor; Sintel oynatılabilir değil; kartta `NOT AVAILABLE`. Bu testte **DRM oynatma başarılı değildir**.
+- **Muhtemel nedenler:** GeckoView'da DRM site izin işleyicisinin eksik olması (tespit edildi), key-system/CDM desteğinin olmaması, format/DRM kısıtları veya demo servis durumu. Fotoğraf nedenini tek başına ayırmaz.
+- **Test düzeltmesi:** `GeckoSession.PermissionDelegate` DRM anahtar erişimi isteyen HTTPS site için açık kullanıcı seçimi ile izin verebilir/reddedebilir; diğer izinleri otomatik açmaz. Tek APK `v0.0.1-motor-test.3` sonrasında aynı site tekrar denenecek.
+- **Kontrol önerisi:** Aynı Sintel örneğinin Chrome'da da `NOT AVAILABLE` olup olmadığını karşılaştır. Yeni APK'da DRM izni açılırsa, kullanıcı özellikle **İzin ver** seçerse oynatma değişiyor mu kaydet. Yazılım/servis kaynaklı kısıtlarda kesin uyumluluk iddiasında bulunma.

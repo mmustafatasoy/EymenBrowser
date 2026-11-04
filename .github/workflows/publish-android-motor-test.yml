@@ -35,6 +35,7 @@ jobs:
           python tools/generate.py
           python tools/verify.py
           python tools/check_rotation.py
+          python tools/check_drm_permission.py
       - name: Build phone GeckoView APK from THIS commit
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
@@ -45,25 +46,31 @@ jobs:
           mkdir -p release
           APK="android/app-telefon/build/outputs/apk/debug/app-telefon-arm64-v8a-debug.apk"
           python tools/verify.py --artifact "$APK"
-          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-ROTASYON-TEST.apk
+          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-DRM-IZIN-TEST.apk
           sha256sum release/*.apk
           test "$(find release -name '*.apk' -type f | wc -l)" -eq 1
       - name: Publish direct APK to GitHub Releases
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.1-motor-test.2"
+          TAG="v0.0.1-motor-test.3"
           cat > RELEASE_NOTES.md <<'EOF'
-          # EymenBrowser Android Telefon — Yatay Döndürme Testi
+          # EymenBrowser Android Telefon — DRM İzin Testi
 
-          Bu test sürümünde video tam ekrana geçince Activity/GeckoSession korunur.
-          Ekran yataya dönerken sayfanın Google'a sıfırlanmasını önlemeyi hedefler.
-          Tam ekran içindeki sistem çubukları gizlenir ve telefon yatay moda geçebilir.
+          Bu test sürümünde GeckoView için DRM medya anahtarı erişimi
+          yalnızca sitenin isteği üzerine kullanıcının açık İzin ver / Reddet
+          tercihiyle işlenir. Yalnızca HTTPS kaynakları için sorulur.
+
+          Önceki YouTube tam ekran ve yatay döndürme düzeltmeleri korunur.
+          Shaka Player Sintel kartı önceki sürümde NOT AVAILABLE gösterdi.
+          Bu değişiklikten sonra korumalı videonun oynadığı henüz kanıtlanmadı.
+          DRM lisans/sistem/yayının uyumsuzluğu veya örnek servis sorunu kalabilir.
 
           **Önemli:** Bu APK yalnız arm64-v8a Android telefon içindir. ZIP yok.
           Debug imzalı motor test sürümüdür; resmi üretim imzalı sürüm değildir.
-          Google girişi, DRM, bankalar ve gerçek cihazdaki yatay döndürme davranışı
-          bu yeni sürümde kullanıcı tarafından henüz test edilmemiştir.
+          Google giriş formu ve banka ana sayfaları açıldı, YouTube yatay dönüş
+          düzeltmesi kullanıcı tarafından doğrulandı. Widevine DRM videosu bu
+          sürümde henüz kullanıcı tarafından yeniden test edilmedi.
           Tasarım ekranları Kapı 1 tamamlanmadan eklenmedi.
 
           Eski APK ile imzalama anahtarı farklıysa güncelleme yerine kaldırıp
@@ -73,7 +80,7 @@ jobs:
             gh release upload "$TAG" release/*.apk --clobber
           else
             gh release create "$TAG" release/*.apk \
-              --title "EymenBrowser Android Telefon - Yatay Video Motor Testi" \
+              --title "EymenBrowser Android Telefon - DRM Izin Motor Testi" \
               --target "${{ github.sha }}" \
               --notes-file RELEASE_NOTES.md --prerelease
           fi

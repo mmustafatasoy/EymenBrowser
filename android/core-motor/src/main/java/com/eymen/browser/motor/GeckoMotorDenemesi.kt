@@ -3,6 +3,7 @@ package com.eymen.browser.motor
 import android.content.Context
 import android.content.res.Configuration
 import android.content.Intent
+import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
@@ -66,12 +67,58 @@ object GeckoMotorDenemesi {
         context: Context,
         view: GeckoView,
         url: String?,
-        onFullScreen: (Boolean) -> Unit
+        onFullScreen: (Boolean) -> Unit,
+        askDrmPermission: (String, (Boolean) -> Unit) -> Unit
     ): GeckoSession {
         val session = GeckoSession()
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
                 onFullScreen(fullScreen)
+            }
+        }
+        // Only the Widevine/DRM key-system site permission is handled here.
+        // All other permissions keep GeckoView's normal default behavior.
+        session.permissionDelegate = object : GeckoSession.PermissionDelegate {
+            override fun onContentPermissionRequest(
+                session: GeckoSession,
+                perm: GeckoSession.PermissionDelegate.ContentPermission
+            ): GeckoResult<Int>? {
+                if (perm.permission !=
+                    GeckoSession.PermissionDelegate.PERMISSION_MEDIA_KEY_SYSTEM_ACCESS
+                ) return null
+
+                // Reject non-HTTPS origins instead of silently granting DRM access.
+                val origin = try {
+                    val u = URI(perm.uri)
+                    if (u.scheme?.lowercase(Locale.ROOT) == "https" &&
+                        !u.host.isNullOrBlank() && u.userInfo == null
+                    ) u.host else null
+                } catch (_: Exception) {
+                    null
+                }
+                if (origin == null) {
+                    return GeckoResult.fromValue(
+                        GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
+                    )
+                }
+
+                val pending = GeckoResult<Int>()
+                try {
+                    // The callback must display a user-controlled native permission dialog.
+                    askDrmPermission(origin) { allowed ->
+                        pending.complete(
+                            if (allowed) GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW
+                            else GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
+                        )
+                    }
+                    // Dialog.show() has returned, so the prompt is now visible.
+                    perm.notifyShown()
+                } catch (_: Exception) {
+                    pending.complete(
+                        GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
+                    )
+                }
+                return pending
             }
         }
         session.open(getRuntime(context))

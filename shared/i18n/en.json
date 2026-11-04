@@ -16,5 +16,9 @@
   "private_tab": "Private tab",
   "devices": "Devices",
   "address": "Web address",
-  "tv_hint": "Navigate with the remote"
+  "tv_hint": "Navigate with the remote",
+  "drm_permission_title": "Protected video permission",
+  "drm_permission_message": "%1$s requests access to device DRM media keys to play protected video. Allow?",
+  "drm_permission_allow": "Allow",
+  "drm_permission_deny": "Deny"
 }

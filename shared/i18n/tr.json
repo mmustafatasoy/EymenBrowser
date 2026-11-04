@@ -16,5 +16,9 @@
   "private_tab": "Gizli sekme",
   "devices": "Cihazlar",
   "address": "Web adresi",
-  "tv_hint": "Kumandayla gezin"
+  "tv_hint": "Kumandayla gezin",
+  "drm_permission_title": "Korumalı video izni",
+  "drm_permission_message": "%1$s sitesi korumalı video oynatmak için cihazın DRM medya anahtarlarına erişim istiyor. İzin verilsin mi?",
+  "drm_permission_allow": "İzin ver",
+  "drm_permission_deny": "Reddet"
 }

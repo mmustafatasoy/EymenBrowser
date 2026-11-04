@@ -1,5 +1,6 @@
 package com.eymen.browser.telefon
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -30,7 +31,8 @@ class MainActivity : ComponentActivity() {
         setContentView(view)
         session = GeckoMotorDenemesi.attach(
             this, view, GeckoMotorDenemesi.urlFromIntent(intent),
-            onFullScreen = ::setVideoFullScreen
+            onFullScreen = ::setVideoFullScreen,
+            askDrmPermission = ::showDrmAccessPrompt
         )
     }
 
@@ -60,6 +62,20 @@ class MainActivity : ComponentActivity() {
             window.decorView.systemUiVisibility = originalSystemUiVisibility
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
+    }
+
+    /**
+     * Temporary Stage-1 native site-permission prompt (not an approved UI screen).
+     * The user always chooses: no DRM key-system access is auto-granted.
+     */
+    private fun showDrmAccessPrompt(host: String, answer: (Boolean) -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.drm_permission_title))
+            .setMessage(getString(R.string.drm_permission_message, host))
+            .setPositiveButton(getString(R.string.drm_permission_allow)) { _, _ -> answer(true) }
+            .setNegativeButton(getString(R.string.drm_permission_deny)) { _, _ -> answer(false) }
+            .setOnCancelListener { answer(false) }
+            .show()
     }
 
     override fun onNewIntent(intent: Intent) {

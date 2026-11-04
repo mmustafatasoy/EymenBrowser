@@ -56,3 +56,11 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **e-Devlet ana sayfa testi (2026-11-04):** Kullanıcı, resmî e-Devlet ana sayfasının EymenBrowser Android telefonda sorunsuz açıldığını doğruladı. Oturum açma denenmedi.
 - **Banka ana sayfaları testi (2026-11-04):** Kullanıcı, EymenBrowser Android telefonda **Ziraat Bankası** ve **Türkiye İş Bankası** herkese açık ana sayfalarının her ikisinin de sorunsuz açıldığını doğruladı. Banka oturumu, ödeme, SMS ve kimlik doğrulama **denenmedi**.
 - **Sonraki iş:** [Shaka Player Demo](https://shaka-project.github.io/shaka-player/demo/) üzerindeki **Sintel** Widevine DRM korumalı örneği EymenBrowser Android telefonunda denenecek. Sitenin açılması ile şifrelenmiş videonun gerçekten oynatılması ayrı ayrı değerlendirilecek. Bir hata çıkması tek başına tarayıcının DRM desteğinin kesin bulunmadığı anlamına gelmez.
+
+## Widevine Sintel testi — 2026-11-04
+
+- **Gerçek Android kullanıcı ekranı:** Shaka Player web demo sayfası yükleniyor; **Sintel** kutusunda **NOT AVAILABLE** yazıyor. Video oynatımı **başarısız / kullanılamıyor**, bu görüntü tek başına GeckoView'un tüm Widevine desteğini reddetmeye yetmez.
+- **Kod incelemesi:** Aşama 1 Android GeckoSession için `PermissionDelegate` henüz tanımlanmamıştı. Mozilla API'sinde DRM sistem medya anahtarına erişim (`PERMISSION_MEDIA_KEY_SYSTEM_ACCESS`) bir site iznidir; Shaka'nın uygun key system seçememesi diğer olası nedenlerden biridir.
+- **Düzeltme denemesi:** Her HTTPS sitesinden DRM izni gerektiğinde **kullanıcı onaylı** yerel Android istemi, reddedilirse hiçbir erişim yok. Kamera/mikrofon/konum veya başka izinler otomatik açılmaz. `shared/i18n` Türkçe/İngilizce metinleri; yeni statik regresyon kontrolü.
+- **Yayın hedefi:** `v0.0.1-motor-test.3` test için tek arm64 APK. Derleme sonucu ve gerçek cihazda Widevine oynatma tekrar testi **bekleniyor**. Üretim imzası hâlâ yok; Kapı 1 açık.
+- **Bir sonraki gözlem:** Önce Chrome üzerinde Sintel'in aynı durumda olup olmadığı; sonra yeni EymenBrowser sürümünde DRM izin isteminin çıkması, Sintel durumunun değişmesi, başka bir şifreli örneğin çalışması.
