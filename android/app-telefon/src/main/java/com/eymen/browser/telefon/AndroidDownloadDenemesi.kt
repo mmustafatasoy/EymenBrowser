@@ -34,7 +34,9 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
     )
 
     private val worker = Executors.newSingleThreadExecutor()
-    private val registry = DownloadRegistry(activity.applicationContext)
+    // Activity is not attached to a Context during its property initialization.
+    // The first download is only handled after onCreate; defer Context access.
+    private val registry by lazy { DownloadRegistry(activity.applicationContext) }
     private var choosing: Pending? = null
     private var saveAs: Pending? = null
     private var busy = false
