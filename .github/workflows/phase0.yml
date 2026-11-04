@@ -35,6 +35,8 @@ jobs:
         run: python tools/check_menu_actions.py
       - name: T05 T08 T10 koruma indirme ayar regresyon denetimi
         run: python tools/check_stage2_features.py
+      - name: Android imzali surum ve guncelleme guvenlik kontrati
+        run: python tools/check_update_contract.py
       - uses: actions/upload-artifact@v4
         with:
           name: EymenBrowser-generated-themes
