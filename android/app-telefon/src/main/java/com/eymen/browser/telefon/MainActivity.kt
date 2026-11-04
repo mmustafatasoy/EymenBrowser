@@ -357,6 +357,11 @@ class MainActivity : ComponentActivity() {
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 runOnUiThread {
+                    // Gecko can signal its internal about:blank document on a new
+                    // empty session. This is not a user navigation: keep T03 home.
+                    if (tab.home && url.equals("about:blank", ignoreCase = true)) {
+                        return@runOnUiThread
+                    }
                     tab.url = url
                     tab.home = false
                     tab.blockedPage = 0
