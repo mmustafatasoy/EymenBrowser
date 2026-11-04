@@ -180,7 +180,7 @@ class MainActivity : ComponentActivity() {
             override fun handleOnBackPressed() {
                 when {
                     overviewShowing -> hideTabs()
-                    videoFullScreen -> activeTab?.gecko?.goBack()
+                    videoFullScreen -> activeTab?.gecko?.exitFullScreen()
                     !atHome.value -> activeTab?.gecko?.goBack()
                     else -> showTabs()
                 }
