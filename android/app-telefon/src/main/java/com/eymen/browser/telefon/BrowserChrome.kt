@@ -60,8 +60,8 @@ internal fun EymenVector(
 ) {
     val path = remember(pathData) { PathParser().parsePathString(pathData).toPath() }
     Canvas(modifier.size(iconSize)) {
-        val scale = size.minDimension / 24f
-        withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
+        val factor = size.minDimension / 24f
+        withTransform({ scale(factor, factor, pivot = Offset.Zero) }) {
             drawPath(
                 path, color,
                 style = Stroke(width = 1.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
