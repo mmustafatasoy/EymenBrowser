@@ -129,5 +129,6 @@
   "shield_autoplay_desc": "Autoplay settings aren't available yet",
   "shield_scope_explanation": "Blocked counts are GeckoView events reported in this session. This isn't a VPN and cannot guarantee blocking every ad.",
   "shield_global": "Gecko tracking protection",
-  "shield_site_exception": "Exception for this site"
+  "shield_site_exception": "Exception for this site",
+  "shield_summary_counter": "%1$d blocking events in this session"
 }
