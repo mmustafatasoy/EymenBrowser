@@ -71,4 +71,4 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Android TV GeckoView motor test APK'ları doğrudan Releases varlığı olarak `arm64-v8a` ve `armeabi-v7a` için **iki ayrı APK** şeklinde yayımlanacak. ZIP veya telefon APK'sı TV kullanıcısına dayatılmayacak.
 - Test APK'sı açıldığında `https://example.org/` görüntülenmesi **beklenir**, gerçek TV'de başarılı olduğu henüz doğrulanmadı.
 - **TV kumandasıyla tam gezinti, video DRM, giriş ekranları denenmedi**; bu aşama yalnız motor doğrulamasıdır ve V01–V03 ekranları Kapı 1 öncesi yapılmaz.
-- GitHub Actions test sürümünün yayın durumu CI tamamlandıktan sonra ayrıca doğrulanmalı.
+- **Android TV APK'ları yayımlandı:** [GitHub Releases v0.0.1-tv-motor-test.1](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-tv-motor-test.1) üzerinde **iki ayrı ZIP'siz APK** var: arm64-v8a **205425920 bayt**, armeabi-v7a **166230996 bayt**. GitHub Releases varlık durumları yüklenmiş ve yayın herkese açık; gerçek TV testleri **henüz denenmedi**. GitHub Actions iş akışı [#41826501884](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41826501884).
