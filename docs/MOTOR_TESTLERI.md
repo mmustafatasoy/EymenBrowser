@@ -25,7 +25,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
 | Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| İki banka ve ödeme sayfası | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | PDF ve dosya indirme | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 
@@ -104,3 +104,20 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Başarılı:** Herkese açık e-Devlet ana sayfasının GeckoView ile yüklenmesi.
 - **Denenmedi:** T.C. kimlik numarası/şifreyle oturum açma, kişisel hizmetler, TV/masaüstü/iOS.
 - **Sıradaki test:** Ziraat Bankası `https://www.ziraatbank.com.tr/tr` ve Türkiye İş Bankası `https://www.isbank.com.tr/` herkese açık ana sayfaları. Hesaba giriş, ödeme veya kart/şifre/SMS bilgisi girişi yapılmayacak.
+
+## İki banka — kamuya açık ana sayfalar — 2026-11-04
+
+- Kullanıcı EymenBrowser Android telefonunda **Ziraat Bankası** ve **Türkiye İş Bankası** ana sayfalarını sorunsuz açtığını doğruladı.
+- **Başarılı:** Her iki bankanın yalnız kamuya açık tanıtım/ana sayfalarının GeckoView ile yüklenmesi.
+- **Denenmedi:** Banka hesap kimlik doğrulaması, şifre/SMS, ödeme, kart işlemleri, güvenli bankacılık uyumluluğu, TV/PC/iOS.
+- Bu doğrulama bankacılık güvenliği veya oturum açma desteğinin sertifikası değildir.
+
+## Sıradaki test — Widevine DRM korumalı video
+
+- Kaynak: Shaka Player resmî demo `https://shaka-project.github.io/shaka-player/demo/`.
+- `Sintel` örneği demo içinde **Widevine ile şifrelenmiş** içerik olarak etiketlenmiştir.
+- Android'de Chrome ile demo linkini açıp **Paylaş → EymenBrowser** üzerinden gönder.
+- Site yüklendikten sonra `Sintel` içeriğini seç ve **Play** düğmesine dokun.
+- **Ayrı raporla:** (1) demo sayfası yüklendi mi, (2) DRM korumalı Sintel video görüntülü/sesli oynadı mı, (3) varsa hata mesajı.
+- YouTube videosunun daha önce açılmış olması Widevine DRM uyumluluğunun kanıtı değildir. DRM lisans sunucusunun veya içerik dağıtım altyapısının geçici hatası da olasıdır.
+- DRM'yi aşmaya yönelik denetim kapatma, lisans müdahalesi veya koruma devre dışı bırakma yapılmayacak. Sonuç **kullanıcı testine kadar denenmedi**.
