@@ -20,8 +20,10 @@ android {
         applicationId = "com.eymen.browser.telefon"
         minSdk = 26
         targetSdk = 35
-        versionCode = releaseCode ?: 1
-        versionName = releaseVersion ?: "0.0.1"
+        versionCode = 1
+        versionName = "0.0.1"
+        if (releaseVersion != null) versionName = releaseVersion
+        if (releaseCode != null) versionCode = releaseCode
     }
     signingConfigs {
         if (canSign) {
