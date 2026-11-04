@@ -175,5 +175,6 @@
   "update_install_permission_message": "Android requires you to allow this app to request installations and confirm the APK installation. Silent installation isn't possible.",
   "update_open_permissions": "Open permission settings",
   "update_installer_unavailable": "Android couldn't open the APK installer.",
-  "update_manual_check": "Check for updates"
+  "update_manual_check": "Check for updates",
+  "update_debug_build": "This is a debug-signed build. A stable release uses a different production signing certificate and cannot upgrade this install in place. Back up data, uninstall the debug build and install the signed stable APK once. Future updates can then be installed from within the app."
 }
