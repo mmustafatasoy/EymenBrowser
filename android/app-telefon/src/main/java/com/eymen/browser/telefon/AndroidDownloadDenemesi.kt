@@ -34,6 +34,7 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
     )
 
     private val worker = Executors.newSingleThreadExecutor()
+    private val registry = DownloadRegistry(activity.applicationContext)
     private var choosing: Pending? = null
     private var saveAs: Pending? = null
     private var busy = false
@@ -50,6 +51,13 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
             busy = false
             message(R.string.download_cancelled)
         } else {
+            try {
+                activity.contentResolver.takePersistableUriPermission(
+                    destination, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+                // Not all SAF providers allow persistence; saving still proceeds.
+            }
             writeInBackground(request, destination)
         }
     }
@@ -173,6 +181,17 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                     check(resolver.update(downloadUri, publish, null, null) > 0)
                 }
 
+                try {
+                    registry.record(SavedDownload(
+                        uri = destination.toString(),
+                        name = request.fileName,
+                        mimeType = request.mimeType,
+                        bytes = bytes,
+                        savedAt = System.currentTimeMillis()
+                    ))
+                } catch (_: Exception) {
+                    // The saved file is valid even if history metadata cannot persist.
+                }
                 activity.runOnUiThread {
                     busy = false
                     message(R.string.download_saved, request.fileName)
