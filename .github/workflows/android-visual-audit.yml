@@ -3,6 +3,12 @@ on:
   push:
     paths:
       - '.github/workflows/android-visual-audit.yml'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/MainActivity.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/OnboardingScreens.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
+      - 'tools/capture_android_visual.sh'
+      - 'tools/compare_approved_screenshots.py'
   workflow_dispatch:
 permissions:
   contents: read
