@@ -7,56 +7,74 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  actions: read
 jobs:
   release:
-    name: Publish only the arm64 phone APK (not ZIP)
+    name: Build and publish only phone arm64 APK (not ZIP)
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      - name: Download verified motor test APK
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: "9.3.1"}
+      - name: Install Android API 37
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p downloaded release
-          gh run download 41808478602 -n EymenBrowser-Phase1-GeckoView-ABI-Debug -D downloaded
-          APK="$(find downloaded -type f -name 'app-telefon-arm64-v8a-debug.apk' -print -quit)"
-          test -n "$APK"
-          test -s "$APK"
-          SIZE="$(stat -c %s "$APK")"
-          echo "APK bytes: $SIZE"
-          test "$SIZE" -gt 100000000
-          test "$SIZE" -lt 500000000
-          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-MOTOR-TEST.apk
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Generate shared tokens and verify configuration
+        run: |
+          python tools/generate.py
+          python tools/verify.py
+          python tools/check_rotation.py
+      - name: Build phone GeckoView APK from THIS commit
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
+      - name: Verify and select one arm64 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          APK="android/app-telefon/build/outputs/apk/debug/app-telefon-arm64-v8a-debug.apk"
+          python tools/verify.py --artifact "$APK"
+          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-ROTASYON-TEST.apk
           sha256sum release/*.apk
-          test "$(find release -type f -name '*.apk' | wc -l)" -eq 1
-      - name: Publish one direct-download APK
+          test "$(find release -name '*.apk' -type f | wc -l)" -eq 1
+      - name: Publish direct APK to GitHub Releases
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.1-motor-test.1"
+          TAG="v0.0.1-motor-test.2"
           cat > RELEASE_NOTES.md <<'EOF'
-          # EymenBrowser - Android Phone GeckoView Engine Test
+          # EymenBrowser Android Telefon — Yatay Döndürme Testi
 
-          One direct APK for Android phone arm64-v8a. No ZIP extraction.
+          Bu test sürümünde video tam ekrana geçince Activity/GeckoSession korunur.
+          Ekran yataya dönerken sayfanın Google'a sıfırlanmasını önlemeyi hedefler.
+          Tam ekran içindeki sistem çubukları gizlenir ve telefon yatay moda geçebilir.
 
-          - Stage 1 motor test only. Android 8.0+ arm64 CPU.
-          - Added HTTPS links via Android Share > EymenBrowser, for site compatibility testing.
-          - Engine GeckoView 159, from successful Android build run 41808478602.
-          - This is DEBUG/TEST signed, NOT official release-signed.
-          - No address bar, tabs, or final design screens yet, per docs/SARTNAME.md.
-          - Google login, banking, e-Devlet, video DRM and downloads remain untested.
-          - Old test APK may have a different debug key; reinstalling may erase app data.
-          - TV and other ABI APKs excluded from this phone-only test release.
+          **Önemli:** Bu APK yalnız arm64-v8a Android telefon içindir. ZIP yok.
+          Debug imzalı motor test sürümüdür; resmi üretim imzalı sürüm değildir.
+          Google girişi, DRM, bankalar ve gerçek cihazdaki yatay döndürme davranışı
+          bu yeni sürümde kullanıcı tarafından henüz test edilmemiştir.
+          Tasarım ekranları Kapı 1 tamamlanmadan eklenmedi.
+
+          Eski APK ile imzalama anahtarı farklıysa güncelleme yerine kaldırıp
+          yeniden kurmak gerekebilir; kaldırma uygulama verilerini siler.
           EOF
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/*.apk --clobber
           else
             gh release create "$TAG" release/*.apk \
-              --title "EymenBrowser Android Telefon - GeckoView Motor Test (arm64)" \
-              --target 7721fce1e45f49eeb3e02868b3e1831739e5bf3d \
+              --title "EymenBrowser Android Telefon - Yatay Video Motor Testi" \
+              --target "${{ github.sha }}" \
               --notes-file RELEASE_NOTES.md --prerelease
           fi
           gh release view "$TAG" --json url,assets --jq '{url:.url,assets:[.assets[].name]}'

@@ -1,18 +1,15 @@
 package com.eymen.browser.tv
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 
-/**
- * Aşama 1: yalnızca GeckoView motor testi. Son kullanıcı arayüzü değildir.
- *
- * HTTPS bağlantısını başka bir uygulamada "Paylaş > EymenBrowser" seçerek
- * denemek mümkündür; tarayıcı ekranları Kapı 1 onayı sonrasına aittir.
- */
+/** Aşama 1: Android TV GeckoView motor denemesi (henüz V01–V03 değil). */
 class MainActivity : ComponentActivity() {
     private lateinit var view: GeckoView
     private var session: GeckoSession? = null
@@ -22,15 +19,27 @@ class MainActivity : ComponentActivity() {
         view = GeckoView(this)
         setContentView(view)
         session = GeckoMotorDenemesi.attach(
-            this, view, GeckoMotorDenemesi.urlFromIntent(intent)
+            this, view, GeckoMotorDenemesi.urlFromIntent(intent),
+            onFullScreen = { enabled ->
+                if (enabled) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                }
+            }
         )
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        GeckoMotorDenemesi.onConfigurationChanged(newConfig)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        GeckoMotorDenemesi.urlFromIntent(intent)?.let { safeUrl ->
-            session?.loadUri(safeUrl)
+        GeckoMotorDenemesi.urlFromIntent(intent)?.let { url ->
+            session?.loadUri(url)
         }
     }
 

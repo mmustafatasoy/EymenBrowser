@@ -1,6 +1,7 @@
 package com.eymen.browser.motor
 
 import android.content.Context
+import android.content.res.Configuration
 import android.content.Intent
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
@@ -52,9 +53,27 @@ object GeckoMotorDenemesi {
         return verifiedHttpsUrl(candidate)
     }
 
-    fun attach(context: Context, view: GeckoView, url: String?): GeckoSession {
+    /**
+     * Keep the same GeckoSession during an Activity orientation/configuration change.
+     * Only the Activity should manage display flags; the engine remains the same.
+     */
+    fun onConfigurationChanged(config: Configuration) {
+        runtime?.configurationChanged(config)
+        runtime?.orientationChanged()
+    }
+
+    fun attach(
+        context: Context,
+        view: GeckoView,
+        url: String?,
+        onFullScreen: (Boolean) -> Unit
+    ): GeckoSession {
         val session = GeckoSession()
-        session.contentDelegate = object : GeckoSession.ContentDelegate {}
+        session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
+                onFullScreen(fullScreen)
+            }
+        }
         session.open(getRuntime(context))
         view.setSession(session)
         session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)

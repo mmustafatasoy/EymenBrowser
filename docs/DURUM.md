@@ -44,3 +44,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 ## Açık konular
 - Gerçek cihaz motor uyumu, Google oturum açma, DRM/korumalı video, e-Devlet, bankalar, TV kumandasıyla test yolu ve iPhone testleri **denenmedi**.
 - Apple Developer/EVS gerektiren üretim imzaları yok. Yalnız arm64 Android telefon motor deneme APK'sı [test Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.1) **debug imzalı** olarak yayımlandı; kararlı sürüm değildir.
+
+## Yeni Android tam ekran/yatay döndürme hatası — 2026-11-04
+
+- **Kullanıcı testi:** YouTube videosu tam ekran açılıyor; telefon yatay dönünce uygulama YouTube'da kalmak yerine Google sayfasına dönüyor. Tam ekran *görünümü başarılı*, dönüşte *oturumun korunması başarısız*.
+- **Muhtemel neden:** Android konfigürasyon değişiminde Activity yeniden yaratılması ve GeckoSession'ın başlangıç/paylaşım URL'sinden yeniden yüklenmesi. Test cihazı üzerinde hata günlüğü henüz alınmadı.
+- **Düzeltme:** Android telefon ve TV Activity manifestlerine ekran yönü/boyutu konfigürasyon yönetimi eklendi. GeckoRuntime'a konfigürasyon değişimi iletiliyor. GeckoView tam ekran ContentDelegate geri çağrısı uygulama penceresini tam ekran yapıyor; telefonda tam ekran video yatay yön istemek için mevcut oturum korunuyor.
+- **Yeni test sürümü:** `v0.0.1-motor-test.2` GitHub Releases doğrudan tek arm64 APK şeklinde derlenecek; henüz CI ve cihazda doğrulanmadı. Test imzalıdır.
+- **Kapı 1:** Yatay dönüşün Google'a sıfırlanmadan çalışması gerçek telefonda tekrar denenene kadar başarısız/açık.
+- **Sonraki iş:** Yeni APK'yı yükleyip YouTube video tam ekran/yatay dönüş denemesi; ardından Google girişi/DRM/e-Devlet/bankalar ve diğer platform testleri.
