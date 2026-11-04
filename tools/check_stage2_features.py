@@ -19,6 +19,11 @@ assert 'ContentBlocking.AntiTracking.DEFAULT' in motor
 assert 'setContentBlockingDelegate' in motor
 assert 'onContentBlocked' in motor
 assert 'tab.blockedPage += 1' in main
+# The engine opens an internal about:blank when creating an empty tab;
+# it must never hide the approved new-tab homepage.
+assert 'if (tab.home && url.equals("about:blank", ignoreCase = true))' in main
+assert 'return@runOnUiThread' in main
+assert main.index('if (tab.home && url.equals("about:blank"') < main.index('tab.home = false')
 assert 'tab.blockedTab += 1' in main
 assert 'if (enabled) T.gece_koruma else T.gece_uyari' in shield
 assert 'canToggle = tab != null' in main
