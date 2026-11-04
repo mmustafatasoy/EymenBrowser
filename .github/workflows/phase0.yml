@@ -1,4 +1,4 @@
-name: EymenBrowser - Android telefon arayüz ve kaynak denetimi
+name: EymenBrowser - Android telefon arayuz ve kaynak denetimi
 on:
   push:
     branches: [main]
@@ -29,6 +29,8 @@ jobs:
         run: python tools/check_drm_permission.py
       - name: Android indirme akışı regresyon denetimi
         run: python tools/check_download_handling.py
+      - name: Android T06 T09 sekme ve gizli oturum regresyon denetimi
+        run: python tools/check_tab_sessions.py
       - uses: actions/upload-artifact@v4
         with:
           name: EymenBrowser-generated-themes
@@ -39,7 +41,7 @@ jobs:
             shared/ikon/eymen-icons.svg
 
   android:
-    name: Android telefon GeckoView + T01-T04/T11 derleme
+    name: Android telefon GeckoView + T01-T04/T06/T09/T11 derleme
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +60,7 @@ jobs:
           if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
             sdkmanager --channel=3 --install "platforms;android-37.0"
           fi
-      - name: GeckoView telefon ve TV APK'larını derle
+      - name: GeckoView Android telefon APK'larini derle
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
       - name: ABI APK dosyalarını ölç ve doğrula
