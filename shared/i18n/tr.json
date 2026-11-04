@@ -130,5 +130,16 @@
   "shield_scope_explanation": "Engellenen öğe sayıları GeckoView'ın bu oturumda bildirdiği olaylardır. Bu koruma VPN değildir; tüm reklamları kaldırma garantisi vermez.",
   "shield_global": "Gecko izleyici koruması",
   "shield_site_exception": "Bu site için istisna",
-  "shield_summary_counter": "Bu oturumda %1$d gerçek engelleme olayı"
+  "shield_summary_counter": "Bu oturumda %1$d gerçek engelleme olayı",
+  "download_filter_all": "Tümü",
+  "download_filter_video": "Video",
+  "download_filter_document": "Belge",
+  "download_filter_other": "Dosya",
+  "download_none": "Henüz kaydedilmiş dosya yok.",
+  "download_folder": "İndirme kayıtları",
+  "download_recorded_size": "Toplam %1$s",
+  "download_clear_records": "Tamamlananları listeden sil",
+  "download_clear_confirm": "Yalnız listedeki kayıtlar silinir, dosyalar cihazda kalır. Devam edilsin mi?",
+  "download_open_error": "Dosya açılamıyor veya taşınmış.",
+  "download_clear_done": "İndirme listesi temizlendi."
 }
