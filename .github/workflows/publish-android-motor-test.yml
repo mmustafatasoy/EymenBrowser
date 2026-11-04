@@ -1,0 +1,62 @@
+name: Publish single Android motor-test APK to Releases
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-android-motor-test.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  release:
+    name: Publish only the arm64 phone APK (not ZIP)
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download verified motor test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloaded release
+          gh run download 41808478602 -n EymenBrowser-Phase1-GeckoView-ABI-Debug -D downloaded
+          APK="$(find downloaded -type f -name 'app-telefon-arm64-v8a-debug.apk' -print -quit)"
+          test -n "$APK"
+          test -s "$APK"
+          SIZE="$(stat -c %s "$APK")"
+          echo "APK bytes: $SIZE"
+          test "$SIZE" -gt 100000000
+          test "$SIZE" -lt 500000000
+          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-MOTOR-TEST.apk
+          sha256sum release/*.apk
+          test "$(find release -type f -name '*.apk' | wc -l)" -eq 1
+      - name: Publish one direct-download APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v0.0.1-motor-test.1"
+          cat > RELEASE_NOTES.md <<'EOF'
+          # EymenBrowser - Android Phone GeckoView Engine Test
+
+          One direct APK for Android phone arm64-v8a. No ZIP extraction.
+
+          - Stage 1 motor test only. Android 8.0+ arm64 CPU.
+          - Added HTTPS links via Android Share > EymenBrowser, for site compatibility testing.
+          - Engine GeckoView 159, from successful Android build run 41808478602.
+          - This is DEBUG/TEST signed, NOT official release-signed.
+          - No address bar, tabs, or final design screens yet, per docs/SARTNAME.md.
+          - Google login, banking, e-Devlet, video DRM and downloads remain untested.
+          - Old test APK may have a different debug key; reinstalling may erase app data.
+          - TV and other ABI APKs excluded from this phone-only test release.
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/*.apk --clobber
+          else
+            gh release create "$TAG" release/*.apk \
+              --title "EymenBrowser Android Telefon - GeckoView Motor Test (arm64)" \
+              --target 7721fce1e45f49eeb3e02868b3e1831739e5bf3d \
+              --notes-file RELEASE_NOTES.md --prerelease
+          fi
+          gh release view "$TAG" --json url,assets --jq '{url:.url,assets:[.assets[].name]}'
