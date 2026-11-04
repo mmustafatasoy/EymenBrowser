@@ -125,7 +125,7 @@ private fun SetupView(
     Column(
         Modifier.fillMaxSize()
             .background(T.gece_zemin)
-            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 64.dp, bottom = 32.dp)
     ) {
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -168,11 +168,6 @@ private fun SetupView(
                 LabelText(
                     stringResource(R.string.onboarding_shield_caption), 14,
                     color = T.gece_yaziIkincil
-                )
-                // Aşama 3 filtre motoru yokken koruma çalışıyormuş gibi gösterilmez.
-                LabelText(
-                    stringResource(R.string.onboarding_shield_pending), 12,
-                    color = T.gece_uyari
                 )
             }
 
