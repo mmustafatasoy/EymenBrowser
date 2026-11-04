@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını** ve **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** doğruladı. Gerçek Google/banka oturumu, sosyal medya, diğer cihaz/platform testleri ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
+- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını**, **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** ve **sosyal medya web kullanımını** doğruladı. Gerçek Google/banka oturumu, diğer cihaz/platform testleri ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -37,12 +37,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Bu test sürümünün gerçek APK ölçümleri (bayt): telefon arm64-v8a **204171320**, armeabi-v7a **164976396**, x86_64 **223765886**; TV arm64-v8a **205423940**, armeabi-v7a **166229016**, x86_64 **225018506**.
 
 ## Sıradaki iş
-1. Mevcut `v0.0.1-motor-test.4` Android telefon APK'sında sosyal medya sitesi yüklenmesini dene: `https://www.instagram.com/` bağlantısını Paylaş → EymenBrowser ile aç. Sayfanın yüklenmesi, kaydırılması veya gösterdiği hata ayrı kaydedilecek; yalnız giriş ekranının açılması hesapla oturum açma sayılmayacak.
-2. Google hesabına gerçek giriş (yalnız form açılışı başarılı), diğer Android cihaz/sürüm kontrolleri ve kalan motor testleri ayrı ayrı kaydedilmeli. PDF başarı sonucu bütün dosya türlerine veya arka planda büyük dosya indirmeye genellenmeyecek.
+1. Mevcut `v0.0.1-motor-test.4` Android telefon APK'sında Google hesabıyla gerçek oturum açmayı dene. `https://accounts.google.com/` bağlantısını Paylaş → EymenBrowser ile açıp yalnız girişin tamamlanması ve sayfa yenilendiğinde oturumun sürmesi sonucunu bildir; hesap bilgileri veya doğrulama kodları paylaşılmayacak. Önceki başarılı sonuç yalnız giriş formunun görüntülenmesiydi.
+2. Diğer Android cihaz/sürüm kontrolleri ve kalan motor testleri ayrı ayrı kaydedilmeli. PDF başarı sonucu bütün dosya türlerine veya arka planda büyük dosya indirmeye genellenmeyecek.
 3. Kapı 1 açık kalacak. TV, bilgisayar ve Apple için kullanıcı yeniden başlatana kadar çalışma yapılmayacak; Aşama 2 arayüz uygulamasına başlanmayacak.
 
 ## Açık konular
-- Android telefonda sosyal medya, gerçek Google oturumu, diğer cihaz/sürüm kapsamı, büyük dosya ve diğer dosya türleri henüz doğrulanmadı. Banka ve e-Devlet için yalnız herkese açık ana sayfalar doğrulandı. TV/masaüstü/iOS testleri beklemede.
+- Android telefonda gerçek Google oturumu, diğer cihaz/sürüm kapsamı, büyük dosya ve diğer dosya türleri henüz doğrulanmadı. Banka ve e-Devlet için yalnız herkese açık ana sayfalar doğrulandı. TV/masaüstü/iOS testleri beklemede.
 - Apple Developer/EVS gerektiren üretim imzaları yok. Güncel Android telefon motor deneme APK'sı [v0.0.1-motor-test.4 Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.4) **debug/test imzalı** yayımlandı; kararlı sürüm değildir.
 
 ## Yeni Android tam ekran/yatay döndürme hatası — 2026-11-04
@@ -112,3 +112,10 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Güncel sonuç:** Örnek PDF'nin görüntülenmesi, telefona indirilmesi ve indirilen dosyanın açılması kullanıcı teyidiyle başarılı. Önceki başarısız sonuçlar yukarıda tarihçe olarak korunur. Bu geri bildirim Android 8/9 SAF, bütün dosya türleri veya arka planda büyük dosya indirme sonucu değildir.
 - **Sıradaki iş:** Aynı APK üzerinde Instagram web sayfasını yükleme/kaydırma testi. Yeni APK kurulumu gerekmiyor; sosyal medya sonucu henüz denenmedi.
 - **Açık durum:** Kapı 1 açık, Aşama 2 başlamadı. TV, bilgisayar ve Apple kullanıcı kararıyla beklemede. Bu kayıt yalnız test belgelerini günceller.
+
+## Android telefon — sosyal medya testi başarılı, 2026-11-04
+
+- Instagram bağlantısını mevcut APK'da açma ve kaydırma kontrolünün ardından kullanıcı **"Sosyal medyaya dair herşey çalışıyor"** dedi. Android telefon sosyal medya web kullanım testi kullanıcı bildirimiyle **başarılı** olarak kaydedildi.
+- Ayrı sosyal medya servisleri veya kamera/mikrofon/bildirim gibi özellikler için bağımsız sonuç verilmedi. Bildirim, Google hesabıyla gerçek oturum açma testinin yerine geçmez.
+- **Sıradaki iş:** Aynı Android APK'sında Google hesabıyla gerçek giriş ve sayfa yenileme sonrası oturum kontrolü. Yeni derleme gerekmiyor.
+- **Açık durum:** Aşama 1 devam ediyor; Kapı 1 açık. TV, bilgisayar ve Apple kullanıcı kararıyla beklemede; Aşama 2 başlamadı.

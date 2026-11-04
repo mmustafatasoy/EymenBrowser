@@ -1,8 +1,8 @@
 # Aşama 1 — motor denemeleri
 
 Bu proje, onaylı 16 ekranın uygulaması değildir. **Android telefonda temel HTTPS sayfaları,
-YouTube, Sintel Widevine DRM oynatma ve örnek PDF'yi indirme/açma kullanıcı tarafından doğrulandı.** Google hesabıyla
-oturum açma, sosyal medya, diğer dosya türleri, TV/masaüstü/iOS DRM ve diğer motor testleri henüz tamamlanmadı.
+YouTube, Sintel Widevine DRM oynatma, örnek PDF'yi indirme/açma ve sosyal medya web kullanımı kullanıcı tarafından doğrulandı.** Google hesabıyla
+oturum açma, diğer dosya türleri, TV/masaüstü/iOS DRM ve diğer motor testleri henüz tamamlanmadı.
 Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 
 ## Motor denemeleri
@@ -27,7 +27,7 @@ Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 | Korumalı video/DRM | **Başarılı: Sintel Widevine görüntülü + sesli oynuyor** (`v0.0.1-motor-test.3`, kullanıcı teyidi); diğer DRM örnekleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| YouTube, video, sosyal medya | **YouTube görüntü/ses ve sosyal medya web kullanımı başarılı** (kullanıcı teyidi); servis/özellik bazında ayrı sosyal medya sonuçları verilmedi | Denenmedi | Denenmedi | Denenmedi |
 | PDF ve dosya indirme | **PDF görüntüleme, Download ile kaydetme ve indirilen dosyayı açma başarılı** (`v0.0.1-motor-test.4`, kullanıcı teyidi); diğer dosya türleri ve büyük dosyalar denenmedi | Denenmedi | Denenmedi | Denenmedi |
 
 Samsung Android 14, Tecno Android 16, Philips Android TV ve Android TV emülatörü
@@ -181,3 +181,15 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Mevcut APK korunur; yeniden kurulum gerekmez. `https://www.instagram.com/` bağlantısını Chrome'dan Paylaş → EymenBrowser ile aç.
 - Sayfanın yüklenip yüklenmediğini, kaydırmanın çalışıp çalışmadığını ve varsa hata mesajını bildir. Giriş ekranı çıkarsa bu yalnız giriş sayfasının görüntülendiğini doğrular; hesapla oturum açma sonucu sayılmaz.
 - **Durum:** Henüz denenmedi. TV, bilgisayar ve Apple çalışmaları beklemede; Kapı 1 açıktır.
+
+## Sosyal medya tekrar testi — kullanıcı teyidi, 2026-11-04
+
+- Instagram web sayfasını mevcut Android APK'sında açma/kaydırma testi istendikten sonra kullanıcı **"Sosyal medyaya dair herşey çalışıyor"** dedi.
+- **Güncel sonuç:** Android telefonda sosyal medya web kullanımı kullanıcı bildirimiyle başarılı. Önceki "henüz denenmedi" kaydı bu sonuçla güncellendi.
+- Ayrı servislerin adı ve her işlevin sonucu verilmedi; kamera/mikrofon/bildirim gibi izinler için ayrıca sonuç çıkarılmadı. Google hesap girişi bu sosyal medya sonucuyla doğrulanmış sayılmaz.
+
+## Sıradaki Android telefon testi — Google hesabıyla oturum açma
+
+- Mevcut `v0.0.1-motor-test.4` APK'sında `https://accounts.google.com/` bağlantısını Paylaş → EymenBrowser ile aç.
+- Kullanıcı hesabına kendi telefonunda giriş yapıp girişin tamamlandığını ve sayfa yenilendiğinde oturumun sürdüğünü kontrol eder. Yalnız başarı/hata sonucu bildirilir; parola, SMS/doğrulama kodu veya özel hesap ekranı paylaşılmaz.
+- **Durum:** Giriş formu görüntüleme başarılı; gerçek hesapla giriş ve oturum sürekliliği henüz denenmedi. Kapı 1 açık, diğer platform çalışmaları beklemede.
