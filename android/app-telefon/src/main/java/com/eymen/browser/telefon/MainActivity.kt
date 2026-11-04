@@ -527,7 +527,10 @@ class MainActivity : ComponentActivity() {
         }
         tab.gecko.saveAsPdf().accept(
             { stream ->
-                runOnUiThread { downloads.savePdfStream(stream) }
+                runOnUiThread {
+                    if (stream == null) notice(R.string.menu_pdf_error)
+                    else downloads.savePdfStream(stream)
+                }
             },
             { _ ->
                 runOnUiThread { notice(R.string.menu_pdf_error) }
