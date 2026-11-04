@@ -48,12 +48,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            set -e
-            APK=$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' | head -1)
-            test -f "$APK"
+            test -f "$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)"
             adb shell wm size 390x844
             adb shell wm density 160
-            adb install -r "$APK"
+            adb install -r "$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)"
             adb shell am force-stop com.eymen.browser.telefon || true
             adb shell am start -n com.eymen.browser.telefon/.MainActivity
             sleep 8
