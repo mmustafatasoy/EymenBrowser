@@ -6,7 +6,6 @@ function createWindow(): void {
     width: 1200,
     height: 780,
     show: true,
-    backgroundColor: "#0A0F1C",
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
