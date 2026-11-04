@@ -22,7 +22,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | Test | Android telefon | Android TV | Masaüstü | iOS |
 | --- | --- | --- | --- | --- |
 | Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
-| Google hesabı giriş | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
 | Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -90,3 +90,10 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - `tools/check_rotation.py` statik yapılandırma regresyon denetimidir; cihaz testi yerine geçmez.
 - Yeni [`v0.0.1-motor-test.2`](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.2) tek arm64 telefon APK'sı yayımlandı; üretim imzalı değildir.
 - **Tekrar test sonucu (kullanıcı, 2026-11-04):** Yeni APK'da YouTube tam ekran ve yataya dönme sırasında Google sayfasına geri atma sorunu **giderildi**. Video oturumu korunuyor. Tam ekrandan portreye dönüş ve başka platformlardaki davranış ayrıca ölçülmedi.
+
+## Google giriş ekranı — 2026-11-04
+
+- Kullanıcı, **EymenBrowser Android telefon** üzerinde Google hesap giriş ekranının açıldığını doğruladı.
+- **Başarılı:** Google HTTPS giriş sayfasının ve formunun görüntülenmesi.
+- **Denenmedi:** Gerçek hesap kimlik doğrulaması, oturum çerezi ve Electron oturum açma.
+- Sıradaki test: `https://www.turkiye.gov.tr/` resmî e-Devlet sitesinin **herkese açık** ana sayfası. Chrome'dan bağlantıyı EymenBrowser'a paylaş. Yalnız sayfa açılma sonucunu bildir; **T.C. kimlik numarası, parola, SMS kodu veya özel belge paylaşma**.
