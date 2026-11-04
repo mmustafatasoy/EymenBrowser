@@ -6,6 +6,7 @@ import android.content.Intent
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.WebResponse
 import java.net.URI
@@ -70,10 +71,20 @@ object GeckoMotorDenemesi {
         url: String?,
         onFullScreen: (Boolean) -> Unit,
         askDrmPermission: (String, (Boolean) -> Unit) -> Unit,
-        onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit }
+        onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit },
+        privateMode: Boolean = false,
+        initialLoad: Boolean = true,
+        onTitle: (String?) -> Unit = {}
     ): GeckoSession {
-        val session = GeckoSession()
+        val settings = GeckoSessionSettings.Builder()
+            .usePrivateMode(privateMode)
+            .build()
+        val session = GeckoSession(settings)
         session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onTitleChange(session: GeckoSession, title: String?) {
+                onTitle(title)
+            }
+
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
                 onFullScreen(fullScreen)
             }
@@ -132,7 +143,9 @@ object GeckoMotorDenemesi {
         }
         session.open(getRuntime(context))
         view.setSession(session)
-        session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)
+        if (initialLoad || url != null) {
+            session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)
+        }
         return session
     }
 
