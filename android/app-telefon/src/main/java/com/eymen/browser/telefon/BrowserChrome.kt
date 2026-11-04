@@ -396,36 +396,3 @@ internal fun BrowserToolbar(
         }
     }
 }
-}{tabLabel}"; role = Role.Button }
-                    .clickable(onClick = onTabs),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    Modifier.size(24.dp).border(
-                        1.8.dp, p.text, RoundedCornerShape(7.dp)
-                    ), contentAlignment = Alignment.Center
-                ) {
-                    ChromeText("1", 12, p.text, weight = FontWeight.SemiBold)
-                }
-            }
-            ToolbarButton(
-                stringResource(R.string.menu),
-                EymenPaths.menu, p.text, onMenu, Modifier.weight(1f)
-            )
-        }
-    }
-    Column(
-        Modifier.fillMaxWidth()
-            .background(p.panel)
-            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        if (addressBottom) {
-            addressBox()
-            nav()
-        } else {
-            nav()
-            addressBox()
-        }
-    }
-}
