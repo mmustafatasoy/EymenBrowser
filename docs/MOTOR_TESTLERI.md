@@ -1,8 +1,8 @@
 # Aşama 1 — motor denemeleri
 
 Bu proje, onaylı 16 ekranın uygulaması değildir. **Android telefonda temel HTTPS sayfaları,
-YouTube, Sintel Widevine DRM oynatma, örnek PDF'yi indirme/açma ve sosyal medya web kullanımı kullanıcı tarafından doğrulandı.** Google hesabıyla
-oturum açma, diğer dosya türleri, TV/masaüstü/iOS DRM ve diğer motor testleri henüz tamamlanmadı.
+YouTube, Sintel Widevine DRM oynatma, örnek PDF'yi indirme/açma, sosyal medya web kullanımı ve Google hesabıyla giriş/aynı oturumda yeniden bağlantı açma kullanıcı tarafından doğrulandı.**
+Diğer dosya türleri, cihaz kapsamı, TV/masaüstü/iOS DRM ve diğer motor testleri henüz tamamlanmadı.
 Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 
 ## Motor denemeleri
@@ -15,7 +15,8 @@ Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
   HTTPS adresi tanımlanabilir.
 - Windows, macOS, Linux: castLabs Electron WebContentsView; ortam değişkeni
   `EYMEN_TEST_URL=https://www.google.com/`.
-- Bu denemelerde şifre, hesap, çerez veya banka verisi kaydedilmez.
+- Test raporlarına şifre, hesap kimliği, çerez veya banka verisi kaydedilmez.
+  Motorun normal oturum çerezleri cihazdaki web oturumunun parçasıdır; rapora veya telemetriye aktarılmaz.
   Sertifika doğrulaması ve sandbox kapatılmaz.
 
 ## Kapı 1 test listesi
@@ -23,7 +24,7 @@ Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 | Test | Android telefon | Android TV | Masaüstü | iOS |
 | --- | --- | --- | --- | --- |
 | Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
-| Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
+| Google hesabı giriş | **Hesapla giriş ve aynı uygulama oturumunda bağlantıyı yeniden açarken girişin korunması başarılı** (kullanıcı teyidi); soğuk başlatma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | Korumalı video/DRM | **Başarılı: Sintel Widevine görüntülü + sesli oynuyor** (`v0.0.1-motor-test.3`, kullanıcı teyidi); diğer DRM örnekleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -193,3 +194,10 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Mevcut `v0.0.1-motor-test.4` APK'sında `https://accounts.google.com/` bağlantısını Paylaş → EymenBrowser ile aç.
 - Kullanıcı hesabına kendi telefonunda giriş yapıp girişin tamamlandığını ve sayfa yenilendiğinde oturumun sürdüğünü kontrol eder. Yalnız başarı/hata sonucu bildirilir; parola, SMS/doğrulama kodu veya özel hesap ekranı paylaşılmaz.
 - **Durum:** Giriş formu görüntüleme başarılı; gerçek hesapla giriş ve oturum sürekliliği henüz denenmedi. Kapı 1 açık, diğer platform çalışmaları beklemede.
+
+## Google hesap girişi — kullanıcı teyidi, 2026-11-04
+
+- Kullanıcı, mevcut APK'da Google hesabına giriş yapma ve aynı bağlantıyı yeniden paylaşarak oturumun korunduğunu kontrol etme isteğine **"Tamam oldu"** yanıtını verdi.
+- **Güncel sonuç:** Android telefonda Google hesabıyla giriş ve aynı uygulama oturumunda bağlantıyı yeniden açarken girişin korunması başarılı. Önceki yalnız form açılışı sonucu bu testle genişletildi.
+- **Denenmedi:** Uygulama kapatılıp soğuk başlatıldığında/süreç öldürüldüğünde oturumun geri gelmesi, diğer Android cihazları ve diğer platformlar. Hesap bilgileri rapora alınmadı.
+- **Sonraki karar:** Diğer platformlar beklerken yalnız Android için Aşama 2'ye geçiş. [S-001](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) kullanıcı kararını bekler; genel Kapı 1 açık kalır.

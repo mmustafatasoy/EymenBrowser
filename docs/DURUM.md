@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını**, **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** ve **sosyal medya web kullanımını** doğruladı. Gerçek Google/banka oturumu, diğer cihaz/platform testleri ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
+- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, **Google hesabıyla giriş ve aynı bağlantı yeniden açıldığında oturumun korunmasını**, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını**, **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** ve **sosyal medya web kullanımını** doğruladı. Banka/e-Devlet kişisel oturumları, diğer cihaz/platform testleri ve tüm platformları kapsayan Kapı 1 kabulü tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -37,12 +37,13 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Bu test sürümünün gerçek APK ölçümleri (bayt): telefon arm64-v8a **204171320**, armeabi-v7a **164976396**, x86_64 **223765886**; TV arm64-v8a **205423940**, armeabi-v7a **166229016**, x86_64 **225018506**.
 
 ## Sıradaki iş
-1. Mevcut `v0.0.1-motor-test.4` Android telefon APK'sında Google hesabıyla gerçek oturum açmayı dene. `https://accounts.google.com/` bağlantısını Paylaş → EymenBrowser ile açıp yalnız girişin tamamlanması ve sayfa yenilendiğinde oturumun sürmesi sonucunu bildir; hesap bilgileri veya doğrulama kodları paylaşılmayacak. Önceki başarılı sonuç yalnız giriş formunun görüntülenmesiydi.
-2. Diğer Android cihaz/sürüm kontrolleri ve kalan motor testleri ayrı ayrı kaydedilmeli. PDF başarı sonucu bütün dosya türlerine veya arka planda büyük dosya indirmeye genellenmeyecek.
-3. Kapı 1 açık kalacak. TV, bilgisayar ve Apple için kullanıcı yeniden başlatana kadar çalışma yapılmayacak; Aşama 2 arayüz uygulamasına başlanmayacak.
+1. [Android Aşama 2 uygulama planını](ANDROID_ASAMA2_PLANI.md) ve [kapsam kararını](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) kullanıcıya sun. Onay istenen karar: diğer platformlar beklerken mevcut telefon sonuçlarını esas alıp yalnız Android arayüz uygulamasına başlamak.
+2. Kullanıcı bu kapsam değişikliğini kabul ederse kararı kaydet ve onaylı T01–T11 kaynaklarıyla Aşama 2'ye başla. Onaya kadar ekran kodu yazılmayacak; genel Kapı 1 tüm platformlar için geçmiş sayılmayacak.
+3. Diğer Android cihaz/sürüm kontrolleri, büyük dosyalar ve diğer dosya türleri açık kalır. TV, bilgisayar ve Apple kullanıcı yeniden başlatana kadar beklemede.
 
 ## Açık konular
-- Android telefonda gerçek Google oturumu, diğer cihaz/sürüm kapsamı, büyük dosya ve diğer dosya türleri henüz doğrulanmadı. Banka ve e-Devlet için yalnız herkese açık ana sayfalar doğrulandı. TV/masaüstü/iOS testleri beklemede.
+- Diğer Android cihaz/sürüm kapsamı, büyük dosya ve diğer dosya türleri henüz doğrulanmadı. Banka ve e-Devlet için yalnız herkese açık ana sayfalar doğrulandı. Google giriş testi aynı uygulama oturumunda tekrar bağlantı açmayı kapsar; uygulamanın öldürülmesi/yeniden başlatılmasını kapsamaz. TV/masaüstü/iOS testleri beklemede.
+- **S-001 kapsam kararı bekliyor:** Şartnamedeki tüm platformları kapsayan Kapı 1 yerine mevcut Android telefon sonuçlarıyla yalnız Android ekran uygulamasına geçilmesi henüz onaylanmadı.
 - Apple Developer/EVS gerektiren üretim imzaları yok. Güncel Android telefon motor deneme APK'sı [v0.0.1-motor-test.4 Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.4) **debug/test imzalı** yayımlandı; kararlı sürüm değildir.
 
 ## Yeni Android tam ekran/yatay döndürme hatası — 2026-11-04
@@ -119,3 +120,10 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Ayrı sosyal medya servisleri veya kamera/mikrofon/bildirim gibi özellikler için bağımsız sonuç verilmedi. Bildirim, Google hesabıyla gerçek oturum açma testinin yerine geçmez.
 - **Sıradaki iş:** Aynı Android APK'sında Google hesabıyla gerçek giriş ve sayfa yenileme sonrası oturum kontrolü. Yeni derleme gerekmiyor.
 - **Açık durum:** Aşama 1 devam ediyor; Kapı 1 açık. TV, bilgisayar ve Apple kullanıcı kararıyla beklemede; Aşama 2 başlamadı.
+
+## Android telefon — Google hesabıyla giriş başarılı, 2026-11-04
+
+- Kullanıcıya mevcut APK'da Google hesabına giriş yapma ve aynı bağlantıyı tekrar Paylaş → EymenBrowser ile açıp oturumun korunduğunu kontrol etme adımları verildi. Kullanıcı **"Tamam oldu"** dedi.
+- **Güncel sonuç:** Google hesabıyla giriş ve aynı uygulama oturumunda bağlantıyı yeniden açarken girişin korunması kullanıcı teyidiyle başarılı. Hesap bilgileri veya doğrulama kodları alınmadı. Soğuk başlatma, süreç ölümü ve diğer platformlar için sonuç çıkarılmadı.
+- **Hazırlanan iş:** T01–T11'in 11 PNG/HTML çiftinin tamamı bulundu; PNG'lerin her biri 780 × 1688 piksel. [Aşama 2 planı](ANDROID_ASAMA2_PLANI.md) kaynakları ve uygulama sırasını gösterir. Bu inceleme mevcut uygulamanın görsellerle eşleştiği anlamına gelmez; ekranlar henüz uygulanmadı.
+- **Sıradaki iş:** [S-001](SAPMA.md#s-001--yalnız-android-arayüzüne-geçiş) için kullanıcı kararı. Android test sonuçları hazır; tüm platformları kapsayan Kapı 1 açık. TV, bilgisayar ve Apple beklemede.
