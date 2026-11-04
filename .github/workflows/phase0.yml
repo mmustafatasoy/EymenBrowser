@@ -39,7 +39,7 @@ jobs:
             shared/ikon/eymen-icons.svg
 
   android:
-    name: Android telefon GeckoView ve T01-T02 denemesi
+    name: Android telefon GeckoView + T01-T04/T11 derleme
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
