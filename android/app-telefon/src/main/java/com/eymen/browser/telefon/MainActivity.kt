@@ -25,6 +25,7 @@ import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
+import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -40,6 +41,9 @@ private class BrowserTab(
     var home by mutableStateOf(initialUrl == null)
     var fullScreen by mutableStateOf(false)
     var desktop by mutableStateOf(false)
+    var shieldEnabled by mutableStateOf(false)
+    var blockedPage by mutableStateOf(0)
+    var blockedTab by mutableStateOf(0)
 }
 
 /**
@@ -54,6 +58,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var homeLayer: ComposeView
     private lateinit var tabsLayer: ComposeView
     private lateinit var menuLayer: ComposeView
+    private lateinit var shieldLayer: ComposeView
     private lateinit var prefs: SharedPreferences
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -68,6 +73,8 @@ class MainActivity : ComponentActivity() {
     private var searchEngine = "Google"
     private var overviewShowing = false
     private var menuShowing = false
+    private var shieldShowing = false
+    private val globalShieldWanted = mutableStateOf(true)
     private val devicesRequested = mutableStateOf(false)
 
     private val activeTab: BrowserTab?
@@ -83,6 +90,7 @@ class MainActivity : ComponentActivity() {
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         dayMode.value = prefs.getBoolean("day_theme", false)
+        globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
@@ -115,7 +123,7 @@ class MainActivity : ComponentActivity() {
                     addressBottom = addressBottom,
                     onOpen = ::openUrl,
                     onDevices = ::showDevices,
-                    onShield = { notice(R.string.shield_not_ready) }
+                    onShield = ::showShield
                 )
             }
         }
@@ -143,7 +151,7 @@ class MainActivity : ComponentActivity() {
                 onReload = { activeTab?.gecko?.reload() },
                 onTabs = ::showTabs,
                 onMenu = ::showBrowserMenu,
-                onShield = { notice(R.string.shield_not_ready) }
+                onShield = ::showShield
             )
         }
 
@@ -199,12 +207,31 @@ class MainActivity : ComponentActivity() {
             )
         }
         menuLayer.visibility = View.GONE
+        shieldLayer = ComposeView(this)
+        root.addView(shieldLayer, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        shieldLayer.setContent {
+            val tab = activeTab
+            ShieldPanel(
+                host = verifiedHost(tab?.url),
+                enabled = tab?.shieldEnabled ?: globalShieldWanted.value,
+                pageBlocked = tab?.blockedPage ?: 0,
+                tabBlocked = tab?.blockedTab ?: 0,
+                canToggle = tab != null && !tab.home && verifiedHost(tab.url) != null,
+                onDismiss = ::hideShield,
+                onToggle = ::setShieldForCurrentSite
+            )
+        }
+        shieldLayer.visibility = View.GONE
         updateChromeMargins()
         updateHomeVisibility()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    shieldShowing -> hideShield()
                     menuShowing -> hideBrowserMenu()
                     overviewShowing -> hideTabs()
                     videoFullScreen -> activeTab?.gecko?.exitFullScreen()
@@ -232,6 +259,11 @@ class MainActivity : ComponentActivity() {
                         .putBoolean("setup_completed", true)
                         .apply()
                     searchEngine = engine
+                    globalShieldWanted.value = shield
+                    tabs.forEach { tab ->
+                        tab.shieldEnabled = protectionFor(tab.url)
+                        tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
+                    }
                     addressBottom = bottom
                     root.removeView(onboarding)
                     updateChromeMargins()
@@ -265,16 +297,29 @@ class MainActivity : ComponentActivity() {
             onDownload = downloads::handleResponse,
             privateMode = privateMode,
             initialLoad = initialUrl != null,
+            trackingProtection = protectionFor(initialUrl),
+            onBlocked = {
+                runOnUiThread {
+                    tabs.firstOrNull { it.id == id }?.let { tab ->
+                        tab.blockedPage += 1
+                        tab.blockedTab += 1
+                    }
+                }
+            },
             onTitle = { title ->
                 tabs.firstOrNull { it.id == id }?.title = title.orEmpty()
             }
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl)
+        tab.shieldEnabled = protectionFor(initialUrl)
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 runOnUiThread {
                     tab.url = url
                     tab.home = false
+                    tab.blockedPage = 0
+                    tab.shieldEnabled = protectionFor(url)
+                    tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
                     if (activeId.value == id) {
                         currentUrl.value = url
                         atHome.value = false
@@ -389,6 +434,8 @@ class MainActivity : ComponentActivity() {
         activeTab?.let { tab ->
             tab.url = verified
             tab.home = false
+            tab.shieldEnabled = protectionFor(verified)
+            tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
             currentUrl.value = verified
             atHome.value = false
             updateHomeVisibility()
@@ -421,6 +468,44 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams.WRAP_CONTENT,
             if (addressBottom) Gravity.BOTTOM else Gravity.TOP
         )
+    }
+
+    private fun verifiedHost(url: String?): String? {
+        if (GeckoMotorDenemesi.verifiedHttpsUrl(url) != url) return null
+        return try { URI(url).host?.lowercase(Locale.ROOT) } catch (_: Exception) { null }
+    }
+
+    /** Per-host exceptions are local, never encoded into the visited URL. */
+    private fun protectionFor(url: String?): Boolean {
+        val host = verifiedHost(url) ?: return globalShieldWanted.value
+        return getSharedPreferences("eymen_browser_shield_sites", MODE_PRIVATE)
+            .getBoolean("host_$host", globalShieldWanted.value)
+    }
+
+    private fun setShieldForCurrentSite(enabled: Boolean) {
+        val host = verifiedHost(activeTab?.url) ?: return
+        getSharedPreferences("eymen_browser_shield_sites", MODE_PRIVATE).edit()
+            .putBoolean("host_$host", enabled).apply()
+        tabs.forEach { tab ->
+            if (verifiedHost(tab.url) == host) {
+                tab.shieldEnabled = enabled
+                tab.gecko.settings.setUseTrackingProtection(enabled)
+            }
+        }
+        activeTab?.gecko?.reload()
+    }
+
+    private fun showShield() {
+        if (!::shieldLayer.isInitialized || videoFullScreen) return
+        if (overviewShowing) hideTabs()
+        if (menuShowing) hideBrowserMenu()
+        shieldShowing = true
+        shieldLayer.visibility = View.VISIBLE
+    }
+
+    private fun hideShield() {
+        shieldShowing = false
+        if (::shieldLayer.isInitialized) shieldLayer.visibility = View.GONE
     }
 
     private fun showBrowserMenu() {
@@ -639,7 +724,10 @@ class MainActivity : ComponentActivity() {
             window.decorView.systemUiVisibility = originalSystemUiVisibility
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
-        if (enabled) hideBrowserMenu()
+        if (enabled) {
+            hideBrowserMenu()
+            hideShield()
+        }
         if (::chrome.isInitialized) {
             chrome.visibility = if (enabled) View.GONE else View.VISIBLE
             updateChromeMargins()
