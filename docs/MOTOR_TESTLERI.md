@@ -21,7 +21,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 
 | Test | Android telefon | Android TV | Masaüstü | iOS |
 | --- | --- | --- | --- | --- |
-| Gerçek cihazda HTTPS sayfa | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
 | Google hesabı giriş | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | Korumalı video/DRM | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -67,3 +67,10 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Test için aynı uygulamayı yeniden açmak `https://example.org/` ile başlayabilir; test bağlantısı paylaşmak daha doğrudan bir yöntemdir.
 - Yeni test yolunun uygulanması, başarılı derleme veya gerçek cihazda uyumluluk sonucu sayılmaz. Denemelerin sonucu cihaz başına kaydedilmelidir.
 - Google girişi veya banka sayfası denenirse **şifre, SMS kodu, çerez veya özel hesap sayfası ekran görüntüsü paylaşmayın**. Yalnız "açıldı/açılmadı" ve hata türünü yazın.
+
+## Güncel kullanıcı testi — Google bağlantı paylaşımı
+
+- 2026-11-04: Kullanıcı, yeni Android telefon motor testi APK'sını kurduğunu ve Chrome'dan **Paylaş → EymenBrowser** ile Google sayfasının açıldığını doğruladı.
+- **Başarılı:** Android ACTION_SEND HTTPS bağlantı kabulü, GeckoView'de Google sayfası görüntüleme.
+- **Denenmedi:** Google hesabına giriş, YouTube video oynatma, DRM, banka/e-Devlet oturumları ve indirme.
+- Sonraki kullanıcı testi: YouTube bağlantısını Paylaş → EymenBrowser ile aç; video oynatma, ses, tam ekran ve sayfa gezinmesini ayrı ayrı doğrula. Telif hakkı korumalı/DRM akışına dair sonuç çıkarma.
