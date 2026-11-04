@@ -3,6 +3,7 @@ package com.eymen.browser.motor
 import android.content.Context
 import android.content.res.Configuration
 import android.content.Intent
+import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
@@ -74,12 +75,20 @@ object GeckoMotorDenemesi {
         onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit },
         privateMode: Boolean = false,
         initialLoad: Boolean = true,
-        onTitle: (String?) -> Unit = {}
+        onTitle: (String?) -> Unit = {},
+        trackingProtection: Boolean = false,
+        onBlocked: () -> Unit = {}
     ): GeckoSession {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
+            .useTrackingProtection(trackingProtection)
             .build()
         val session = GeckoSession(settings)
+        session.setContentBlockingDelegate(object : ContentBlocking.Delegate {
+            override fun onContentBlocked(session: GeckoSession, event: ContentBlocking.BlockEvent) {
+                onBlocked()
+            }
+        })
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onTitleChange(session: GeckoSession, title: String?) {
                 onTitle(title)
@@ -141,7 +150,10 @@ object GeckoMotorDenemesi {
                 return pending
             }
         }
-        session.open(getRuntime(context))
+        val geckoRuntime = getRuntime(context)
+        // Gecko categorizes known trackers. Individual GeckoSessions opt in/out.
+        geckoRuntime.settings.contentBlocking.setAntiTracking(ContentBlocking.AntiTracking.DEFAULT)
+        session.open(geckoRuntime)
         view.setSession(session)
         if (initialLoad || url != null) {
             session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)
