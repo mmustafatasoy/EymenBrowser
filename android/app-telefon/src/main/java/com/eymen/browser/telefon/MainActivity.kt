@@ -13,9 +13,10 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
@@ -25,25 +26,45 @@ import java.net.URLEncoder
 import java.util.Locale
 import kotlin.math.roundToInt
 
+private class BrowserTab(
+    val id: Long,
+    val gecko: GeckoSession,
+    val privateMode: Boolean,
+    initialUrl: String?
+) {
+    var url by mutableStateOf(initialUrl.orEmpty())
+    var title by mutableStateOf("")
+    var home by mutableStateOf(initialUrl == null)
+    var fullScreen by mutableStateOf(false)
+}
+
 /**
- * Android Aşama 2 – T01/T02 ilk kurulum ve T03/T04/T11 gerçek GeckoView kabuğu.
- * Oturum, DRM izni, Android PDF indirme ve video tam ekranı korunur.
- * Sekme yöneticisi ve filtre motoru sonraki aşamalardır.
+ * Android phone: T01-T04, T06, T09 and T11 implementation stages.
+ * GeckoView owns one displayed GeckoSession; background tab sessions stay open.
+ * Private sessions are never added to regular history/recent pages.
  */
 class MainActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private lateinit var view: GeckoView
     private lateinit var chrome: ComposeView
     private lateinit var homeLayer: ComposeView
+    private lateinit var tabsLayer: ComposeView
     private lateinit var prefs: SharedPreferences
-    private var session: GeckoSession? = null
-    private val downloads = AndroidDownloadDenemesi(this)
+
+    private val tabs = mutableStateListOf<BrowserTab>()
+    private val activeId = mutableStateOf(-1L)
     private val atHome = mutableStateOf(true)
     private val currentUrl = mutableStateOf("")
     private val dayMode = mutableStateOf(false)
     private val recent = mutableStateListOf<String>()
+    private val downloads = AndroidDownloadDenemesi(this)
+    private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
     private var searchEngine = "Google"
+    private var overviewShowing = false
+
+    private val activeTab: BrowserTab?
+        get() = tabs.firstOrNull { it.id == activeId.value }
 
     private var videoFullScreen = false
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -56,7 +77,6 @@ class MainActivity : ComponentActivity() {
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         dayMode.value = prefs.getBoolean("day_theme", false)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
-        currentUrl.value = incomingUrl ?: ""
 
         root = FrameLayout(this)
         view = GeckoView(this)
@@ -66,27 +86,9 @@ class MainActivity : ComponentActivity() {
         ))
         setContentView(root)
 
-        // Attach the same engine as the verified motor tests. No WebView fallback.
-        session = GeckoMotorDenemesi.attach(
-            this, view, incomingUrl,
-            onFullScreen = ::setVideoFullScreen,
-            askDrmPermission = ::showDrmAccessPrompt,
-            onDownload = downloads::handleResponse
-        )
-        session?.progressDelegate = object : GeckoSession.ProgressDelegate {
-            override fun onPageStart(session: GeckoSession, url: String) {
-                runOnUiThread {
-                    currentUrl.value = url
-                    if (!atHome.value && url.startsWith("https://", true) &&
-                        url != "https://example.org/"
-                    ) {
-                        recent.remove(url)
-                        recent.add(0, url)
-                        while (recent.size > 2) recent.removeAt(recent.lastIndex)
-                    }
-                }
-            }
-        }
+        // Create the first normal tab; keep the verified DRM, download and
+        // rotation callbacks for every new or reopened GeckoSession.
+        createTab(privateMode = false, initialUrl = incomingUrl)
 
         homeLayer = ComposeView(this)
         root.addView(
@@ -97,14 +99,18 @@ class MainActivity : ComponentActivity() {
             )
         )
         homeLayer.setContent {
-            BrowserHome(
-                day = dayMode.value,
-                recentUrls = recent,
-                addressBottom = addressBottom,
-                onOpen = ::openUrl,
-                onDevices = { notice(R.string.devices_not_ready) },
-                onShield = { notice(R.string.shield_not_ready) }
-            )
+            if (activeTab?.privateMode == true) {
+                PrivateHome()
+            } else {
+                BrowserHome(
+                    day = dayMode.value,
+                    recentUrls = recent,
+                    addressBottom = addressBottom,
+                    onOpen = ::openUrl,
+                    onDevices = ::showTabs,
+                    onShield = { notice(R.string.shield_not_ready) }
+                )
+            }
         }
 
         chrome = ComposeView(this)
@@ -121,18 +127,65 @@ class MainActivity : ComponentActivity() {
                 home = atHome.value,
                 day = dayMode.value,
                 addressBottom = addressBottom,
+                privateMode = activeTab?.privateMode == true,
+                tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
                 onGo = ::openAddress,
-                onBack = { session?.goBack() },
-                onForward = { session?.goForward() },
+                onBack = { activeTab?.gecko?.goBack() },
+                onForward = { activeTab?.gecko?.goForward() },
                 onHome = { showHome(true) },
-                onReload = { session?.reload() },
-                onTabs = { notice(R.string.tabs_not_ready) },
+                onReload = { activeTab?.gecko?.reload() },
+                onTabs = ::showTabs,
                 onMenu = ::showBrowserMenu,
                 onShield = { notice(R.string.shield_not_ready) }
             )
         }
-        showHome(incomingUrl == null)
+
+        tabsLayer = ComposeView(this)
+        root.addView(
+            tabsLayer,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+        tabsLayer.setContent {
+            TabOverview(
+                tabs = tabs.map { tab ->
+                    TabPreview(
+                        id = tab.id,
+                        title = tab.title.ifBlank {
+                            if (tab.privateMode) getString(R.string.private_tab)
+                            else if (tab.home) getString(R.string.new_tab)
+                            else tab.url.removePrefix("https://").substringBefore('/')
+                        },
+                        url = tab.url,
+                        privateMode = tab.privateMode,
+                        selected = tab.id == activeId.value
+                    )
+                },
+                activePrivate = activeTab?.privateMode == true,
+                day = dayMode.value,
+                onOpen = ::activateTab,
+                onClose = ::closeTab,
+                onCloseAll = ::closeAllOfType,
+                onNew = { privateMode -> createTab(privateMode) },
+                onDismiss = ::hideTabs
+            )
+        }
+        tabsLayer.visibility = View.GONE
         updateChromeMargins()
+        updateHomeVisibility()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                when {
+                    overviewShowing -> hideTabs()
+                    videoFullScreen -> activeTab?.gecko?.goBack()
+                    !atHome.value -> activeTab?.gecko?.goBack()
+                    else -> showTabs()
+                }
+            }
+        })
 
         if (!prefs.getBoolean("setup_completed", false)) {
             val onboarding = ComposeView(this)
@@ -143,7 +196,6 @@ class MainActivity : ComponentActivity() {
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
             )
-            // First run overrides the chrome but does not destroy GeckoSession.
             onboarding.setContent {
                 FirstRunOverlay { shield, engine, bottom, requestDefault ->
                     prefs.edit()
@@ -155,29 +207,12 @@ class MainActivity : ComponentActivity() {
                     searchEngine = engine
                     addressBottom = bottom
                     root.removeView(onboarding)
-                    // Rebuild only chrome layout when address placement changes.
-                    chrome.setContent {
-                        BrowserToolbar(
-                            currentUrl = currentUrl.value,
-                            home = atHome.value,
-                            day = dayMode.value,
-                            addressBottom = addressBottom,
-                            onGo = ::openAddress,
-                            onBack = { session?.goBack() },
-                            onForward = { session?.goForward() },
-                            onHome = { showHome(true) },
-                            onReload = { session?.reload() },
-                            onTabs = { notice(R.string.tabs_not_ready) },
-                            onMenu = ::showBrowserMenu,
-                            onShield = { notice(R.string.shield_not_ready) }
-                        )
-                    }
                     updateChromeMargins()
                     if (requestDefault) {
                         try {
                             startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
                         } catch (_: Exception) {
-                            // Some Android versions provide no such settings screen.
+                            // Some Android versions have no default-app settings screen.
                         }
                     }
                 }
@@ -185,22 +220,123 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Never allow javascript:, data:, cleartext http: or userinfo in the bar. */
+    /** Existing attached sessions are released, never closed on tab switches. */
+    private fun createTab(privateMode: Boolean, initialUrl: String? = null) {
+        if (tabs.isNotEmpty()) {
+            view.releaseSession()
+        }
+        val id = nextId++
+        val session = GeckoMotorDenemesi.attach(
+            this, view, initialUrl,
+            onFullScreen = { enabled ->
+                tabs.firstOrNull { it.id == id }?.let { tab ->
+                    tab.fullScreen = enabled
+                    if (activeId.value == id) setVideoFullScreen(enabled)
+                }
+            },
+            askDrmPermission = ::showDrmAccessPrompt,
+            onDownload = downloads::handleResponse,
+            privateMode = privateMode,
+            initialLoad = initialUrl != null,
+            onTitle = { title ->
+                tabs.firstOrNull { it.id == id }?.title = title.orEmpty()
+            }
+        )
+        val tab = BrowserTab(id, session, privateMode, initialUrl)
+        session.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStart(session: GeckoSession, url: String) {
+                runOnUiThread {
+                    tab.url = url
+                    tab.home = false
+                    if (activeId.value == id) {
+                        currentUrl.value = url
+                        atHome.value = false
+                        updateHomeVisibility()
+                    }
+                    if (!privateMode && url.startsWith("https://", true) &&
+                        url != "https://example.org/"
+                    ) {
+                        recent.remove(url)
+                        recent.add(0, url)
+                        while (recent.size > 2) recent.removeAt(recent.lastIndex)
+                    }
+                }
+            }
+        }
+        tabs.add(tab)
+        activeId.value = id
+        currentUrl.value = initialUrl.orEmpty()
+        atHome.value = initialUrl == null
+        if (::tabsLayer.isInitialized) hideTabs()
+        updateHomeVisibility()
+    }
+
+    private fun activateTab(id: Long) {
+        val tab = tabs.firstOrNull { it.id == id } ?: return
+        if (activeId.value != id) {
+            if (videoFullScreen) setVideoFullScreen(false)
+            view.releaseSession()
+            view.setSession(tab.gecko)
+            activeId.value = id
+        }
+        currentUrl.value = tab.url
+        atHome.value = tab.home
+        setVideoFullScreen(tab.fullScreen)
+        updateHomeVisibility()
+        hideTabs()
+    }
+
+    private fun closeTab(id: Long) {
+        val tab = tabs.firstOrNull { it.id == id } ?: return
+        val active = activeId.value == id
+        if (active) {
+            if (videoFullScreen) setVideoFullScreen(false)
+            view.releaseSession()
+        }
+        tab.gecko.close()
+        tabs.remove(tab)
+        if (active) {
+            if (tabs.isEmpty()) {
+                // Always leave a usable normal tab rather than a blank GeckoView.
+                createTab(privateMode = false)
+            } else {
+                activeId.value = -1L
+                activateTab(tabs.last().id)
+            }
+        }
+    }
+
+    private fun closeAllOfType(privateMode: Boolean) {
+        tabs.filter { it.privateMode == privateMode }.map { it.id }.forEach(::closeTab)
+        if (tabs.isEmpty()) createTab(privateMode = false)
+    }
+
+    private fun showTabs() {
+        if (!::tabsLayer.isInitialized || videoFullScreen) return
+        overviewShowing = true
+        tabsLayer.visibility = View.VISIBLE
+    }
+
+    private fun hideTabs() {
+        overviewShowing = false
+        if (::tabsLayer.isInitialized) tabsLayer.visibility = View.GONE
+    }
+
+    /** Only validated HTTPS destinations are loaded into GeckoSession. */
     private fun openAddress(text: String) {
         val raw = text.trim()
         if (raw.isEmpty()) return
         val direct = if (raw.startsWith("https://", ignoreCase = true)) {
             GeckoMotorDenemesi.verifiedHttpsUrl(raw)
-        } else if (raw.contains("://")) {
-            null
-        } else if ('.' in raw && raw.none { it.isWhitespace() }) {
+        } else if (raw.contains("://")) null
+        else if ('.' in raw && raw.none { it.isWhitespace() }) {
             GeckoMotorDenemesi.verifiedHttpsUrl("https://$raw")
         } else null
         if (raw.contains("://") && direct == null) {
             notice(R.string.invalid_address)
             return
         }
-        val url = direct ?: run {
+        val destination = direct ?: run {
             val encoded = URLEncoder.encode(raw, "UTF-8")
             when (searchEngine.lowercase(Locale.ROOT)) {
                 "duckduckgo" -> "https://duckduckgo.com/?q=$encoded"
@@ -209,7 +345,7 @@ class MainActivity : ComponentActivity() {
                 else -> "https://www.google.com/search?q=$encoded"
             }
         }
-        openUrl(url)
+        openUrl(destination)
     }
 
     private fun openUrl(url: String) {
@@ -218,15 +354,26 @@ class MainActivity : ComponentActivity() {
             notice(R.string.invalid_address)
             return
         }
-        currentUrl.value = verified
-        showHome(false)
-        session?.loadUri(verified)
+        activeTab?.let { tab ->
+            tab.url = verified
+            tab.home = false
+            currentUrl.value = verified
+            atHome.value = false
+            updateHomeVisibility()
+            tab.gecko.loadUri(verified)
+        }
     }
 
     private fun showHome(enabled: Boolean) {
+        activeTab?.home = enabled
         atHome.value = enabled
+        updateHomeVisibility()
+    }
+
+    private fun updateHomeVisibility() {
         if (::homeLayer.isInitialized) {
-            homeLayer.visibility = if (enabled && !videoFullScreen) View.VISIBLE else View.GONE
+            homeLayer.visibility =
+                if (atHome.value && !videoFullScreen) View.VISIBLE else View.GONE
         }
     }
 
@@ -245,16 +392,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showBrowserMenu() {
-        val choice = if (dayMode.value) R.string.theme_night else R.string.theme_day
+        val themeChoice = if (dayMode.value) R.string.theme_night else R.string.theme_day
         AlertDialog.Builder(this)
             .setTitle(R.string.browser_menu_title)
-            .setItems(arrayOf(getString(choice), getString(R.string.menu_current_page))) { _, which ->
-                when (which) {
-                    0 -> {
+            .setItems(arrayOf(
+                getString(R.string.new_tab),
+                getString(R.string.new_private_tab),
+                getString(themeChoice),
+                getString(R.string.menu_current_page)
+            )) { _, choice ->
+                when (choice) {
+                    0 -> createTab(false)
+                    1 -> createTab(true)
+                    2 -> {
                         dayMode.value = !dayMode.value
                         prefs.edit().putBoolean("day_theme", dayMode.value).apply()
                     }
-                    1 -> if (!atHome.value) session?.reload()
+                    3 -> if (!atHome.value) activeTab?.gecko?.reload()
                 }
             }
             .show()
@@ -287,11 +441,11 @@ class MainActivity : ComponentActivity() {
             window.decorView.systemUiVisibility = originalSystemUiVisibility
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
-        if (::chrome.isInitialized) chrome.visibility =
-            if (enabled) View.GONE else View.VISIBLE
-        if (::homeLayer.isInitialized) homeLayer.visibility =
-            if (enabled || !atHome.value) View.GONE else View.VISIBLE
-        if (::chrome.isInitialized) updateChromeMargins()
+        if (::chrome.isInitialized) {
+            chrome.visibility = if (enabled) View.GONE else View.VISIBLE
+            updateChromeMargins()
+        }
+        updateHomeVisibility()
     }
 
     private fun showDrmAccessPrompt(host: String, answer: (Boolean) -> Unit) {
@@ -307,13 +461,18 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        GeckoMotorDenemesi.urlFromIntent(intent)?.let { url -> openUrl(url) }
+        GeckoMotorDenemesi.urlFromIntent(intent)?.let { url ->
+            // Links from another app never silently enter an existing private tab.
+            if (activeTab?.privateMode == true) createTab(false, url)
+            else openUrl(url)
+        }
     }
 
     override fun onDestroy() {
         downloads.dispose()
-        GeckoMotorDenemesi.detach(view, session)
-        session = null
+        if (::view.isInitialized) view.releaseSession()
+        tabs.forEach { it.gecko.close() }
+        tabs.clear()
         super.onDestroy()
     }
 }
