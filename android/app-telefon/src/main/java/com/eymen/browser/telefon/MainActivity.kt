@@ -1,6 +1,7 @@
 package com.eymen.browser.telefon
 
 import android.app.AlertDialog
+import android.app.DownloadManager
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.Toast
+import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.runtime.getValue
@@ -21,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
 import java.net.URLEncoder
 import java.util.Locale
@@ -36,6 +39,7 @@ private class BrowserTab(
     var title by mutableStateOf("")
     var home by mutableStateOf(initialUrl == null)
     var fullScreen by mutableStateOf(false)
+    var desktop by mutableStateOf(false)
 }
 
 /**
@@ -49,6 +53,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var chrome: ComposeView
     private lateinit var homeLayer: ComposeView
     private lateinit var tabsLayer: ComposeView
+    private lateinit var menuLayer: ComposeView
     private lateinit var prefs: SharedPreferences
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -62,6 +67,7 @@ class MainActivity : ComponentActivity() {
     private var addressBottom by mutableStateOf(true)
     private var searchEngine = "Google"
     private var overviewShowing = false
+    private var menuShowing = false
     private val devicesRequested = mutableStateOf(false)
 
     private val activeTab: BrowserTab?
@@ -175,12 +181,31 @@ class MainActivity : ComponentActivity() {
             )
         }
         tabsLayer.visibility = View.GONE
+        menuLayer = ComposeView(this)
+        root.addView(
+            menuLayer,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+        menuLayer.setContent {
+            BrowserMenu(
+                hasPage = !atHome.value && GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
+                isDesktop = activeTab?.desktop == true,
+                dayMode = dayMode.value,
+                onDismiss = ::hideBrowserMenu,
+                onAction = ::handleMenuAction
+            )
+        }
+        menuLayer.visibility = View.GONE
         updateChromeMargins()
         updateHomeVisibility()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    menuShowing -> hideBrowserMenu()
                     overviewShowing -> hideTabs()
                     videoFullScreen -> activeTab?.gecko?.exitFullScreen()
                     !atHome.value -> activeTab?.gecko?.goBack()
@@ -399,23 +424,169 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showBrowserMenu() {
-        val themeChoice = if (dayMode.value) R.string.theme_night else R.string.theme_day
+        if (!::menuLayer.isInitialized || videoFullScreen) return
+        menuShowing = true
+        menuLayer.visibility = View.VISIBLE
+    }
+
+    private fun hideBrowserMenu() {
+        menuShowing = false
+        if (::menuLayer.isInitialized) menuLayer.visibility = View.GONE
+    }
+
+    private fun handleMenuAction(action: MenuAction) {
+        hideBrowserMenu()
+        when (action) {
+            MenuAction.BOOKMARKS -> showBookmarks()
+            MenuAction.HISTORY -> showRecentPages()
+            MenuAction.DOWNLOADS -> {
+                try {
+                    startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
+                } catch (_: Exception) {
+                    notice(R.string.menu_downloads_error)
+                }
+            }
+            MenuAction.PRIVATE -> createTab(privateMode = true)
+            MenuAction.FIND -> showFindDialog()
+            MenuAction.DESKTOP -> toggleDesktopSite()
+            MenuAction.SHARE -> shareCurrentPage()
+            MenuAction.THEME -> {
+                dayMode.value = !dayMode.value
+                prefs.edit().putBoolean("day_theme", dayMode.value).apply()
+            }
+            MenuAction.SETTINGS -> showStarterSettings()
+            else -> Unit // T07 unavailable actions are non-clickable.
+        }
+    }
+
+    private fun showBookmarks() {
+        val store = getSharedPreferences("eymen_browser_bookmarks", MODE_PRIVATE)
+        val links = store.getStringSet("urls", emptySet()).orEmpty()
+            .filter { GeckoMotorDenemesi.verifiedHttpsUrl(it) == it }
+            .sorted()
+        val current = GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url)
+            ?.takeIf { it == activeTab?.url && !atHome.value }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.bookmarks)
+            .setNegativeButton(android.R.string.cancel, null)
+        if (links.isEmpty()) dialog.setMessage(R.string.menu_bookmark_empty)
+        else dialog.setItems(links.toTypedArray()) { _, index -> openUrl(links[index]) }
+        if (current != null) dialog.setPositiveButton(R.string.menu_bookmark_prompt) { _, _ ->
+            if (links.contains(current)) notice(R.string.menu_bookmark_exists)
+            else {
+                store.edit().putStringSet("urls", (links + current).toSet()).apply()
+                notice(R.string.menu_bookmark_saved)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showRecentPages() {
+        val pages = recent.toList()
         AlertDialog.Builder(this)
-            .setTitle(R.string.browser_menu_title)
-            .setItems(arrayOf(
-                getString(R.string.new_tab),
-                getString(R.string.new_private_tab),
-                getString(themeChoice),
-                getString(R.string.menu_current_page)
-            )) { _, choice ->
-                when (choice) {
-                    0 -> createTab(false)
-                    1 -> createTab(true)
-                    2 -> {
-                        dayMode.value = !dayMode.value
-                        prefs.edit().putBoolean("day_theme", dayMode.value).apply()
-                    }
-                    3 -> if (!atHome.value) activeTab?.gecko?.reload()
+            .setTitle(R.string.menu_recent_history)
+            .apply {
+                if (pages.isEmpty()) setMessage(R.string.menu_recent_empty)
+                else setItems(pages.toTypedArray()) { _, which ->
+                    openUrl(pages[which])
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showFindDialog() {
+        val tab = activeTab ?: return
+        if (tab.home) return
+        val field = EditText(this).apply {
+            hint = getString(R.string.menu_find_hint)
+            isSingleLine = true
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_find)
+            .setView(field)
+            .setPositiveButton(R.string.menu_find_next) { _, _ ->
+                val term = field.text.toString().trim()
+                if (term.isNotBlank()) {
+                    tab.gecko.finder.setDisplayFlags(
+                        GeckoSession.FINDER_DISPLAY_HIGHLIGHT_ALL
+                    )
+                    tab.gecko.finder.find(term, 0)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun toggleDesktopSite() {
+        val tab = activeTab ?: return
+        if (tab.home) return
+        tab.desktop = !tab.desktop
+        val mode = if (tab.desktop) {
+            GeckoSessionSettings.USER_AGENT_MODE_DESKTOP
+        } else GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+        val viewport = if (tab.desktop) {
+            GeckoSessionSettings.VIEWPORT_MODE_DESKTOP
+        } else GeckoSessionSettings.VIEWPORT_MODE_MOBILE
+        tab.gecko.settings.setUserAgentMode(mode)
+        tab.gecko.settings.setViewportMode(viewport)
+        tab.gecko.reload()
+        notice(if (tab.desktop) R.string.menu_desktop_on else R.string.menu_desktop_off)
+    }
+
+    private fun shareCurrentPage() {
+        val url = GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url)
+            ?.takeIf { it == activeTab?.url && !atHome.value }
+        if (url == null) {
+            notice(R.string.menu_share_error)
+            return
+        }
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, url)
+        }
+        try {
+            startActivity(Intent.createChooser(send, getString(R.string.menu_share)))
+        } catch (_: Exception) {
+            notice(R.string.menu_share_error)
+        }
+    }
+
+    private fun showStarterSettings() {
+        val choices = arrayOf(
+            getString(R.string.menu_settings_search),
+            getString(R.string.menu_settings_address)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_settings_limited)
+            .setItems(choices) { _, selected ->
+                if (selected == 0) {
+                    val engines = arrayOf("Google", "DuckDuckGo", "Bing", "Yandex")
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.menu_change_search)
+                        .setSingleChoiceItems(
+                            engines, engines.indexOf(searchEngine).coerceAtLeast(0)
+                        ) { dialog, index ->
+                            searchEngine = engines[index]
+                            prefs.edit().putString("search_engine", searchEngine).apply()
+                            dialog.dismiss()
+                        }.show()
+                } else {
+                    val positions = arrayOf(
+                        getString(R.string.onboarding_bottom),
+                        getString(R.string.onboarding_top)
+                    )
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.menu_change_address)
+                        .setSingleChoiceItems(
+                            positions, if (addressBottom) 0 else 1
+                        ) { dialog, index ->
+                            addressBottom = index == 0
+                            prefs.edit()
+                                .putBoolean("address_at_bottom", addressBottom).apply()
+                            updateChromeMargins()
+                            dialog.dismiss()
+                        }.show()
                 }
             }
             .show()
@@ -448,6 +619,7 @@ class MainActivity : ComponentActivity() {
             window.decorView.systemUiVisibility = originalSystemUiVisibility
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
+        if (enabled) hideBrowserMenu()
         if (::chrome.isInitialized) {
             chrome.visibility = if (enabled) View.GONE else View.VISIBLE
             updateChromeMargins()
