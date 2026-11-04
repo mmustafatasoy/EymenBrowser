@@ -101,3 +101,5 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Derleyici düzeltmesi:** İlk Kotlin derlemesinde arka plan lambda'sından yakalanan `createdDownload` değişkeni için akıllı tür dönüşümü hatası oluştu. Nullable URI kullanımı yerel değişmez `downloadUri` ile düzeltildi; indirme özelliğinin gerçek cihaz sonucu hâlâ bekleniyor.
 
 - **İkinci CI kontrol düzeltmesi:** URI işlemi Kotlin derleyicisi için `downloadUri` değişkenine taşınınca statik denetimin eski `createdDownload` aramasını güncellemek gerekti. Yeni derleme yeniden tetiklendi; gerçek telefon indirme sonucu hâlâ bekleniyor.
+
+- **Yayın betiği düzeltmesi:** Android telefon APK derlemesi [GitHub Actions #41832912227](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41832912227) üzerinde başarılıydı; ancak RELEASE_NOTES here-document kapanışı ile sonraki shell komutu aynı satıra birleştiği için yayın adımı gerçekte çalışmamıştı. Bu durum giderildi; yeni Releases varlığı doğrulanana kadar APK yayımlandı sayılmıyor.

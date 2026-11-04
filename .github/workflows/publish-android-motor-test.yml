@@ -77,7 +77,8 @@ jobs:
           DEBUG/TEST imzası kullanılmıştır, üretim imzalı kararlı APK değildir.
           Nihai tarayıcı ekranları şartnamedeki Kapı 1 sonrasına aittir.
           Eski test APK imzası farklı olabilir; yeniden kurulum verileri silebilir.
-          EOF         if gh release view "$TAG" >/dev/null 2>&1; then
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/*.apk --clobber
           else
             gh release create "$TAG" release/*.apk \
