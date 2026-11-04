@@ -147,15 +147,16 @@ internal class BrowserUpdateManager(private val activity: Activity) {
             try {
                 val directory = File(activity.cacheDir, "updates").apply { mkdirs() }
                 val output = File(directory, "eymen-update.apk")
-                tmp = File(directory, "eymen-update.partial")
+                val partial = File(directory, "eymen-update.partial")
+                tmp = partial
                 output.delete()
-                tmp.delete()
+                partial.delete()
                 val digest = MessageDigest.getInstance("SHA-256")
                 val connection = openTrustedHttps(candidate.downloadUrl)
                 try {
                     if (connection.responseCode != 200) throw IOException("APK unavailable")
                     var read = 0L
-                    FileOutputStream(tmp).use { file ->
+                    FileOutputStream(partial).use { file ->
                         connection.inputStream.use { input ->
                             val buffer = ByteArray(64 * 1024)
                             while (true) {
@@ -179,8 +180,8 @@ internal class BrowserUpdateManager(private val activity: Activity) {
                 } finally {
                     connection.disconnect()
                 }
-                verifyPackageAndSigner(tmp, candidate.versionCode)
-                if (!tmp.renameTo(output)) throw IOException("Cannot finalize APK")
+                verifyPackageAndSigner(partial, candidate.versionCode)
+                if (!partial.renameTo(output)) throw IOException("Cannot finalize APK")
                 tmp = null
                 ui {
                     popup.dismiss()
@@ -209,10 +210,10 @@ internal class BrowserUpdateManager(private val activity: Activity) {
         } else pkg.signatures?.map { it.toByteArray() }.orEmpty()
     }
 
+    @Suppress("DEPRECATION")
     private fun verifyPackageAndSigner(file: File, expectedVersion: Long) {
         val flags = if (Build.VERSION.SDK_INT >= 28)
-            PackageManager.GET_SIGNING_CERTIFICATES else
-            @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
+            PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
         @Suppress("DEPRECATION")
         val apk = activity.packageManager.getPackageArchiveInfo(file.absolutePath, flags)
             ?: throw IOException("APK invalid")
