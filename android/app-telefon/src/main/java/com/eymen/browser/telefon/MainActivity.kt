@@ -5,6 +5,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
+import android.provider.Settings
+import android.widget.FrameLayout
+import androidx.compose.ui.platform.ComposeView
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -28,14 +31,50 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val root = FrameLayout(this)
         view = GeckoView(this)
-        setContentView(view)
+        root.addView(view, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        setContentView(root)
         session = GeckoMotorDenemesi.attach(
             this, view, GeckoMotorDenemesi.urlFromIntent(intent),
             onFullScreen = ::setVideoFullScreen,
             askDrmPermission = ::showDrmAccessPrompt,
             onDownload = downloads::handleResponse
         )
+
+        // Aşama 2'nin ilk dilimi: yalnız ilk kurulumda T01/T02 üst katman.
+        // GeckoSession aynen çalışır ve kullanıcı Başla dediğinde korunur.
+        val preferences = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
+        if (!preferences.getBoolean("setup_completed", false)) {
+            val onboarding = ComposeView(this)
+            root.addView(onboarding, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+            onboarding.setContent {
+                FirstRunOverlay { shield, searchEngine, addressBottom, requestDefault ->
+                    preferences.edit()
+                        .putBoolean("shield_wanted", shield)
+                        .putString("search_engine", searchEngine)
+                        .putBoolean("address_at_bottom", addressBottom)
+                        .putBoolean("setup_completed", true)
+                        .apply()
+                    root.removeView(onboarding)
+                    if (requestDefault) {
+                        // Sistem seçimi: varsayılan tarayıcı olma garantisi verilmez.
+                        try {
+                            startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+                        } catch (_: Exception) {
+                            // Seçim tamamlandı; sistem ekranı olmayan cihazlarda
+                            // kullanıcı normal tarayıcı oturumuna döner.
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Rotation MUST NOT destroy the Activity/GeckoSession: manifest configChanges
