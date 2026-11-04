@@ -129,7 +129,8 @@ internal fun BrowserHome(
         Modifier.fillMaxSize().background(p.base)
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp,
-                top = if (addressBottom) 32.dp else 162.dp,
+                // T03 approved HTML uses a 56dp top inset above the brand row.
+                top = if (addressBottom) 56.dp else 162.dp,
                 bottom = if (addressBottom) 148.dp else 32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
