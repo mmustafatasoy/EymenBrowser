@@ -129,3 +129,10 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Muhtemel nedenler:** GeckoView'da DRM site izin işleyicisinin eksik olması (tespit edildi), key-system/CDM desteğinin olmaması, format/DRM kısıtları veya demo servis durumu. Fotoğraf nedenini tek başına ayırmaz.
 - **Test düzeltmesi:** `GeckoSession.PermissionDelegate` DRM anahtar erişimi isteyen HTTPS site için açık kullanıcı seçimi ile izin verebilir/reddedebilir; diğer izinleri otomatik açmaz. [Tek arm64 APK v0.0.1-motor-test.3](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.3) **204173292 bayt** olarak yayımlandı; GitHub Actions derleme ve yayın adımları başarılı. Aynı site gerçek Android telefonda yeniden denenmeden DRM uyumluluğu **kanıtlanmış sayılmaz**.
 - **Kontrol önerisi:** Aynı Sintel örneğinin Chrome'da da `NOT AVAILABLE` olup olmadığını karşılaştır. Yeni APK'da DRM izni açılırsa, kullanıcı özellikle **İzin ver** seçerse oynatma değişiyor mu kaydet. Yazılım/servis kaynaklı kısıtlarda kesin uyumluluk iddiasında bulunma.
+
+## Widevine DRM izin düzeltmesi — kullanıcı geri bildirimi, 2026-11-04
+
+- `v0.0.1-motor-test.3` tek APK yayımlandıktan sonra kullanıcı: **"Bu sefer açılıyor"**.
+- Önceki `NOT AVAILABLE` göstergesine kıyasla DRM demo içerik açılışında **olumlu ilerleme** bildirildi.
+- **Henüz açık:** Gerçek Sintel videosunun görüntü ve sesle oynatılıp oynatılmadığı, DRM izin iletişim kutusu, kesintisiz oynatma süresi ve Chrome karşılaştırması bu kısa geri bildirimden kesinleştirilemiyor.
+- Sonuç bu nedenle **tam DRM oynatma başarılı** işaretlenmedi. Kullanıcıdan görüntü ve ses teyidi geldikten sonra matris güncellenecek.
