@@ -47,23 +47,9 @@ jobs:
           profile: pixel_6
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: |
-            test -f "$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)"
-            adb shell wm size 390x844
-            adb shell wm density 160
-            adb install -r "$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)"
-            adb shell am force-stop com.eymen.browser.telefon || true
-            adb shell am start -n com.eymen.browser.telefon/.MainActivity
-            sleep 8
-            mkdir -p visual-captures
-            adb shell screencap -p /sdcard/T02.png
-            adb pull /sdcard/T02.png visual-captures/T02-Ilk-kurulum.png
-            adb shell input tap 190 730
-            sleep 5
-            adb shell screencap -p /sdcard/T03.png
-            adb pull /sdcard/T03.png visual-captures/T03-Yeni-sekme.png
+          script: bash tools/capture_android_visual.sh
       - name: Tasarim fark raporlarini olustur
-        if: always()
+        if: success()
         run: |
           if test -s visual-captures/T02-Ilk-kurulum.png; then
             python tools/compare_approved_screenshots.py --screen T02-Ilk-kurulum --capture visual-captures/T02-Ilk-kurulum.png --output visual-report
@@ -80,4 +66,5 @@ jobs:
             visual-captures/*.png
             visual-report/*.png
             visual-report/*.json
+            visual-captures/*.txt
           if-no-files-found: warn
