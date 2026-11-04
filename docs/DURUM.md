@@ -196,3 +196,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - `docs/ANDROID_GORSEL_KABUL.md` gerçek ekran/görsel farkları ve kişisel veri içermeyen ekran görüntüsü kurallarını belirtir.
 - `docs/ANDROID_TARAYICI_VPN_MIMARISI.md` Android `VpnService.prepare`, yalnız EymenBrowser paketine izinli yönlendirme, güvenilir sağlayıcı backend'i, DNS/IPv6 ve bağlantı kopma testlerini tanımlar. **Henüz VPN servisi, tüneli, kimlik bilgisi bağlantısı veya çalışır VPN ekranı yoktur.** Üçüncü taraf sağlayıcı seçimi ve gerçek tünel backend'i henüz uygulanmadı.
 - Önceki Android ABI debug APK derlemeleri ve statik kontroller başarılıdır; en güncel gizlilik düzeltmesinin CI çalışması ve emülatör fark denetimi ayrıca sonuçlanmalıdır. **Üretim imzalı kararlı GitHub Release yoktur.**
+
+
+## Android görsel denetimi — yanlış karşılaştırma ve gerçek açılış hatası (2026-11-04)
+
+- [Görsel CI #41851463110](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41851463110) teknik olarak başarılı bitti; ancak artefaktların bizzat açılmasıyla **T02 ve T03 yakalanan görüntülerde EYMEN Browser yerine Android ana ekranının bulunduğu** tespit edildi. Rapordaki `%48,42` ve `%45,78` eşik aşan piksel oranları bu nedenle **tasarım uyum ölçümü DEĞİLDİR ve kabul verisi sayılmaz**.
+- Yeni `tools/capture_android_visual.sh` uygulama PID'si ve öndeki `resumed Activity` bilgisini kontrol eder; tarayıcı açılmadığında kıyaslama yapmaz, `AndroidRuntime` hatası ve ön plan kaydını test artefaktına ekler. Test CI `success()` koşuluyla yalnız doğrulanmış yakalamalarda çalışır.
+- [Doğrulamalı test #41902516926](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41902516926) bu korumayla başarısız oldu; hata kaydında `NullPointerException`: `AndroidDownloadDenemesi.kt:37` üzerinden `activity.applicationContext` alanına **MainActivity'nin Context'i henüz bağlanmadan** erişildiği saptandı. Bu gerçek bir **uygulama açılış çökmesiydi**, yalnız görsel test otomasyonu hatası değildi.
+- `AndroidDownloadDenemesi` içinde `DownloadRegistry(activity.applicationContext)` nesnesi `by lazy` ile ilk gerçek ihtiyaçta başlatılır hale getirildi. `tools/check_stage2_features.py` bu erken Context erişiminin geri gelmemesi için statik kontrol içerir.
+- [Tekrar görsel test #41903321443](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41903321443) ve ilgili Android APK derlemesi son kodla başlatıldı. **Sonuç doğrulanmadan gerçek uygulama görüntüsü T02/T03 tasarımına uyuyor denmeyecek**.
