@@ -108,5 +108,6 @@
   "menu_change_address": "Adres çubuğunu seçin",
   "menu_bookmark_prompt": "Sayfayı yer imlerine kaydet",
   "menu_bookmark_open": "Yer imlerini aç",
-  "menu_search_not_found": "Bu sayfada eşleşme bulunamadı"
+  "menu_search_not_found": "Bu sayfada eşleşme bulunamadı",
+  "menu_dismiss": "Menüyü kapat"
 }
