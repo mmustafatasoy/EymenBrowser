@@ -59,6 +59,7 @@ private fun TabLabel(
 internal fun TabOverview(
     tabs: List<TabPreview>,
     activePrivate: Boolean,
+    openDevices: Boolean,
     day: Boolean,
     onOpen: (Long) -> Unit,
     onClose: (Long) -> Unit,
@@ -69,8 +70,12 @@ internal fun TabOverview(
     var section by remember { mutableStateOf(
         if (activePrivate) TabSection.PRIVATE else TabSection.NORMAL
     ) }
-    LaunchedEffect(activePrivate) {
-        section = if (activePrivate) TabSection.PRIVATE else TabSection.NORMAL
+    LaunchedEffect(activePrivate, openDevices) {
+        section = when {
+            openDevices -> TabSection.DEVICES
+            activePrivate -> TabSection.PRIVATE
+            else -> TabSection.NORMAL
+        }
     }
     val background = if (day) T.gunduz_zemin else T.gece_zemin
     val surface = if (day) T.gunduz_yuzey1 else T.gece_yuzey1
