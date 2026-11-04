@@ -118,6 +118,8 @@ internal fun BrowserHome(
     day: Boolean,
     recentUrls: List<String>,
     addressBottom: Boolean,
+    shieldEnabled: Boolean,
+    realBlockedCount: Int,
     onOpen: (String) -> Unit,
     onDevices: () -> Unit,
     onShield: () -> Unit
@@ -245,11 +247,11 @@ internal fun BrowserHome(
             Spacer(Modifier.width(12.dp))
             Column {
                 ChromeText(
-                    stringResource(R.string.shield_not_active), 15, p.text,
+                    stringResource(if (shieldEnabled) R.string.shield_active else R.string.shield_inactive), 15, p.text,
                     weight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(2.dp))
-                ChromeText(stringResource(R.string.shield_planned), 13, p.muted)
+                ChromeText(stringResource(R.string.shield_summary_counter, realBlockedCount), 13, p.muted)
             }
         }
     }
