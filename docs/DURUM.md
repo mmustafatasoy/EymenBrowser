@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını ve **Sintel Widevine DRM görüntü/ses oynatımını** doğruladı. Gerçek Google/banka oturumu, **dosyanın indirilmesi**, sosyal medya, TV, masaüstü, iOS ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. **PDF belgesini görüntüleme** Android telefon ekran fotoğrafıyla doğrulandı.
+- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını, **Sintel Widevine DRM görüntü/ses oynatımını** ve **PDF görüntüleme, indirme ve indirilen dosyayı açmayı** doğruladı. Gerçek Google/banka oturumu, sosyal medya, diğer cihaz/platform testleri ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. TV, masaüstü ve Apple çalışmaları kullanıcı kararıyla beklemede.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -37,13 +37,13 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Bu test sürümünün gerçek APK ölçümleri (bayt): telefon arm64-v8a **204171320**, armeabi-v7a **164976396**, x86_64 **223765886**; TV arm64-v8a **205423940**, armeabi-v7a **166229016**, x86_64 **225018506**.
 
 ## Sıradaki iş
-1. Fiziksel Android telefon ve Android TV'ye işlemciye uygun test APK'sı kurulup varsayılan HTTPS sayfası açma denenmeli.
-2. Android telefonda YouTube video/ses, tam ekran ve yatay dönüşte aynı sayfada kalma **başarılı**. Google hesabına gerçek giriş (yalnız form açılışı başarılı), korumalı video/DRM, e-Devlet kişisel oturumları (ana sayfa başarılı), banka hesap/ödeme uyumu (iki herkese açık ana sayfa başarılı), PDF/indirme ve diğer platform testleri ayrı ayrı kaydedilmeli.
-3. Gerçek motor testleri ve kullanıcı onayı olmadan Kapı 1 kapanmayacak.
+1. Mevcut `v0.0.1-motor-test.4` Android telefon APK'sında sosyal medya sitesi yüklenmesini dene: `https://www.instagram.com/` bağlantısını Paylaş → EymenBrowser ile aç. Sayfanın yüklenmesi, kaydırılması veya gösterdiği hata ayrı kaydedilecek; yalnız giriş ekranının açılması hesapla oturum açma sayılmayacak.
+2. Google hesabına gerçek giriş (yalnız form açılışı başarılı), diğer Android cihaz/sürüm kontrolleri ve kalan motor testleri ayrı ayrı kaydedilmeli. PDF başarı sonucu bütün dosya türlerine veya arka planda büyük dosya indirmeye genellenmeyecek.
+3. Kapı 1 açık kalacak. TV, bilgisayar ve Apple için kullanıcı yeniden başlatana kadar çalışma yapılmayacak; Aşama 2 arayüz uygulamasına başlanmayacak.
 
 ## Açık konular
-- Gerçek cihaz motor uyumu, Google oturum açma, DRM/korumalı video, e-Devlet, bankalar, TV kumandasıyla test yolu ve iPhone testleri **denenmedi**.
-- Apple Developer/EVS gerektiren üretim imzaları yok. Yalnız arm64 Android telefon motor deneme APK'sı [test Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.1) **debug imzalı** olarak yayımlandı; kararlı sürüm değildir.
+- Android telefonda sosyal medya, gerçek Google oturumu, diğer cihaz/sürüm kapsamı, büyük dosya ve diğer dosya türleri henüz doğrulanmadı. Banka ve e-Devlet için yalnız herkese açık ana sayfalar doğrulandı. TV/masaüstü/iOS testleri beklemede.
+- Apple Developer/EVS gerektiren üretim imzaları yok. Güncel Android telefon motor deneme APK'sı [v0.0.1-motor-test.4 Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.4) **debug/test imzalı** yayımlandı; kararlı sürüm değildir.
 
 ## Yeni Android tam ekran/yatay döndürme hatası — 2026-11-04
 
@@ -105,3 +105,10 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Yayın betiği düzeltmesi:** Android telefon APK derlemesi [GitHub Actions #41832912227](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41832912227) üzerinde başarılıydı; ancak RELEASE_NOTES here-document kapanışı ile sonraki shell komutu aynı satıra birleştiği için yayın adımı gerçekte çalışmamıştı. Bu durum giderildi; yeni Releases varlığı doğrulanana kadar APK yayımlandı sayılmıyor.
 
 - **Yeni APK doğrulandı ve yayımlandı:** [GitHub Releases v0.0.1-motor-test.4](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.4) içinde yalnızca `EymenBrowser-Android-Telefon-arm64-PDF-INDIRME-TEST.apk` (**204193824 bayt**) bulunmaktadır. [GitHub Actions #41833503736](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41833503736) dosya boyutu, statik kontroller, Android APK derlemesi ve yayın adımları **başarılı**. İndirme işleminin gerçek telefonda çalıştığı **henüz test edilmedi**. Sadece Android telefon debug/test APK'dır.
+
+## Android telefon — PDF indirme tekrar testi başarılı, 2026-11-04
+
+- Kullanıcıya `v0.0.1-motor-test.4` APK'sı ile `dummy.pdf` belgesini açma, Download → İndir seçme, Dosyalar → İndirilenler'de dosyayı bulup açma adımları verildi. Kullanıcı **"Tamam oldu devam et"** yanıtıyla bu denemenin başarılı olduğunu bildirdi.
+- **Güncel sonuç:** Örnek PDF'nin görüntülenmesi, telefona indirilmesi ve indirilen dosyanın açılması kullanıcı teyidiyle başarılı. Önceki başarısız sonuçlar yukarıda tarihçe olarak korunur. Bu geri bildirim Android 8/9 SAF, bütün dosya türleri veya arka planda büyük dosya indirme sonucu değildir.
+- **Sıradaki iş:** Aynı APK üzerinde Instagram web sayfasını yükleme/kaydırma testi. Yeni APK kurulumu gerekmiyor; sosyal medya sonucu henüz denenmedi.
+- **Açık durum:** Kapı 1 açık, Aşama 2 başlamadı. TV, bilgisayar ve Apple kullanıcı kararıyla beklemede. Bu kayıt yalnız test belgelerini günceller.

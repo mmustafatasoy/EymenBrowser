@@ -1,8 +1,8 @@
 # Aşama 1 — motor denemeleri
 
 Bu proje, onaylı 16 ekranın uygulaması değildir. **Android telefonda temel HTTPS sayfaları,
-YouTube ve Sintel Widevine DRM oynatma kullanıcı tarafından doğrulandı.** Google hesabıyla
-oturum açma, TV/masaüstü/iOS DRM, dosya indirme ve diğer motor testleri henüz tamamlanmadı.
+YouTube, Sintel Widevine DRM oynatma ve örnek PDF'yi indirme/açma kullanıcı tarafından doğrulandı.** Google hesabıyla
+oturum açma, sosyal medya, diğer dosya türleri, TV/masaüstü/iOS DRM ve diğer motor testleri henüz tamamlanmadı.
 Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 
 ## Motor denemeleri
@@ -28,7 +28,7 @@ Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| PDF ve dosya indirme | **PDF görüntüleme başarılı** (Dummy PDF ekran fotoğrafı); Download düğmesi görünüyor, dosyanın gerçekten indirilmesi DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
+| PDF ve dosya indirme | **PDF görüntüleme, Download ile kaydetme ve indirilen dosyayı açma başarılı** (`v0.0.1-motor-test.4`, kullanıcı teyidi); diğer dosya türleri ve büyük dosyalar denenmedi | Denenmedi | Denenmedi | Denenmedi |
 
 Samsung Android 14, Tecno Android 16, Philips Android TV ve Android TV emülatörü
 ayrı ayrı kontrol edilir. Masaüstünde Windows 10/11, macOS 13+ ve Ubuntu; iOS'ta
@@ -169,3 +169,15 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Yeni motor test değişikliği:** onExternalResponse → Android telefon indirme işleyicisi; `WebResponse.body` akışının yeniden HTTP isteği oluşturmadan asenkron kaydı. Android 10+ MediaStore Downloads + IS_PENDING, Android 8-9 SAF, kullanıcı onayı ve hata temizliği. Bunlar gerçek cihazda henüz doğrulanmadı.
 - **Tekrar test:** `v0.0.1-motor-test.4` yeni APK'sından sonra PDF belgeyi aç, **Download** düğmesine bas, EYMEN Browser onayını ver, `Dosyalar/İndirilenler` içerisinde aynı PDF'nin kaydedildiğini doğrula. Başarılı ise dosyanın açıldığını da bildir.
 - **Güvenlik:** İnternet bağlantısı tekrar açılmıyor; site sertifika kontrolleri değiştirilmedi. Yeni ekran tasarımı eklenmedi. TV, masaüstü, iOS kapsam dışı.
+
+## PDF indirme tekrar testi — kullanıcı teyidi, 2026-11-04
+
+- Kullanıcı, `v0.0.1-motor-test.4` APK'sı için PDF'yi açma, Download → İndir seçme ve Dosyalar → İndirilenler'de `dummy.pdf` dosyasını bulup açma kontrolünün ardından **"Tamam oldu devam et"** dedi.
+- **Başarılı:** Android telefonda örnek PDF görüntüleme, dosyayı kaydetme ve indirilen dosyayı açma (kullanıcı bildirimi). Önceki indirme hatası bu örnek için giderildi.
+- **Denenmedi:** Android 8/9 SAF akışı, diğer dosya türleri, büyük/arka plan indirmeleri ve başka cihazlar. Kullanıcı bildirimi bu kapsamların sonucu değildir.
+
+## Sıradaki Android telefon testi — sosyal medya
+
+- Mevcut APK korunur; yeniden kurulum gerekmez. `https://www.instagram.com/` bağlantısını Chrome'dan Paylaş → EymenBrowser ile aç.
+- Sayfanın yüklenip yüklenmediğini, kaydırmanın çalışıp çalışmadığını ve varsa hata mesajını bildir. Giriş ekranı çıkarsa bu yalnız giriş sayfasının görüntülendiğini doğrular; hesapla oturum açma sonucu sayılmaz.
+- **Durum:** Henüz denenmedi. TV, bilgisayar ve Apple çalışmaları beklemede; Kapı 1 açıktır.
