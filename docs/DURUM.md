@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açılmadı.** Gerçek Android telefonda `https://example.org/` sayfasının açıldığı fotoğrafla ve Google sayfasının paylaşım yoluyla açıldığı kullanıcı geri bildirimiyle doğrulandı. Google girişi, DRM, e-Devlet, bankalar, video, PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
+- **Kapı 1: açılmadı.** Gerçek Android telefonda `https://example.org/` sayfasının açıldığı fotoğrafla ve Google sayfasının paylaşım yoluyla açıldığı kullanıcı geri bildirimiyle doğrulandı. Google girişi, DRM, e-Devlet, bankalar, YouTube tam ekranı ve PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -33,12 +33,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 
 - GeckoView'e yalnızca doğrulanmış HTTPS adreslerini alan Android `ACTION_SEND` ve `ACTION_VIEW` deneme niyetleri eklendi. Böylece telefondan başka uygulama üzerinden `Paylaş → EymenBrowser` kullanılarak Google, YouTube, e-Devlet vb. siteler ADB gerekmeksizin manuel denenebilecek.
 - Uygulama **yalnız motor testidir**: T01–T11/V01–V03 ekranları, adres çubuğu ve sekmeler şartnamedeki Kapı 1 tamamlanmadan oluşturulmadı.
-- Android telefon ve TV motor testinin **yeni APK derlemesi başarılı**: [GitHub Actions #41808478602](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41808478602). Altı işlemciye özel debug APK hazır; 500 MB dosya başı sınırının tamamı geçti. **Telefon paylaşım testi kullanıcı tarafından başarılı doğrulandı:** Google bağlantısı Chrome'dan Paylaş → EymenBrowser ile açıldı. Bu, Google hesabı oturum açmanın çalıştığı anlamına gelmez.
+- Android telefon ve TV motor testinin **yeni APK derlemesi başarılı**: [GitHub Actions #41808478602](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41808478602). Altı işlemciye özel debug APK hazır; 500 MB dosya başı sınırının tamamı geçti. **Telefon paylaşım testi kullanıcı tarafından başarılı doğrulandı:** Google bağlantısı Chrome'dan Paylaş → EymenBrowser ile açıldı. Kullanıcı ayrıca YouTube videosunun **görüntülü ve sesli oynatıldığını** doğruladı. Bu, Google hesabı oturum açma, tam ekran ya da DRM'nin çalıştığı anlamına gelmez.
 - Bu test sürümünün gerçek APK ölçümleri (bayt): telefon arm64-v8a **204171320**, armeabi-v7a **164976396**, x86_64 **223765886**; TV arm64-v8a **205423940**, armeabi-v7a **166229016**, x86_64 **225018506**.
 
 ## Sıradaki iş
 1. Fiziksel Android telefon ve Android TV'ye işlemciye uygun test APK'sı kurulup varsayılan HTTPS sayfası açma denenmeli.
-2. Ardından Google girişi, korumalı video, e-Devlet, iki banka, PDF/indirme ve medya testleri her motor için gerçek sonuçlarla kaydedilmeli.
+2. Android telefonda YouTube video ve ses oynatma doğrulandı; sıradaki test tam ekran video. Google girişi, korumalı video/DRM, e-Devlet, iki banka, PDF/indirme ve diğer platform testleri ayrı ayrı kaydedilmeli.
 3. Gerçek motor testleri ve kullanıcı onayı olmadan Kapı 1 kapanmayacak.
 
 ## Açık konular
