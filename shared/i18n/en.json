@@ -63,5 +63,19 @@
   "browser_menu_title": "EymenBrowser",
   "theme_day": "Day theme",
   "theme_night": "Night theme",
-  "menu_current_page": "Reload current page"
+  "menu_current_page": "Reload current page",
+  "tab_all": "All",
+  "tab_groups_pending": "Groups are coming later",
+  "normal_tabs_empty": "No open tabs",
+  "private_tabs_empty": "No private tabs",
+  "tab_add_hint": "Use the button below to create a new tab.",
+  "close_all_tabs": "Close all",
+  "new_private_tab": "New private tab",
+  "private_address_hint": "Search privately",
+  "private_intro": "Local browsing history is not kept after private sessions are closed.",
+  "private_does_not_keep_title": "Not kept on this device",
+  "private_does_not_keep_desc": "Private browsing history, cookies and form data aren't retained after the session closes.",
+  "private_still_visible_title": "Still visible",
+  "private_still_visible_desc": "Sites you visit, your internet provider, and your work or school network. Downloaded files remain on the device.",
+  "private_lock_unavailable": "Lock on return is not available yet."
 }
