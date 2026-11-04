@@ -47,11 +47,17 @@
         "AppImage",
         "deb"
       ],
-      "category": "Network"
+      "category": "Network",
+      "maintainer": "Atasoy Yazılım <344944535+mmustafatasoy@users.noreply.github.com>"
     },
     "asar": true,
     "electronDownload": {
       "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
     }
+  },
+  "homepage": "https://github.com/mmustafatasoy/EymenBrowser",
+  "author": {
+    "name": "Atasoy Yazılım",
+    "email": "344944535+mmustafatasoy@users.noreply.github.com"
   }
 }
