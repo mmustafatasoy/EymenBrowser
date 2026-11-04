@@ -2,7 +2,7 @@
 
 Bu proje, onaylı 16 ekranın uygulaması değildir. **Android telefonda temel HTTPS sayfaları,
 YouTube ve Sintel Widevine DRM oynatma kullanıcı tarafından doğrulandı.** Google hesabıyla
-oturum açma, TV/masaüstü/iOS DRM, PDF/indirme ve diğer motor testleri henüz tamamlanmadı.
+oturum açma, TV/masaüstü/iOS DRM, dosya indirme ve diğer motor testleri henüz tamamlanmadı.
 Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 
 ## Motor denemeleri
@@ -28,7 +28,7 @@ Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
-| PDF ve dosya indirme | Denenmedi | Denenmedi | Denenmedi | Denenmedi |
+| PDF ve dosya indirme | **PDF görüntüleme başarılı** (Dummy PDF ekran fotoğrafı); Download düğmesi görünüyor, dosyanın gerçekten indirilmesi DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
 
 Samsung Android 14, Tecno Android 16, Philips Android TV ve Android TV emülatörü
 ayrı ayrı kontrol edilir. Masaüstünde Windows 10/11, macOS 13+ ve Ubuntu; iOS'ta
@@ -151,3 +151,12 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Yalnız Android TV / Google TV (Android 8+) kapsamda; LG webOS, Samsung Tizen, Whale OS gibi diğer sistemler bu APK'yı doğrudan çalıştırmayabilir.
 - Uygulama açılınca `https://example.org/` sayfası görüntülenirse **yalnız başlangıç HTTPS motor testi** başarılı sayılır. Daha fazla site açma ve TV kumanda testleri ayrıca yapılır.
 - TV APK'sı **debug/test imzalıdır**, üretim sürümü değildir; Google hesabı/banka bilgileri TV üzerinde test amacıyla girilmemelidir.
+
+## Android telefon — PDF sayfa görüntüleme (2026-11-04)
+
+- Kullanıcı, `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` deneme bağlantısının EymenBrowser'da **uygulama içi PDF görüntüleyicide açıldığını** gösteren ekran fotoğrafı paylaştı.
+- Görselde beyaz PDF sayfası üzerinde `Dummy PDF file` metni ve üst tarafta `Download` seçeneği açıkça görülüyor.
+- **Başarılı:** GeckoView Android telefon içinde örnek PDF belgesi görüntüleme.
+- **Henüz doğrulanmadı:** Download düğmesinin dosyayı telefonun İndirilenler klasörüne kaydetmesi, dosyanın sonradan açılması ve Android indirme yöneticisi uyumluluğu. Görünen düğme tek başına indirme başarısı kanıtı değildir.
+- **Sonraki test:** PDF açıkken `Download` düğmesine dokun. Android dosyayı indirirse telefonun Dosyalar → İndirilenler bölümünden `dummy.pdf` dosyasını doğrula. Çıkarsa hata türünü bildir. Kişisel bir dosya kullanma.
+- **Platform önceliği:** Kullanıcı isteği uyarınca yalnız Android telefon çalışmaları devam ediyor; TV, masaüstü ve Apple beklemede. Kapı 1 tüm platformlar için henüz açık.
