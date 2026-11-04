@@ -63,7 +63,7 @@ def produce():
     for lang, data in LANG.items():
         resource = ['<?xml version="1.0" encoding="utf-8"?>', '<resources>']
         for key, text in data.items():
-            escaped = html.escape(text, quote=True).replace("'", "\\'")
+            escaped = html.escape(text, quote=False).replace("'", chr(92) + "'").replace('"', chr(92) + '"')
             resource.append(f'    <string name="{key}">{escaped}</string>')
         resource.append('</resources>')
         suffix = "values" if lang == "tr" else "values-en"
