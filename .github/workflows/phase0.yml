@@ -31,6 +31,8 @@ jobs:
         run: python tools/check_download_handling.py
       - name: Android T06 T09 sekme ve gizli oturum regresyon denetimi
         run: python tools/check_tab_sessions.py
+      - name: Android T07 menu ve eylem regresyon denetimi
+        run: python tools/check_menu_actions.py
       - uses: actions/upload-artifact@v4
         with:
           name: EymenBrowser-generated-themes
@@ -41,7 +43,7 @@ jobs:
             shared/ikon/eymen-icons.svg
 
   android:
-    name: Android telefon GeckoView + T01-T04/T06/T09/T11 derleme
+    name: Android telefon GeckoView + T01-T04/T06/T07/T09/T11 derleme
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
