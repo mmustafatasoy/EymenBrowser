@@ -15,7 +15,7 @@ on_exit() {
 }
 trap on_exit EXIT
 
-APK="$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)"
+APK="${EY_APK_PATH:-$(find android/app-telefon/build/outputs/apk/debug -name '*x86_64*.apk' -print -quit)}"
 test -n "$APK" && test -f "$APK"
 adb shell wm size 390x844
 adb shell wm density 160
