@@ -94,7 +94,7 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
         try {
             AlertDialog.Builder(activity)
                 .setTitle(R.string.download_confirm_title)
-                .setMessage(activity.getString(R.string.download_confirm_message, filename))
+                .setMessage(activity.getString(R.string.download_confirm_message, request.fileName))
                 .setPositiveButton(R.string.download_confirm_allow) { _, _ ->
                     choosing = null
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -103,8 +103,8 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                         saveAs = request
                         val selectFile = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                             addCategory(Intent.CATEGORY_OPENABLE)
-                            type = mime
-                            putExtra(Intent.EXTRA_TITLE, filename)
+                            type = request.mimeType
+                            putExtra(Intent.EXTRA_TITLE, request.fileName)
                         }
                         try {
                             documentPicker.launch(selectFile)
