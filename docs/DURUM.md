@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açılmadı.** Kullanıcıdan gelen gerçek Android telefon görüntüsünde `https://example.org/` sayfasının GeckoView üzerinde açıldığı doğrulandı. Google girişi, DRM, e-Devlet, bankalar, video, PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
+- **Kapı 1: açılmadı.** Gerçek Android telefonda `https://example.org/` sayfasının açıldığı fotoğrafla ve Google sayfasının paylaşım yoluyla açıldığı kullanıcı geri bildirimiyle doğrulandı. Google girişi, DRM, e-Devlet, bankalar, video, PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -33,7 +33,7 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 
 - GeckoView'e yalnızca doğrulanmış HTTPS adreslerini alan Android `ACTION_SEND` ve `ACTION_VIEW` deneme niyetleri eklendi. Böylece telefondan başka uygulama üzerinden `Paylaş → EymenBrowser` kullanılarak Google, YouTube, e-Devlet vb. siteler ADB gerekmeksizin manuel denenebilecek.
 - Uygulama **yalnız motor testidir**: T01–T11/V01–V03 ekranları, adres çubuğu ve sekmeler şartnamedeki Kapı 1 tamamlanmadan oluşturulmadı.
-- Android telefon ve TV motor testinin **yeni APK derlemesi başarılı**: [GitHub Actions #41808478602](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41808478602). Altı işlemciye özel debug APK hazır; 500 MB dosya başı sınırının tamamı geçti. Telefonda bağlantı paylaşımıyla açma testi henüz **denenmedi**.
+- Android telefon ve TV motor testinin **yeni APK derlemesi başarılı**: [GitHub Actions #41808478602](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41808478602). Altı işlemciye özel debug APK hazır; 500 MB dosya başı sınırının tamamı geçti. **Telefon paylaşım testi kullanıcı tarafından başarılı doğrulandı:** Google bağlantısı Chrome'dan Paylaş → EymenBrowser ile açıldı. Bu, Google hesabı oturum açmanın çalıştığı anlamına gelmez.
 - Bu test sürümünün gerçek APK ölçümleri (bayt): telefon arm64-v8a **204171320**, armeabi-v7a **164976396**, x86_64 **223765886**; TV arm64-v8a **205423940**, armeabi-v7a **166229016**, x86_64 **225018506**.
 
 ## Sıradaki iş
@@ -43,4 +43,4 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 
 ## Açık konular
 - Gerçek cihaz motor uyumu, Google oturum açma, DRM/korumalı video, e-Devlet, bankalar, TV kumandasıyla test yolu ve iPhone testleri **denenmedi**.
-- Apple Developer/EVS gerektiren üretim imzaları yok. Test APK'ları `Releases` içinde yayınlanmadı.
+- Apple Developer/EVS gerektiren üretim imzaları yok. Yalnız arm64 Android telefon motor deneme APK'sı [test Releases sayfasında](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.1) **debug imzalı** olarak yayımlandı; kararlı sürüm değildir.
