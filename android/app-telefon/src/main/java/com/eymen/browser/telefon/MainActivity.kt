@@ -121,6 +121,8 @@ class MainActivity : ComponentActivity() {
                     day = dayMode.value,
                     recentUrls = recent,
                     addressBottom = addressBottom,
+                    shieldEnabled = globalShieldWanted.value,
+                    realBlockedCount = tabs.filter { !it.privateMode }.sumOf { it.blockedTab },
                     onOpen = ::openUrl,
                     onDevices = ::showDevices,
                     onShield = ::showShield
