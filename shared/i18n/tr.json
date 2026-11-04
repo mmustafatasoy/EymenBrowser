@@ -129,5 +129,6 @@
   "shield_autoplay_desc": "Otomatik oynatma ayarı henüz hazır değil",
   "shield_scope_explanation": "Engellenen öğe sayıları GeckoView'ın bu oturumda bildirdiği olaylardır. Bu koruma VPN değildir; tüm reklamları kaldırma garantisi vermez.",
   "shield_global": "Gecko izleyici koruması",
-  "shield_site_exception": "Bu site için istisna"
+  "shield_site_exception": "Bu site için istisna",
+  "shield_summary_counter": "Bu oturumda %1$d gerçek engelleme olayı"
 }
