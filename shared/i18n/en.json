@@ -29,5 +29,18 @@
   "download_missing": "The file data is not available.",
   "download_cancelled": "Download cancelled.",
   "download_failed": "Could not save the file.",
-  "download_saved": "Saved file: %1$s"
+  "download_saved": "Saved file: %1$s",
+  "onboarding_brand": "EymenBrowser",
+  "onboarding_author": "M. Muhammet Atasoy",
+  "onboarding_channel": "Globalworkm",
+  "onboarding_headline": "Three choices and you're ready.",
+  "onboarding_caption": "You can change these later in Settings.",
+  "onboarding_shield": "Block ads and trackers",
+  "onboarding_shield_caption": "Pages load faster. You can disable it on any site.",
+  "onboarding_shield_pending": "Protection isn't active yet; your choice will be saved.",
+  "onboarding_search_engine": "Search engine",
+  "onboarding_address_position": "Where should the address bar go?",
+  "onboarding_bottom": "Bottom",
+  "onboarding_top": "Top",
+  "onboarding_default_browser": "Make my default browser"
 }
