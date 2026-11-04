@@ -69,6 +69,9 @@ internal fun TabOverview(
     var section by remember { mutableStateOf(
         if (activePrivate) TabSection.PRIVATE else TabSection.NORMAL
     ) }
+    LaunchedEffect(activePrivate) {
+        section = if (activePrivate) TabSection.PRIVATE else TabSection.NORMAL
+    }
     val background = if (day) T.gunduz_zemin else T.gece_zemin
     val surface = if (day) T.gunduz_yuzey1 else T.gece_yuzey1
     val muted = if (day) T.gunduz_yaziIkincil else T.gece_yaziIkincil
