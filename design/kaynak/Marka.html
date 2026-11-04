@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>EymenBrowser marka ve tasarım dili</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, 'Segoe UI', Roboto, sans-serif; display: grid; grid-template-columns: 560px minmax(0, 1fr); overflow: hidden">
+  <section style="position: relative; box-sizing: border-box; padding: 64px; display: flex; flex-direction: column; justify-content: space-between; background: #0D1424; overflow: hidden">
+    <svg aria-hidden="true" viewBox="0 0 560 900" style="position: absolute; inset: 0; width: 100%; height: 100%">
+      <g fill="none" stroke="#1B2540" stroke-width="1">
+        <circle cx="520" cy="470" r="150"></circle>
+        <circle cx="520" cy="470" r="250"></circle>
+        <circle cx="520" cy="470" r="350"></circle>
+        <circle cx="520" cy="470" r="450"></circle>
+      </g>
+    </svg>
+    <div style="position: relative; display: flex; align-items: center; gap: 12px">
+      <svg width="36" height="36" viewBox="0 0 64 64" role="img" aria-label="EymenBrowser işareti"><path d="M46 10.5A26 26 0 1 0 46 53.5" fill="none" stroke="#4DA3FF" stroke-width="7" stroke-linecap="round"></path><rect x="21" y="17" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect><rect x="21" y="28.5" width="24" height="7" rx="3.5" fill="#4DA3FF"></rect><rect x="21" y="40" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect></svg>
+      <div style="font-family: Sora, Inter, sans-serif; font-weight: 600; font-size: 20px; letter-spacing: -0.2px">EymenBrowser</div>
+    </div>
+    <div style="position: relative; display: flex; flex-direction: column; gap: 32px">
+      <svg width="248" height="248" viewBox="0 0 64 64" role="img" aria-label="EymenBrowser büyük işareti"><path d="M46 10.5A26 26 0 1 0 46 53.5" fill="none" stroke="#4DA3FF" stroke-width="7" stroke-linecap="round"></path><rect x="21" y="17" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect><rect x="21" y="28.5" width="24" height="7" rx="3.5" fill="#4DA3FF"></rect><rect x="21" y="40" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect></svg>
+      <h1 style="margin: 0; font-family: Sora, Inter, sans-serif; font-weight: 600; font-size: 44px; line-height: 1.12; letter-spacing: -1px; max-width: 420px">Dünya içinde, üç sekme.</h1>
+      <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #A9B6CF; max-width: 400px">İşaret iki parçadır: dünyayı anlatan açık halka, E harfini kuran üç sekme. Orta sekme hep mavidir ve kısadır.</p>
+    </div>
+    <div style="position: relative; font-size: 13px; color: #A9B6CF">M. Muhammet Atasoy · Globalworkm</div>
+  </section>
+
+  <section style="box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 36px; min-width: 0">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">Gece teması</h2>
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{gece}}" as="r" hint-placeholder-count="8">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="height: 104px; border-radius: 12px; border: 1px solid #34436A; background: {{r.hex}}"></div>
+            <div style="font-size: 12px; font-weight: 600">{{r.ad}}</div>
+            <div style="font-size: 12px; color: #A9B6CF">{{r.hex}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">Gündüz teması</h2>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{gunduz}}" as="r" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="height: 44px; border-radius: 10px; border: 1px solid #34436A; background: {{r.hex}}"></div>
+              <div style="font-size: 12px; color: #A9B6CF">{{r.hex}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">Gizli sekme teması</h2>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{gizli}}" as="r" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="height: 44px; border-radius: 10px; border: 1px solid #34436A; background: {{r.hex}}"></div>
+              <div style="font-size: 12px; color: #A9B6CF">{{r.hex}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 32px; min-height: 0">
+      <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <h2 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">Yazı</h2>
+        <div style="font-family: Sora, Inter, sans-serif; font-size: 34px; font-weight: 600; letter-spacing: -0.6px">Şimdi ağa çık, ğüşıöç</div>
+        <div style="font-size: 13px; color: #A9B6CF">Sora 600: yalnızca marka ve büyük başlık</div>
+        <div style="font-size: 20px; font-weight: 500">Arayüzün tamamı Inter ile yazılır</div>
+        <div style="font-size: 13px; color: #A9B6CF">Inter 400, 500, 600: menü, buton, liste, adres çubuğu</div>
+        <table style="border-collapse: collapse; font-size: 13px; margin-top: 4px">
+          <thead><tr style="color: #A9B6CF; text-align: left"><th style="font-weight: 500; padding: 4px 16px 4px 0">Ölçü</th><th style="font-weight: 500; padding: 4px 16px 4px 0">Telefon</th><th style="font-weight: 500; padding: 4px 16px 4px 0">Bilgisayar</th><th style="font-weight: 500; padding: 4px 0">TV</th></tr></thead>
+          <tbody>
+            <tr><td style="padding: 4px 16px 4px 0">Gövde yazısı</td><td style="padding: 4px 16px 4px 0">15</td><td style="padding: 4px 16px 4px 0">14</td><td style="padding: 4px 0">28</td></tr>
+            <tr><td style="padding: 4px 16px 4px 0">Dokunma, odak alanı</td><td style="padding: 4px 16px 4px 0">48</td><td style="padding: 4px 16px 4px 0">36</td><td style="padding: 4px 0">88</td></tr>
+            <tr><td style="padding: 4px 16px 4px 0">Kart köşesi</td><td style="padding: 4px 16px 4px 0">16</td><td style="padding: 4px 16px 4px 0">16</td><td style="padding: 4px 0">20</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+        <h2 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">Temel parçalar</h2>
+        <div style="height: 48px; box-sizing: border-box; border-radius: 24px; background: #1B2540; border: 1px solid #34436A; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DD6A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg>
+          <span style="font-size: 15px">Ara veya adres yaz</span>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <button type="button" style="height: 44px; padding: 0 20px; border: none; border-radius: 22px; background: #4DA3FF; color: #06101F; font: 600 15px Inter, sans-serif">Ana buton</button>
+          <button type="button" style="height: 44px; padding: 0 20px; border: 1px solid #34436A; border-radius: 22px; background: transparent; color: #F1F4FA; font: 500 15px Inter, sans-serif">İkincil</button>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <div style="height: 88px; width: 176px; flex-shrink: 0; margin: 4px; box-sizing: border-box; border-radius: 20px; background: #1B2540; box-shadow: 0 0 0 4px #F1F4FA; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; white-space: nowrap">TV odak hali</div>
+          <div style="font-size: 13px; line-height: 1.45; color: #A9B6CF">Beyaz 4 px çerçeve ve 1,06 büyüme. TV'de seçili öğe yalnızca renkle gösterilmez.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      gece: [
+        { ad: 'Zemin', hex: '#0A0F1C' }, { ad: 'Yüzey 1', hex: '#121A2B' }, { ad: 'Yüzey 2', hex: '#1B2540' }, { ad: 'Yüzey 3', hex: '#26324F' },
+        { ad: 'Vurgu', hex: '#4DA3FF' }, { ad: 'Koruma', hex: '#3DD6A3' }, { ad: 'Uyarı', hex: '#FFB547' }, { ad: 'Tehlike', hex: '#FF8A80' }
+      ],
+      gunduz: [{ hex: '#F5F7FB' }, { hex: '#FFFFFF' }, { hex: '#E9EEF7' }, { hex: '#0E1526' }, { hex: '#0B5FD0' }],
+      gizli: [{ hex: '#120E24' }, { hex: '#1D1736' }, { hex: '#2A2150' }, { hex: '#F3F0FB' }, { hex: '#B79CFF' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

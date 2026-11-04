@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Açılış ekranı</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F1F4FA}a:hover{color:#7ABBFF}
+@keyframes halkaCiz{from{stroke-dashoffset:120}to{stroke-dashoffset:0}}
+@keyframes sekmeGir{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes belir{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<a href="Telefon-Kurulum.dc.html" aria-label="Kuruluma geç" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 72px 32px 56px; overflow: hidden; text-decoration: none">
+  <svg aria-hidden="true" viewBox="0 0 390 844" style="position: absolute; inset: 0; width: 100%; height: 100%">
+    <g fill="none" stroke="#1B2540" stroke-width="1">
+      <circle cx="195" cy="376" r="124"></circle>
+      <circle cx="195" cy="376" r="192"></circle>
+      <circle cx="195" cy="376" r="268"></circle>
+      <circle cx="195" cy="376" r="352"></circle>
+    </g>
+  </svg>
+  <div style="height: 24px"></div>
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 28px">
+    <svg width="152" height="152" viewBox="0 0 64 64" role="img" aria-label="EymenBrowser işareti">
+      <path d="M46 10.5A26 26 0 1 0 46 53.5" fill="none" stroke="#4DA3FF" stroke-width="7" stroke-linecap="round" stroke-dasharray="120" style="animation: halkaCiz 420ms cubic-bezier(.3,.7,.2,1) both"></path>
+      <rect x="21" y="17" width="33" height="7" rx="3.5" fill="#F1F4FA" style="animation: sekmeGir 240ms 300ms ease-out both"></rect>
+      <rect x="21" y="28.5" width="24" height="7" rx="3.5" fill="#4DA3FF" style="animation: sekmeGir 240ms 400ms ease-out both"></rect>
+      <rect x="21" y="40" width="33" height="7" rx="3.5" fill="#F1F4FA" style="animation: sekmeGir 240ms 500ms ease-out both"></rect>
+    </svg>
+    <div style="font-family: Sora, Inter, sans-serif; font-weight: 600; font-size: 32px; letter-spacing: -0.6px; animation: belir 260ms 560ms ease-out both">EymenBrowser</div>
+  </div>
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; animation: belir 260ms 640ms ease-out both">
+    <div style="font-size: 15px; font-weight: 500">M. Muhammet Atasoy</div>
+    <div style="font-size: 13px; color: #A9B6CF">Globalworkm</div>
+  </div>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>TV sayfa ve imleç</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F1F4FA}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="position: relative; width: 1920px; height: 1080px; box-sizing: border-box; background: #FFFFFF; font-family: Inter, Roboto, sans-serif; overflow: hidden">
+  <article lang="en" style="position: absolute; left: 96px; right: 96px; top: 54px; display: grid; grid-template-columns: 860px minmax(0, 1fr); gap: 72px; color: #16181D">
+    <svg viewBox="0 0 860 600" role="img" aria-label="Örnek sayfa görseli yeri" style="width: 860px; height: 600px; border-radius: 16px; display: block">
+      <rect width="860" height="600" fill="#DDE7DC"></rect>
+      <circle cx="680" cy="150" r="70" fill="#F2EFE3"></circle>
+      <path d="M0 440c150-120 280-120 430-40s280 70 430-40v240H0z" fill="#9DB89A"></path>
+      <path d="M0 500c170-60 320-50 470-10s270 30 390-20v130H0z" fill="#6E9270"></path>
+    </svg>
+    <div style="display: flex; flex-direction: column; gap: 28px">
+      <div style="font-size: 26px; font-weight: 600; color: #4A5468">Small Garden Journal</div>
+      <h1 style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 64px; line-height: 1.12; font-weight: 700">How to keep a small garden alive through winter</h1>
+      <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 34px; line-height: 1.45">Cold weather does not have to end the growing season.</p>
+      <div style="width: 300px; height: 76px; border-radius: 14px; background: #16181D; color: #FFFFFF; font-size: 28px; font-weight: 600; display: flex; align-items: center; justify-content: center">Read the guide</div>
+    </div>
+  </article>
+
+  <svg width="64" height="64" viewBox="0 0 24 24" role="img" aria-label="Sanal imleç" style="position: absolute; left: 1250px; top: 560px; filter: drop-shadow(0 3px 6px rgba(6, 16, 31, 0.5))">
+    <path d="M5 3l14 9-6.2 1.4L16 20l-3 1.4-3.2-6.6L5 19z" fill="#4DA3FF" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"></path>
+  </svg>
+
+  <div style="position: absolute; left: 96px; right: 96px; bottom: 54px; height: 184px; box-sizing: border-box; border-radius: 28px; background: #121A2B; color: #F1F4FA; padding: 16px 32px; display: flex; flex-direction: column; justify-content: center; gap: 12px; box-shadow: 0 16px 48px rgba(6, 16, 31, 0.45)">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <sc-for list="{{araclar}}" as="a" hint-placeholder-count="8">
+        <a href="{{a.git}}" aria-label="{{a.ad}}" onMouseEnter="{{a.odakla}}" style="{{a.stil}}">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.ikon}}"></path></svg>
+        </a>
+      </sc-for>
+      <div style="margin-left: auto; min-width: 0; font-size: 26px; color: #A9B6CF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">smallgardenjournal.example</div>
+    </div>
+    <div style="font-size: 26px; font-weight: 500">{{aciklama}}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { odak: 3 }; }
+  renderVals() {
+    const liste = [
+      { ad: 'Geri', not: 'Önceki sayfaya dön', git: 'TV-Ana.dc.html', ikon: 'M15 5l-7 7 7 7' },
+      { ad: 'İleri', not: 'Sonraki sayfaya git', git: '#', ikon: 'M9 5l7 7-7 7' },
+      { ad: 'Yenile', not: 'Sayfayı yeniden yükle', git: '#', ikon: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5' },
+      { ad: 'İmleç', not: 'İmleç açık. Yön tuşlarıyla gez, Tamam ile tıkla, Geri ile bu çubuğa dön.', git: '#', ikon: 'M5 3l14 9-6.2 1.4L16 20l-3 1.4-3.2-6.6L5 19z' },
+      { ad: 'Yakınlaştır', not: 'Sayfayı büyüt', git: '#', ikon: 'M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4M11 8.5v5M8.5 11h5' },
+      { ad: 'Adres', not: 'Adres veya arama yaz', git: 'TV-Klavye.dc.html', ikon: 'M4 7h16M4 12h10M4 17h7M18 13l3 3-3 3' },
+      { ad: 'Kalkan', not: 'Bu sitede 12 engel', git: '#', ikon: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4' },
+      { ad: 'Ana ekran', not: 'Ana ekrana dön', git: 'TV-Ana.dc.html', ikon: 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z' }
+    ];
+    const { odak } = this.state;
+    return {
+      aciklama: liste[odak].not,
+      araclar: liste.map((a, n) => {
+        const o = odak === n;
+        return { ...a, odakla: () => this.setState({ odak: n }), stil: 'width: 88px; height: 88px; flex-shrink: 0; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #F1F4FA; background: ' + (o ? '#26324F' : '#1B2540') + '; box-shadow: ' + (o ? '0 0 0 4px #F1F4FA' : 'none') + '; transform: ' + (o ? 'scale(1.06)' : 'none') };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Yeni sekme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; overflow: hidden">
+  <div style="box-sizing: border-box; padding: 56px 20px 0; display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; align-items: center; justify-content: space-between">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M46 10.5A26 26 0 1 0 46 53.5" fill="none" stroke="#4DA3FF" stroke-width="7" stroke-linecap="round"></path><rect x="21" y="17" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect><rect x="21" y="28.5" width="24" height="7" rx="3.5" fill="#4DA3FF"></rect><rect x="21" y="40" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect></svg>
+        <div style="font-family: Sora, Inter, sans-serif; font-weight: 600; font-size: 18px">EymenBrowser</div>
+      </div>
+      <a href="Telefon-Sekmeler.dc.html" aria-label="Cihazlarım" style="width: 48px; height: 48px; margin-right: -12px; display: flex; align-items: center; justify-content: center; color: #F1F4FA">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.cihazlar}}"></path></svg>
+      </a>
+    </header>
+
+    <section aria-label="Kısayollar" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 16px; column-gap: 8px">
+      <sc-for list="{{kisayollar}}" as="k" hint-placeholder-count="8">
+        <a href="Telefon-Sayfa.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #F1F4FA; text-decoration: none">
+          <span style="width: 64px; height: 64px; border-radius: 18px; background: #1B2540; display: flex; align-items: center; justify-content: center; font-family: Sora, Inter, sans-serif; font-size: 22px; font-weight: 600">{{k.h}}</span>
+          <span style="font-size: 13px; color: #A9B6CF">{{k.ad}}</span>
+        </a>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 4px">
+      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 600">Kaldığın yerden</h2>
+      <sc-for list="{{devam}}" as="d" hint-placeholder-count="2">
+        <a href="Telefon-Sayfa.dc.html" style="min-height: 60px; display: flex; align-items: center; gap: 12px; color: #F1F4FA; text-decoration: none">
+          <span style="width: 44px; height: 44px; border-radius: 12px; background: #121A2B; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.ikon}}"></path></svg>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.baslik}}</span>
+            <span style="font-size: 13px; color: #A9B6CF">{{d.alt}}</span>
+          </span>
+        </a>
+      </sc-for>
+    </section>
+
+    <a href="Telefon-Kalkan.dc.html" style="background: #121A2B; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; color: #F1F4FA; text-decoration: none">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DD6A3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kalkan}}"></path></svg>
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 15px; font-weight: 600">Bu hafta 1.284 engel</span>
+        <span style="font-size: 13px; color: #A9B6CF">Reklam ve izleyici Kalkan'a takıldı</span>
+      </span>
+    </a>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; background: #121A2B; border-top: 1px solid #26324F; padding: 10px 12px 18px; display: flex; flex-direction: column; gap: 6px">
+    <label style="height: 48px; box-sizing: border-box; border-radius: 24px; background: #1B2540; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 16px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ara}}"></path></svg>
+      <input aria-label="Adres çubuğu" placeholder="Ara veya adres yaz" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #F1F4FA; font: 400 16px Inter, sans-serif">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.mikrofon}}"></path></svg>
+    </label>
+    <nav aria-label="Gezinme" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))">
+      <a href="#" aria-label="Geri" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #8C9AB8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.geri}}"></path></svg></a>
+      <a href="#" aria-label="İleri" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #8C9AB8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ileri}}"></path></svg></a>
+      <a href="Telefon-YeniSekme.dc.html" aria-label="Ana sayfa" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #4DA3FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ev}}"></path></svg></a>
+      <a href="Telefon-Sekmeler.dc.html" aria-label="6 sekme açık" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #F1F4FA; text-decoration: none"><span style="width: 24px; height: 24px; box-sizing: border-box; border: 1.8px solid currentColor; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">6</span></a>
+      <a href="Telefon-Menu.dc.html" aria-label="Menü" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #F1F4FA"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.menu}}"></path></svg></a>
+    </nav>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const i = {
+      cihazlar: 'M5 5h9a2 2 0 0 1 2 2v1M3 15V7a2 2 0 0 1 2-2M3 15h10M7 19h6M17 9h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z',
+      kalkan: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4',
+      ara: 'M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4',
+      mikrofon: 'M12 15a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v3',
+      geri: 'M15 5l-7 7 7 7',
+      ileri: 'M9 5l7 7-7 7',
+      ev: 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z',
+      menu: 'M5 7h14M5 12h14M5 17h14',
+      masaustu: 'M5 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM8 20h8M12 16v4'
+    };
+    return {
+      i,
+      kisayollar: [
+        { h: 'H', ad: 'Haber' }, { h: 'P', ad: 'Posta' }, { h: 'V', ad: 'Video' }, { h: 'M', ad: 'Müzik' },
+        { h: 'H', ad: 'Harita' }, { h: 'B', ad: 'Banka' }, { h: 'S', ad: 'Sözlük' }, { h: 'F', ad: 'Forum' }
+      ],
+      devam: [
+        { ikon: i.masaustu, baslik: 'Kışlık bahçe bakımı rehberi', alt: 'Bilgisayarında açık' },
+        { ikon: i.masaustu, baslik: 'Elektrik faturası hesaplama', alt: 'Bilgisayarında açık' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

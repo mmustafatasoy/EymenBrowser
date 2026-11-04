@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>TV adres girişi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F1F4FA}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="width: 1920px; height: 1080px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; padding: 54px 96px; display: grid; grid-template-columns: 1240px minmax(0, 1fr); gap: 48px; overflow: hidden">
+  <div style="display: flex; flex-direction: column; gap: 28px; min-width: 0">
+    <div style="height: 112px; box-sizing: border-box; border-radius: 24px; background: #1B2540; display: flex; align-items: center; gap: 20px; padding: 0 32px; font-size: 40px">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4"></path></svg>
+      <div aria-label="Yazılan metin" style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden">{{yazi}}<span style="display: inline-block; width: 4px; height: 44px; margin-left: 4px; vertical-align: -6px; background: #4DA3FF"></span></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{tuslar}}" as="t" hint-placeholder-count="48">
+        <button type="button" onClick="{{t.bas}}" onMouseEnter="{{t.odakla}}" style="{{t.stil}}">{{t.y}}</button>
+      </sc-for>
+    </div>
+
+    <footer aria-label="Kumanda tuşları" style="margin-top: auto; display: flex; gap: 40px; font-size: 24px; color: #A9B6CF">
+      <sc-for list="{{ipuclari}}" as="p" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="min-width: 44px; height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 10px; background: #26324F; color: #F1F4FA; font-weight: 600; font-size: 22px; display: flex; align-items: center; justify-content: center">{{p.tus}}</span>
+          {{p.is}}
+        </div>
+      </sc-for>
+    </footer>
+  </div>
+
+  <aside style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0 0 6px; font-size: 30px; font-weight: 600">Öneriler</h2>
+      <sc-for list="{{oneriler}}" as="o" hint-placeholder-count="4">
+        <a href="TV-Sayfa.dc.html" style="min-height: 76px; box-sizing: border-box; padding: 0 24px; border-radius: 16px; background: #121A2B; color: #F1F4FA; font-size: 26px; display: flex; align-items: center; text-decoration: none; white-space: nowrap; overflow: hidden">{{o}}</a>
+      </sc-for>
+    </section>
+
+    <section style="margin-top: auto; background: #121A2B; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-size: 30px; font-weight: 600">Telefondan yaz</h2>
+      <div style="display: flex; align-items: center; gap: 20px">
+        <div aria-label="Eşleştirme kodu için yer" style="width: 180px; height: 180px; flex-shrink: 0; box-sizing: border-box; border-radius: 14px; background: #FFFFFF; color: #16181D; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600; text-align: center">QR kod</div>
+        <p style="margin: 0; font-size: 24px; line-height: 1.4; color: #A9B6CF">Telefonla okut, yazdığın adres burada açılsın.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { yazi: 'kış filmleri', odak: 'e' }; }
+  renderVals() {
+    const { yazi, odak } = this.state;
+    const satirlar = ['1234567890-/', 'qwertyuıopğü', 'asdfghjklşi.', 'zxcvbnmöç:?@'];
+    const stil = (y, sutun, ana) => {
+      const o = odak === y;
+      return 'grid-column: span ' + sutun + '; height: 96px; border: none; border-radius: 16px; font: ' + (y.length > 1 ? '600 28px' : '500 34px') + ' Inter, sans-serif; color: ' + (ana ? '#06101F' : '#F1F4FA') + '; background: ' + (ana ? '#4DA3FF' : (o ? '#26324F' : '#1B2540')) + '; box-shadow: ' + (o ? '0 0 0 4px #F1F4FA' : 'none') + '; transform: ' + (o ? 'scale(1.06)' : 'none') + '; position: relative; z-index: ' + (o ? 1 : 0);
+    };
+    const harf = (y) => ({ y, stil: stil(y, 1, false), odakla: () => this.setState({ odak: y }), bas: () => this.setState({ yazi: this.state.yazi + y }) });
+    const tuslar = satirlar.join('').split('').map(harf);
+    tuslar.push(
+      { y: '.com', stil: stil('.com', 2, false), odakla: () => this.setState({ odak: '.com' }), bas: () => this.setState({ yazi: yazi + '.com' }) },
+      { y: 'Boşluk', stil: stil('Boşluk', 5, false), odakla: () => this.setState({ odak: 'Boşluk' }), bas: () => this.setState({ yazi: yazi + ' ' }) },
+      { y: 'Sil', stil: stil('Sil', 2, false), odakla: () => this.setState({ odak: 'Sil' }), bas: () => this.setState({ yazi: yazi.slice(0, -1) }) },
+      { y: 'Git', stil: stil('Git', 3, true), odakla: () => this.setState({ odak: 'Git' }), bas: () => {} }
+    );
+    return {
+      yazi,
+      tuslar,
+      oneriler: ['kış filmleri listesi', 'kış filmleri 2026', 'kış filmleri çocuk', 'kış filmleri yerli'],
+      ipuclari: [{ tus: 'Tamam', is: 'Harf seç' }, { tus: 'Geri', is: 'Son harfi sil' }, { tus: 'Mikrofon', is: 'Sesle yaz' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

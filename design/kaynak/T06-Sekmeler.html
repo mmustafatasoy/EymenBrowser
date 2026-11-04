@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Sekmeler</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; padding: 56px 16px 0; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+  <div role="tablist" aria-label="Sekme türü" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: #121A2B; border-radius: 16px; padding: 4px">
+    <sc-for list="{{turler}}" as="t" hint-placeholder-count="3">
+      <button type="button" role="tab" aria-selected="{{t.secili}}" onClick="{{t.sec}}" style="{{t.stil}}">{{t.ad}}</button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{normal}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; gap: 8px">
+      <sc-for list="{{gruplar}}" as="g" hint-placeholder-count="3">
+        <button type="button" aria-pressed="{{g.secili}}" onClick="{{g.sec}}" style="{{g.stil}}">{{g.ad}}</button>
+      </sc-for>
+      <button type="button" aria-label="Yeni grup" style="width: 44px; height: 44px; border-radius: 22px; border: 1px dashed #8C9AB8; background: transparent; color: #F1F4FA; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{sekmeler}}" as="s" hint-placeholder-count="6">
+        <a href="Telefon-Sayfa.dc.html" style="position: relative; display: block; height: 196px; box-sizing: border-box; border-radius: 16px; background: #121A2B; overflow: hidden; color: #F1F4FA; text-decoration: none; {{s.cerceve}}">
+          <span style="height: 44px; box-sizing: border-box; padding: 0 8px 0 12px; display: flex; align-items: center; gap: 8px">
+            <span style="width: 20px; height: 20px; border-radius: 6px; background: #26324F; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0">{{s.h}}</span>
+            <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.ad}}</span>
+          </span>
+          <span style="position: absolute; left: 8px; right: 8px; top: 44px; bottom: 8px; border-radius: 10px; background: {{s.zemin}}; box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 6px">
+            <span style="height: 34px; border-radius: 4px; background: {{s.blok}}"></span>
+            <span style="height: 6px; width: 86%; border-radius: 3px; background: {{s.cizgi}}"></span>
+            <span style="height: 6px; width: 100%; border-radius: 3px; background: {{s.cizgi}}"></span>
+            <span style="height: 6px; width: 64%; border-radius: 3px; background: {{s.cizgi}}"></span>
+          </span>
+        </a>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{gizli}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding-bottom: 160px; text-align: center">
+      <div style="font-size: 16px; font-weight: 600">Gizli sekmen yok</div>
+      <a href="Telefon-Gizli.dc.html" style="min-height: 44px; display: flex; align-items: center; font-size: 15px">Gizli sekme aç</a>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{cihaz}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{cihazlar}}" as="c" hint-placeholder-count="2">
+        <section style="background: #121A2B; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600">{{c.ad}}</h2>
+            <span style="font-size: 13px; color: #A9B6CF">{{c.durum}}</span>
+          </div>
+          <div style="font-size: 14px; line-height: 1.5; color: #A9B6CF">{{c.ozet}}</div>
+        </section>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; background: #121A2B; border-top: 1px solid #26324F; padding: 10px 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <button type="button" style="height: 48px; padding: 0 8px; border: none; background: transparent; color: #F1F4FA; font: 500 15px Inter, sans-serif">Tümünü kapat</button>
+    <a href="Telefon-YeniSekme.dc.html" style="height: 48px; padding: 0 20px 0 16px; border-radius: 24px; background: #4DA3FF; color: #06101F; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; text-decoration: none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      Yeni sekme
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tur: 'Sekmeler', grup: 'Tümü' }; }
+  renderVals() {
+    const { tur, grup } = this.state;
+    const parca = (s) => 'height: 40px; border: none; border-radius: 12px; font: ' + (s ? '600' : '500') + ' 14px Inter, sans-serif; color: ' + (s ? '#F1F4FA' : '#A9B6CF') + '; background: ' + (s ? '#26324F' : 'transparent');
+    const cip = (s) => 'height: 44px; padding: 0 16px; border-radius: 22px; font: 500 14px Inter, sans-serif; color: ' + (s ? '#06101F' : '#F1F4FA') + '; background: ' + (s ? '#4DA3FF' : 'transparent') + '; border: ' + (s ? 'none' : '1px solid #34436A');
+    const acik = { zemin: '#FFFFFF', blok: '#DDE3EE', cizgi: '#C7CFDD' };
+    const koyu = { zemin: '#1B2540', blok: '#34436A', cizgi: '#34436A' };
+    const tum = [
+      { h: 'K', ad: 'Küçük bahçe rehberi', g: 'Ev', etkin: true, ...acik },
+      { h: 'E', ad: 'Elektrik faturası', g: 'Ev', ...acik },
+      { h: 'D', ad: 'Proje dosyaları', g: 'İş', ...koyu },
+      { h: 'T', ad: 'Teklif taslağı', g: 'İş', ...acik },
+      { h: 'H', ad: 'Hava durumu', g: 'Ev', ...koyu },
+      { h: 'S', ad: 'Sözlük', g: 'Ev', ...acik }
+    ];
+    return {
+      normal: tur === 'Sekmeler', gizli: tur === 'Gizli', cihaz: tur === 'Cihazlar',
+      turler: ['Sekmeler', 'Gizli', 'Cihazlar'].map((ad) => ({ ad, secili: tur === ad, stil: parca(tur === ad), sec: () => this.setState({ tur: ad }) })),
+      gruplar: ['Tümü', 'Ev', 'İş'].map((ad) => ({ ad, secili: grup === ad, stil: cip(grup === ad), sec: () => this.setState({ grup: ad }) })),
+      sekmeler: tum.filter((s) => grup === 'Tümü' || s.g === grup).map((s) => ({ ...s, cerceve: s.etkin ? 'box-shadow: 0 0 0 2px #4DA3FF' : '' })),
+      cihazlar: [
+        { ad: 'Bilgisayar', durum: 'Şu an açık', ozet: '4 sekme: Elektrik faturası, Teklif taslağı ve 2 sekme daha' },
+        { ad: 'Salon TV', durum: 'Dün', ozet: '1 sekme: Video' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

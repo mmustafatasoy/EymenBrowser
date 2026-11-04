@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Gizli sekme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B79CFF}a:hover{color:#F3F0FB}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #120E24; color: #F3F0FB; font-family: Inter, Roboto, sans-serif; overflow: hidden">
+  <div style="box-sizing: border-box; padding: 64px 20px 0; display: flex; flex-direction: column; gap: 24px">
+    <div style="width: 64px; height: 64px; border-radius: 20px; background: #2A2150; display: flex; align-items: center; justify-content: center">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B79CFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.gizli}}"></path></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 30px; line-height: 1.16; font-weight: 600; letter-spacing: -0.6px">Gizli sekme</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #BDB2DA">Bu sekmeleri kapattığında izler bu cihazdan silinir.</p>
+    </div>
+
+    <section style="background: #1D1736; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Bu cihazda kalmaz</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #BDB2DA">Geçmiş, çerezler, form bilgileri ve site izinleri.</p>
+    </section>
+    <section style="background: #1D1736; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Yine de görülebilir</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #BDB2DA">Girdiğin siteler, internet sağlayıcın ve iş ya da okul ağın. İndirdiğin dosyalar ve eklediğin yer imleri cihazda kalır.</p>
+    </section>
+
+    <div style="display: flex; align-items: center; gap: 12px; min-height: 64px">
+      <div style="flex: 1">
+        <div style="font-size: 15px; font-weight: 500">Geri dönünce kilit sor</div>
+        <div style="font-size: 13px; line-height: 1.35; color: #BDB2DA">Parmak izi, yüz veya ekran kilidi</div>
+      </div>
+      <button type="button" role="switch" aria-checked="{{kilit}}" aria-label="Geri dönünce kilit sor" onClick="{{degis}}" style="{{stil}}"><span style="width: 24px; height: 24px; border-radius: 12px; background: {{top}}"></span></button>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; background: #1D1736; border-top: 1px solid #2A2150; padding: 10px 12px 18px; display: flex; flex-direction: column; gap: 6px">
+    <label style="height: 48px; box-sizing: border-box; border-radius: 24px; background: #2A2150; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B79CFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.gizli}}"></path></svg>
+      <input aria-label="Gizli adres çubuğu" placeholder="Gizli olarak ara" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #F3F0FB; font: 400 16px Inter, sans-serif">
+    </label>
+    <nav aria-label="Gezinme" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))">
+      <a href="Telefon-Menu.dc.html" aria-label="Geri" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #F3F0FB"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.geri}}"></path></svg></a>
+      <a href="#" aria-label="İleri" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #9D90C2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ileri}}"></path></svg></a>
+      <a href="Telefon-YeniSekme.dc.html" aria-label="Ana sayfa" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #B79CFF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ev}}"></path></svg></a>
+      <a href="Telefon-Sekmeler.dc.html" aria-label="1 gizli sekme açık" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #F3F0FB; text-decoration: none"><span style="width: 24px; height: 24px; box-sizing: border-box; border: 1.8px solid currentColor; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">1</span></a>
+      <a href="Telefon-Menu.dc.html" aria-label="Menü" style="height: 48px; display: flex; align-items: center; justify-content: center; color: #F3F0FB"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.menu}}"></path></svg></a>
+    </nav>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { kilit: true }; }
+  renderVals() {
+    const k = this.state.kilit;
+    return {
+      kilit: k,
+      degis: () => this.setState({ kilit: !k }),
+      stil: 'width: 52px; height: 32px; flex-shrink: 0; border: none; border-radius: 16px; padding: 4px; display: flex; justify-content: ' + (k ? 'flex-end' : 'flex-start') + '; background: ' + (k ? '#B79CFF' : '#2A2150'),
+      top: k ? '#140C2B' : '#F3F0FB',
+      i: {
+        gizli: 'M3 3l18 18M10.6 5.2A9.7 9.7 0 0 1 12 5c5 0 9 4 10 7a13 13 0 0 1-2.6 3.8M6.5 6.7A13 13 0 0 0 2 12c1 3 5 7 10 7 1.8 0 3.5-.5 5-1.3',
+        geri: 'M15 5l-7 7 7 7',
+        ileri: 'M9 5l7 7-7 7',
+        ev: 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z',
+        menu: 'M5 7h14M5 12h14M5 17h14'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

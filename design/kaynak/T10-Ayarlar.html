@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ayarlar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; padding: 52px 16px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+  <header style="display: flex; align-items: center; gap: 4px; margin-left: -12px">
+    <a href="Telefon-Menu.dc.html" aria-label="Geri" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #F1F4FA"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <h1 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 24px; font-weight: 600">Ayarlar</h1>
+  </header>
+
+  <label style="height: 48px; box-sizing: border-box; border-radius: 24px; background: #1B2540; display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4"></path></svg>
+    <input aria-label="Ayarlarda ara" placeholder="Ayarlarda ara" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #F1F4FA; font: 400 16px Inter, sans-serif">
+  </label>
+
+  <a href="#" style="background: #121A2B; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; color: #F1F4FA; text-decoration: none; flex-shrink: 0">
+    <span style="width: 44px; height: 44px; border-radius: 22px; background: #26324F; display: flex; align-items: center; justify-content: center; font-weight: 600">MA</span>
+    <span style="flex: 1; min-width: 0">
+      <span style="display: block; font-size: 15px; font-weight: 600">Eşitleme açık</span>
+      <span style="display: block; font-size: 13px; color: #A9B6CF">3 cihaz, şifreli</span>
+    </span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+  </a>
+
+  <nav aria-label="Ayar grupları" style="display: flex; flex-direction: column; background: #121A2B; border-radius: 16px; padding: 2px 14px">
+    <sc-for list="{{satirlar}}" as="s" hint-placeholder-count="10">
+      <a href="{{s.git}}" style="min-height: 52px; display: flex; align-items: center; gap: 14px; color: #F1F4FA; text-decoration: none; {{s.cizgi}}">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{s.ikon}}"></path></svg>
+        <span style="flex: 1; font-size: 15px; font-weight: 500">{{s.ad}}</span>
+        <span style="font-size: 13px; color: #A9B6CF">{{s.not}}</span>
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const i = {
+      kalkan: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4',
+      kilit: 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM8 11V8a4 4 0 0 1 8 0v3',
+      ara: 'M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4',
+      ay: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+      eklenti: 'M6 6h4V5a2 2 0 1 1 4 0v1h4v4h1a2 2 0 1 1 0 4h-1v4H6v-4H5a2 2 0 1 1 0-4h1z',
+      site: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0zM3 12h18M12 3c3.5 3 3.5 15 0 18M12 3c-3.5 3-3.5 15 0 18',
+      indir: 'M12 4v11M7 11l5 5 5-5M5 20h14',
+      cevir: 'M4 6h9M8 4v2M6 6c0 4 3 7 6 8M11 6c-1 4-3 6-6 8M13 20l4-9 4 9M14.5 17h5',
+      cocuk: 'M15 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM5 20c1-4 4-6 7-6s6 2 7 6',
+      bilgi: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0zM12 11v5M12 8v.01'
+    };
+    const liste = [
+      { ad: 'Kalkan ve gizlilik', not: 'Açık', ikon: i.kalkan, git: 'Telefon-Kalkan.dc.html' },
+      { ad: 'Şifreler ve otomatik doldurma', not: '', ikon: i.kilit, git: '#' },
+      { ad: 'Arama motoru', not: 'Google', ikon: i.ara, git: 'Telefon-Kurulum.dc.html' },
+      { ad: 'Görünüm', not: 'Gece', ikon: i.ay, git: 'Telefon-Gunduz.dc.html' },
+      { ad: 'Eklentiler', not: '3', ikon: i.eklenti, git: '#' },
+      { ad: 'Site izinleri', not: '', ikon: i.site, git: '#' },
+      { ad: 'İndirmeler', not: '', ikon: i.indir, git: 'Telefon-Indirmeler.dc.html' },
+      { ad: 'Dil ve çeviri', not: 'Türkçe', ikon: i.cevir, git: '#' },
+      { ad: 'Çocuk modu', not: 'Kapalı', ikon: i.cocuk, git: '#' },
+      { ad: 'Hakkında ve güncelleme', not: '1.0.0', ikon: i.bilgi, git: '#' }
+    ];
+    return { satirlar: liste.map((s, n) => ({ ...s, cizgi: n < liste.length - 1 ? 'border-bottom: 1px solid #26324F' : '' })) };
+  }
+}
+</script>
+</body>
+</html>

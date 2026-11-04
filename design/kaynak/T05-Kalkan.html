@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Kalkan paneli</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #3E4350; font-family: Inter, Roboto, sans-serif; overflow: hidden">
+  <a href="Telefon-Sayfa.dc.html" aria-label="Paneli kapat ve sayfaya dön" style="position: absolute; left: 0; right: 0; top: 0; height: 220px"></a>
+  <section aria-label="Kalkan" style="position: absolute; left: 0; right: 0; bottom: 0; height: 624px; box-sizing: border-box; background: #121A2B; color: #F1F4FA; border-radius: 24px 24px 0 0; padding: 12px 20px 28px; display: flex; flex-direction: column; gap: 20px">
+    <div style="width: 40px; height: 4px; border-radius: 2px; background: #34436A; align-self: center"></div>
+
+    <header style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 52px; height: 52px; border-radius: 16px; background: #1B2540; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="{{durumRenk}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kalkan}}"></path></svg>
+      </span>
+      <div style="flex: 1; min-width: 0">
+        <h1 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">{{durumYazi}}</h1>
+        <div style="font-size: 14px; color: #A9B6CF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">smallgardenjournal.example</div>
+      </div>
+      <button type="button" role="switch" aria-checked="{{koruma}}" aria-label="Bu sitede koruma" onClick="{{korumaDegis}}" style="{{korumaStil}}"><span style="width: 24px; height: 24px; border-radius: 12px; background: {{korumaTopRenk}}"></span></button>
+    </header>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{sayilar}}" as="s" hint-placeholder-count="3">
+        <div style="background: #1B2540; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px">
+          <div style="font-family: Sora, Inter, sans-serif; font-size: 26px; font-weight: 600">{{s.n}}</div>
+          <div style="font-size: 13px; color: #A9B6CF">{{s.ad}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <sc-for list="{{ayarlar}}" as="a" hint-placeholder-count="4">
+        <div style="min-height: 64px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #26324F">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 15px; font-weight: 500">{{a.ad}}</div>
+            <div style="font-size: 13px; line-height: 1.35; color: #A9B6CF">{{a.alt}}</div>
+          </div>
+          <button type="button" role="switch" aria-checked="{{a.acik}}" aria-label="{{a.ad}}" onClick="{{a.degis}}" style="{{a.stil}}"><span style="width: 24px; height: 24px; border-radius: 12px; background: {{a.top}}"></span></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <a href="Telefon-Ayarlar.dc.html" style="margin-top: auto; min-height: 48px; display: flex; align-items: center; justify-content: space-between; color: #F1F4FA; font-size: 15px; font-weight: 500; text-decoration: none">
+      <span>Bu sitenin tüm izinleri</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+    </a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { koruma: true, cerez: true, parmak: true, https: true, video: false }; }
+  renderVals() {
+    const anahtar = (acik) => 'width: 52px; height: 32px; flex-shrink: 0; border: none; border-radius: 16px; padding: 4px; display: flex; justify-content: ' + (acik ? 'flex-end' : 'flex-start') + '; background: ' + (acik ? '#4DA3FF' : '#34436A');
+    const top = (acik) => (acik ? '#06101F' : '#F1F4FA');
+    const liste = [
+      ['cerez', 'Çerez pencerelerini kapat', 'Sorulara otomatik olarak Reddet der'],
+      ['parmak', 'Parmak izi koruması', 'Tarayıcının seni tanımasını zorlaştırır'],
+      ['https', 'Yalnızca güvenli bağlantı', 'HTTPS yoksa önce sana sorar'],
+      ['video', 'Sesli videoyu durdur', 'Otomatik oynatmayı bu sitede engeller']
+    ];
+    const k = this.state.koruma;
+    return {
+      i: { kalkan: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4' },
+      koruma: k,
+      durumYazi: k ? 'Kalkan açık' : 'Kalkan kapalı',
+      durumRenk: k ? '#3DD6A3' : '#FFB547',
+      korumaStil: anahtar(k),
+      korumaTopRenk: top(k),
+      korumaDegis: () => this.setState({ koruma: !k }),
+      sayilar: [{ n: k ? '9' : '0', ad: 'Reklam' }, { n: k ? '3' : '0', ad: 'İzleyici' }, { n: k ? '1' : '0', ad: 'Çerez kutusu' }],
+      ayarlar: liste.map(([id, ad, alt]) => {
+        const acik = this.state[id];
+        return { ad, alt, acik, stil: anahtar(acik), top: top(acik), degis: () => this.setState({ [id]: !acik }) };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

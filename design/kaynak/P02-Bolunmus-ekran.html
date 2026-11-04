@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Bilgisayar bölünmüş ekran</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="position: relative; min-height: 100vh; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 7px 12px; background: #121A2B; border-bottom: 1px solid #26324F">
+    <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true" style="margin-right: 8px"><path d="M46 10.5A26 26 0 1 0 46 53.5" fill="none" stroke="#4DA3FF" stroke-width="7" stroke-linecap="round"></path><rect x="21" y="17" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect><rect x="21" y="28.5" width="24" height="7" rx="3.5" fill="#4DA3FF"></rect><rect x="21" y="40" width="33" height="7" rx="3.5" fill="#F1F4FA"></rect></svg>
+    <sc-for list="{{solArac}}" as="a" hint-placeholder-count="3">
+      <button type="button" aria-label="{{a.ad}}" style="width: 36px; height: 36px; border: none; border-radius: 10px; background: transparent; color: {{a.renk}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.ikon}}"></path></svg></button>
+    </sc-for>
+    <div style="flex: 1 1 320px; min-width: 0; height: 36px; box-sizing: border-box; border-radius: 18px; background: #1B2540; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 14px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kilit}}"></path></svg>
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">smallgardenjournal.example/winter-guide</span>
+    </div>
+    <button type="button" aria-label="Kalkan paneli açık, 12 engel" style="height: 36px; padding: 0 10px; border: none; border-radius: 10px; background: #26324F; color: #3DD6A3; display: flex; align-items: center; gap: 6px; font: 600 13px Inter, sans-serif"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kalkan}}"></path></svg>12</button>
+    <sc-for list="{{sagArac}}" as="a" hint-placeholder-count="4">
+      <button type="button" aria-label="{{a.ad}}" style="width: 36px; height: 36px; border: none; border-radius: 10px; background: transparent; color: {{a.renk}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.ikon}}"></path></svg></button>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+    <aside aria-label="Dikey sekmeler" style="flex: 0 1 252px; box-sizing: border-box; padding: 12px 10px; display: flex; flex-direction: column; gap: 14px">
+      <sc-for list="{{gruplar}}" as="g" hint-placeholder-count="2">
+        <section style="display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #A9B6CF">{{g.ad}}</h2>
+          <sc-for list="{{g.sekmeler}}" as="s" hint-placeholder-count="3">
+            <a href="PC-YeniSekme.dc.html" style="height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 10px; background: {{s.zemin}}; color: #F1F4FA; font-size: 13px; display: flex; align-items: center; gap: 10px; text-decoration: none">
+              <span style="width: 16px; height: 16px; border-radius: 5px; background: #34436A; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0">{{s.h}}</span>
+              <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.ad}}</span>
+            </a>
+          </sc-for>
+        </section>
+      </sc-for>
+      <a href="PC-YeniSekme.dc.html" style="margin-top: auto; height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 10px; color: #F1F4FA; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        Yeni sekme
+      </a>
+    </aside>
+
+    <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 10px 10px 10px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 10px">
+      <article lang="en" style="background: #FFFFFF; color: #16181D; border-radius: 12px; box-shadow: 0 0 0 2px #4DA3FF; padding: 40px 44px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+        <div style="font-size: 13px; font-weight: 600; color: #4A5468">Small Garden Journal</div>
+        <h1 style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 36px; line-height: 1.14; font-weight: 700">How to keep a small garden alive through winter</h1>
+        <svg viewBox="0 0 520 200" role="img" aria-label="Örnek sayfa görseli yeri" style="width: 100%; border-radius: 10px; display: block">
+          <rect width="520" height="200" fill="#DDE7DC"></rect>
+          <circle cx="420" cy="58" r="28" fill="#F2EFE3"></circle>
+          <path d="M0 150c90-46 170-46 250-14s180 26 270-16v80H0z" fill="#9DB89A"></path>
+          <path d="M0 172c100-24 190-20 280-4s170 12 240-8v40H0z" fill="#6E9270"></path>
+        </svg>
+        <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.55">Cold weather does not have to end the growing season. With a little planning, most small gardens can rest safely until spring and come back stronger.</p>
+      </article>
+      <article style="background: #FFFFFF; color: #16181D; border-radius: 12px; padding: 40px 44px; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+        <div style="font-size: 13px; font-weight: 600; color: #4A5468">Belgeler</div>
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.2; font-weight: 600">Teklif taslağı</h1>
+        <p style="margin: 0; font-size: 16px; line-height: 1.6">Bahçe düzenleme işi için üç aşamalı bir çalışma öneriyoruz. İlk aşamada alan ölçülür, ikinci aşamada bitkiler seçilir, üçüncü aşamada kış bakımı planlanır.</p>
+        <p style="margin: 0; font-size: 16px; line-height: 1.6">Süreler aşağıdaki tabloda yer alır. Malzeme fiyatları sipariş günündeki listeye göre güncellenir.</p>
+        <table style="border-collapse: collapse; font-size: 15px; margin-top: 4px">
+          <thead><tr style="text-align: left; color: #4A5468"><th style="font-weight: 600; padding: 8px 0; border-bottom: 1px solid #D8DDE6">Aşama</th><th style="font-weight: 600; padding: 8px 0; border-bottom: 1px solid #D8DDE6">Süre</th></tr></thead>
+          <tbody>
+            <tr><td style="padding: 8px 0; border-bottom: 1px solid #E8ECF2">Alan ölçümü</td><td style="padding: 8px 0; border-bottom: 1px solid #E8ECF2">2 gün</td></tr>
+            <tr><td style="padding: 8px 0; border-bottom: 1px solid #E8ECF2">Bitki seçimi</td><td style="padding: 8px 0; border-bottom: 1px solid #E8ECF2">5 gün</td></tr>
+            <tr><td style="padding: 8px 0">Kış bakımı planı</td><td style="padding: 8px 0">1 gün</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </main>
+  </div>
+
+  <section aria-label="Kalkan paneli" style="position: absolute; top: 56px; right: 172px; width: 324px; max-width: calc(100% - 24px); box-sizing: border-box; background: #121A2B; border: 1px solid #34436A; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 16px 40px rgba(6, 16, 31, 0.55)">
+    <header style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3DD6A3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kalkan}}"></path></svg>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-family: Sora, Inter, sans-serif; font-size: 16px; font-weight: 600">Kalkan açık</div>
+        <div style="font-size: 13px; color: #A9B6CF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">smallgardenjournal.example</div>
+      </div>
+      <button type="button" role="switch" aria-checked="true" aria-label="Bu sitede koruma" style="width: 44px; height: 26px; flex-shrink: 0; border: none; border-radius: 13px; background: #4DA3FF; padding: 3px; display: flex; justify-content: flex-end"><span style="width: 20px; height: 20px; border-radius: 10px; background: #06101F"></span></button>
+    </header>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{sayilar}}" as="s" hint-placeholder-count="3">
+        <div style="background: #1B2540; border-radius: 10px; padding: 8px 10px">
+          <div style="font-family: Sora, Inter, sans-serif; font-size: 20px; font-weight: 600">{{s.n}}</div>
+          <div style="font-size: 12px; color: #A9B6CF">{{s.ad}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <a href="#" style="height: 36px; display: flex; align-items: center; justify-content: space-between; color: #F1F4FA; font-size: 13px; font-weight: 500; text-decoration: none">
+      <span>Bu sitenin tüm izinleri</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9B6CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+    </a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const i = {
+      geri: 'M15 5l-7 7 7 7',
+      ileri: 'M9 5l7 7-7 7',
+      yenile: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
+      kilit: 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM8 11V8a4 4 0 0 1 8 0v3',
+      kalkan: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4',
+      eklenti: 'M6 6h4V5a2 2 0 1 1 4 0v1h4v4h1a2 2 0 1 1 0 4h-1v4H6v-4H5a2 2 0 1 1 0-4h1z',
+      indir: 'M12 4v11M7 11l5 5 5-5M5 20h14',
+      bolunmus: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM12 4v16',
+      menu: 'M5 7h14M5 12h14M5 17h14'
+    };
+    const a = 'transparent';
+    return {
+      i,
+      solArac: [
+        { ad: 'Geri', ikon: i.geri, renk: '#F1F4FA' },
+        { ad: 'İleri', ikon: i.ileri, renk: '#8C9AB8' },
+        { ad: 'Yenile', ikon: i.yenile, renk: '#F1F4FA' }
+      ],
+      sagArac: [
+        { ad: 'Bölünmüş ekranı kapat', ikon: i.bolunmus, renk: '#4DA3FF' },
+        { ad: 'Eklentiler', ikon: i.eklenti, renk: '#F1F4FA' },
+        { ad: 'İndirmeler', ikon: i.indir, renk: '#F1F4FA' },
+        { ad: 'Menü', ikon: i.menu, renk: '#F1F4FA' }
+      ],
+      gruplar: [
+        { ad: 'Ev', sekmeler: [
+          { h: 'K', ad: 'Küçük bahçe rehberi', zemin: '#26324F' },
+          { h: 'E', ad: 'Elektrik faturası', zemin: a },
+          { h: 'H', ad: 'Hava durumu', zemin: a }
+        ] },
+        { ad: 'İş', sekmeler: [
+          { h: 'T', ad: 'Teklif taslağı', zemin: '#1B2540' },
+          { h: 'D', ad: 'Proje dosyaları', zemin: a }
+        ] }
+      ],
+      sayilar: [{ n: '9', ad: 'Reklam' }, { n: '3', ad: 'İzleyici' }, { n: '1', ad: 'Çerez' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>İlk kurulum</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7ABBFF}a:hover{color:#F1F4FA}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0F1C; color: #F1F4FA; font-family: Inter, Roboto, sans-serif; padding: 64px 20px 32px; display: flex; flex-direction: column; gap: 28px; overflow: hidden">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-family: Sora, Inter, sans-serif; font-size: 30px; line-height: 1.16; font-weight: 600; letter-spacing: -0.6px">Üç seçim, sonra hazırsın.</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #A9B6CF">Hepsini sonra Ayarlar'dan değiştirebilirsin.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; flex: 1">
+    <section style="background: #121A2B; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3DD6A3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.kalkan}}"></path></svg>
+        <div style="flex: 1; font-size: 16px; font-weight: 600">Reklam ve izleyici engeli</div>
+        <button type="button" role="switch" aria-checked="true" aria-label="Reklam ve izleyici engeli" style="width: 52px; height: 32px; border: none; border-radius: 16px; background: #4DA3FF; padding: 4px; display: flex; justify-content: flex-end">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #06101F"></span>
+        </button>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #A9B6CF">Sayfalar daha hızlı açılır. İstediğin sitede kapatabilirsin.</p>
+    </section>
+
+    <section style="background: #121A2B; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.ara}}"></path></svg>
+        <div style="font-size: 16px; font-weight: 600">Arama motoru</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{motorlar}}" as="m" hint-placeholder-count="4">
+          <button type="button" aria-pressed="{{m.secili}}" onClick="{{m.sec}}" style="{{m.stil}}">{{m.ad}}</button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background: #121A2B; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 16px; font-weight: 600">Adres çubuğu nerede olsun?</div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{konumlar}}" as="k" hint-placeholder-count="2">
+          <button type="button" aria-pressed="{{k.secili}}" onClick="{{k.sec}}" style="{{k.stil}}">
+            <span style="display: block; width: 56px; height: 76px; box-sizing: border-box; margin: 0 auto 8px; border: 1.5px solid #8C9AB8; border-radius: 10px; padding: 6px; {{k.hiza}}">
+              <span style="display: block; height: 7px; width: 100%; border-radius: 4px; background: #4DA3FF"></span>
+            </span>
+            {{k.ad}}
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <a href="Telefon-YeniSekme.dc.html" style="height: 52px; border-radius: 26px; background: #4DA3FF; color: #06101F; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; text-decoration: none">Başla</a>
+    <a href="Telefon-YeniSekme.dc.html" style="height: 44px; color: #F1F4FA; font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; text-decoration: none">Varsayılan tarayıcım yap</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { motor: 'Google', konum: 'Altta' }; }
+  renderVals() {
+    const secim = (s) => 'min-height: 48px; border-radius: 12px; font: 500 15px Inter, sans-serif; color: ' + (s ? '#F1F4FA' : '#A9B6CF') + '; background: ' + (s ? '#26324F' : 'transparent') + '; border: ' + (s ? '2px solid #4DA3FF' : '1px solid #34436A');
+    return {
+      i: {
+        kalkan: 'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4',
+        ara: 'M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM16 16l4 4'
+      },
+      motorlar: ['Google', 'DuckDuckGo', 'Bing', 'Yandex'].map((ad) => {
+        const s = this.state.motor === ad;
+        return { ad, secili: s, stil: secim(s), sec: () => this.setState({ motor: ad }) };
+      }),
+      konumlar: ['Altta', 'Üstte'].map((ad) => {
+        const s = this.state.konum === ad;
+        return { ad, secili: s, stil: secim(s) + '; padding: 12px 8px', hiza: ad === 'Altta' ? 'display: flex; align-items: flex-end' : 'display: flex; align-items: flex-start', sec: () => this.setState({ konum: ad }) };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
