@@ -15,6 +15,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.GeckoSession
@@ -40,7 +42,7 @@ class MainActivity : ComponentActivity() {
     private val currentUrl = mutableStateOf("")
     private val dayMode = mutableStateOf(false)
     private val recent = mutableStateListOf<String>()
-    private var addressBottom = true
+    private var addressBottom by mutableStateOf(true)
     private var searchEngine = "Google"
 
     private var videoFullScreen = false
@@ -54,6 +56,7 @@ class MainActivity : ComponentActivity() {
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         dayMode.value = prefs.getBoolean("day_theme", false)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
+        currentUrl.value = incomingUrl ?: ""
 
         root = FrameLayout(this)
         view = GeckoView(this)
