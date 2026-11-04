@@ -7,6 +7,7 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebResponse
 import java.net.URI
 import java.util.Locale
 
@@ -68,12 +69,20 @@ object GeckoMotorDenemesi {
         view: GeckoView,
         url: String?,
         onFullScreen: (Boolean) -> Unit,
-        askDrmPermission: (String, (Boolean) -> Unit) -> Unit
+        askDrmPermission: (String, (Boolean) -> Unit) -> Unit,
+        onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit }
     ): GeckoSession {
         val session = GeckoSession()
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
                 onFullScreen(fullScreen)
+            }
+
+            override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
+                // GeckoView PDF viewer's Download button and regular file
+                // downloads arrive here with an already authenticated body.
+                // Do not perform a second unauthenticated HTTP request.
+                onDownload(response)
             }
         }
         // Only the Widevine/DRM key-system site permission is handled here.

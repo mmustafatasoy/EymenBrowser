@@ -86,3 +86,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Ekranda üstte `Download` komutu var. **Bu düğmeye basılıp PDF'nin telefona kaydedildiği henüz doğrulanmadı.**
 - **Sıradaki Android testi:** PDF ekranındaki `Download` düğmesini kullan, ardından Dosyalar/İndirilenler'de `dummy.pdf` dosyasının gerçekten oluştuğunu kontrol et. Çalışmazsa indirme olay işleyicisi motor testinden ayrı incelenecek.
 - TV, PC ve Apple çalışmaları kullanıcının önceki isteği doğrultusunda **beklemede**. Kapı 1 açıktır.
+
+## Android telefon — PDF indirme düzeltmesi, 2026-11-04
+
+- **Hata kullanıcı tarafından doğrulandı:** GeckoView dahili PDF görüntüleyici `dummy.pdf` dosyasını görüntülüyor ancak **Download düğmesine basılınca telefona hiçbir dosya kaydedilmiyor**.
+- **Teknik neden:** `GeckoSession.ContentDelegate.onExternalResponse` indirme olayları önceki motor testinde işlenmiyordu. GeckoView PDF.js'den gelen `WebResponse.body` akışını tüketen indirme işleyicisi eklenmediği için dosya kaydı gerçekleşmiyor.
+- **Düzeltme:** Yalnız Android telefon için `AndroidDownloadDenemesi`. İndirme istekleri GeckoView'un orijinal `WebResponse.body` akışıyla kullanıcı onayından sonra kaydedilir. Android 10+ MediaStore Downloads `IS_PENDING` ile; Android 8-9 sistem SAF dosya seçicisiyle. Arka plan akışı, başarısız/kısmi kayıt temizliği, TR/EN yerelleştirme ve statik regresyon kontrolü eklendi. DRM/yatay dönüş değiştirilmedi.
+- **Yeni sürüm hedefi:** `v0.0.1-motor-test.4`, yalnız arm64 Android telefon **tek doğrudan APK**. CI ve kullanıcı testi sonuçları doğrulanana kadar indirme **başarılı sayılmıyor**.
+- **Sonraki test:** Yeni APK kur, `dummy.pdf` bağlantısını paylaş, PDF görüntüleyicide `Download` düğmesine bas, EYMEN Browser indirme onayını kabul et, Dosyalar → İndirilenler içinde `dummy.pdf` dosyasının varlığını doğrula.
+- **Platform kararı korunur:** TV, PC ve Apple çalışmaları kullanıcı iznine kadar bekletilir. Kapı 1 açıktır.

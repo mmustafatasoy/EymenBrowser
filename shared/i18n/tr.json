@@ -20,5 +20,14 @@
   "drm_permission_title": "Korumalı video izni",
   "drm_permission_message": "%1$s sitesi korumalı video oynatmak için cihazın DRM medya anahtarlarına erişim istiyor. İzin verilsin mi?",
   "drm_permission_allow": "İzin ver",
-  "drm_permission_deny": "Reddet"
+  "drm_permission_deny": "Reddet",
+  "download_confirm_title": "Dosya indirilsin mi?",
+  "download_confirm_message": "%1$s dosyası kaydedilsin mi?",
+  "download_confirm_allow": "İndir",
+  "download_confirm_deny": "İptal",
+  "download_busy": "Önceki indirme henüz tamamlanmadı.",
+  "download_missing": "İndirilecek dosya verisi bulunamadı.",
+  "download_cancelled": "İndirme iptal edildi.",
+  "download_failed": "Dosya kaydedilemedi.",
+  "download_saved": "Dosya kaydedildi: %1$s"
 }

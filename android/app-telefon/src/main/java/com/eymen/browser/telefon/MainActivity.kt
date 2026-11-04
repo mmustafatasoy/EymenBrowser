@@ -21,6 +21,7 @@ import org.mozilla.geckoview.GeckoView
 class MainActivity : ComponentActivity() {
     private lateinit var view: GeckoView
     private var session: GeckoSession? = null
+    private val downloads = AndroidDownloadDenemesi(this)
     private var videoFullScreen = false
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
@@ -32,7 +33,8 @@ class MainActivity : ComponentActivity() {
         session = GeckoMotorDenemesi.attach(
             this, view, GeckoMotorDenemesi.urlFromIntent(intent),
             onFullScreen = ::setVideoFullScreen,
-            askDrmPermission = ::showDrmAccessPrompt
+            askDrmPermission = ::showDrmAccessPrompt,
+            onDownload = downloads::handleResponse
         )
     }
 
@@ -87,6 +89,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        downloads.dispose()
         GeckoMotorDenemesi.detach(view, session)
         session = null
         super.onDestroy()

@@ -20,5 +20,14 @@
   "drm_permission_title": "Protected video permission",
   "drm_permission_message": "%1$s requests access to device DRM media keys to play protected video. Allow?",
   "drm_permission_allow": "Allow",
-  "drm_permission_deny": "Deny"
+  "drm_permission_deny": "Deny",
+  "download_confirm_title": "Download file?",
+  "download_confirm_message": "Save %1$s?",
+  "download_confirm_allow": "Download",
+  "download_confirm_deny": "Cancel",
+  "download_busy": "A previous download is still in progress.",
+  "download_missing": "The file data is not available.",
+  "download_cancelled": "Download cancelled.",
+  "download_failed": "Could not save the file.",
+  "download_saved": "Saved file: %1$s"
 }

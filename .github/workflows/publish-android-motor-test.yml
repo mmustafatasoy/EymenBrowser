@@ -36,6 +36,7 @@ jobs:
           python tools/verify.py
           python tools/check_rotation.py
           python tools/check_drm_permission.py
+          python tools/check_download_handling.py
       - name: Build phone GeckoView APK from THIS commit
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
@@ -46,41 +47,37 @@ jobs:
           mkdir -p release
           APK="android/app-telefon/build/outputs/apk/debug/app-telefon-arm64-v8a-debug.apk"
           python tools/verify.py --artifact "$APK"
-          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-DRM-IZIN-TEST.apk
+          cp "$APK" release/EymenBrowser-Android-Telefon-arm64-PDF-INDIRME-TEST.apk
           sha256sum release/*.apk
           test "$(find release -name '*.apk' -type f | wc -l)" -eq 1
       - name: Publish direct APK to GitHub Releases
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.1-motor-test.3"
+          TAG="v0.0.1-motor-test.4"
           cat > RELEASE_NOTES.md <<'EOF'
-          # EymenBrowser Android Telefon — DRM İzin Testi
+          # EymenBrowser Android Telefon - PDF / Download Stream Test
 
-          Bu test sürümünde GeckoView için DRM medya anahtarı erişimi
-          yalnızca sitenin isteği üzerine kullanıcının açık İzin ver / Reddet
-          tercihiyle işlenir. Yalnızca HTTPS kaynakları için sorulur.
+          GeckoView PDF viewer Download düğmesinden gelen WebResponse.body
+          artık Android indirme işlemine bağlanır.
+          - Android 10+: Kullanıcı onayından sonra İndirilenler klasörüne
+            MediaStore IS_PENDING ile kesintisiz veri akışı.
+          - Android 8-9: Sistem dosya kaydetme penceresi (SAF).
+          - İndirmede yeniden HTTP isteği yapılmaz, mevcut GeckoView akışı
+            kullanılır. Hatalı/kısmi dosya temizlenir.
+          - PDF, Widevine ve YouTube önceki motor denemeleri korunur.
 
-          Önceki YouTube tam ekran ve yatay döndürme düzeltmeleri korunur.
-          Shaka Player Sintel kartı önceki sürümde NOT AVAILABLE gösterdi.
-          Bu değişiklikten sonra korumalı videonun oynadığı henüz kanıtlanmadı.
-          DRM lisans/sistem/yayının uyumsuzluğu veya örnek servis sorunu kalabilir.
-
-          **Önemli:** Bu APK yalnız arm64-v8a Android telefon içindir. ZIP yok.
-          Debug imzalı motor test sürümüdür; resmi üretim imzalı sürüm değildir.
-          Google giriş formu ve banka ana sayfaları açıldı, YouTube yatay dönüş
-          düzeltmesi kullanıcı tarafından doğrulandı. Widevine DRM videosu bu
-          sürümde henüz kullanıcı tarafından yeniden test edilmedi.
-          Tasarım ekranları Kapı 1 tamamlanmadan eklenmedi.
-
-          Eski APK ile imzalama anahtarı farklıysa güncelleme yerine kaldırıp
-          yeniden kurmak gerekebilir; kaldırma uygulama verilerini siler.
-          EOF
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          **ÖNEMLİ:** Bu sürümde yeni indirme işlemi gerçek telefonda
+          henüz doğrulanmadı; test için dummy.pdf dosyasını kullanın.
+          Android telefon arm64-v8a içindir, ZIP yok.
+          DEBUG/TEST imzası kullanılmıştır, üretim imzalı kararlı APK değildir.
+          Nihai tarayıcı ekranları şartnamedeki Kapı 1 sonrasına aittir.
+          Eski test APK imzası farklı olabilir; yeniden kurulum verileri silebilir.
+          EOF         if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/*.apk --clobber
           else
             gh release create "$TAG" release/*.apk \
-              --title "EymenBrowser Android Telefon - DRM Izin Motor Testi" \
+              --title "EymenBrowser Android Telefon - PDF Indirme Motor Testi" \
               --target "${{ github.sha }}" \
               --notes-file RELEASE_NOTES.md --prerelease
           fi

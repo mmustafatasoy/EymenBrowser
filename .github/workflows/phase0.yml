@@ -27,6 +27,8 @@ jobs:
         run: python tools/check_rotation.py
       - name: DRM izin istemi ve yerelleştirme regresyon denetimi
         run: python tools/check_drm_permission.py
+      - name: Android indirme akışı regresyon denetimi
+        run: python tools/check_download_handling.py
       - uses: actions/upload-artifact@v4
         with:
           name: EymenBrowser-generated-themes

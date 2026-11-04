@@ -160,3 +160,12 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - **Henüz doğrulanmadı:** Download düğmesinin dosyayı telefonun İndirilenler klasörüne kaydetmesi, dosyanın sonradan açılması ve Android indirme yöneticisi uyumluluğu. Görünen düğme tek başına indirme başarısı kanıtı değildir.
 - **Sonraki test:** PDF açıkken `Download` düğmesine dokun. Android dosyayı indirirse telefonun Dosyalar → İndirilenler bölümünden `dummy.pdf` dosyasını doğrula. Çıkarsa hata türünü bildir. Kişisel bir dosya kullanma.
 - **Platform önceliği:** Kullanıcı isteği uyarınca yalnız Android telefon çalışmaları devam ediyor; TV, masaüstü ve Apple beklemede. Kapı 1 tüm platformlar için henüz açık.
+
+## PDF indirilemiyor — gerçek Android kullanıcı sonucu (2026-11-04)
+
+- Kullanıcı, PDF görüntüleyicideki `Download` düğmesinin **dosyayı indirmediğini** bildirdi.
+- **Başarılı:** PDF görüntüleme. **Başarısız:** `dummy.pdf` dosyasının telefona kaydedilmesi.
+- **Kök neden (kod incelemesi):** GeckoView `ContentDelegate.onExternalResponse` callback'i tanımlanmadığından PDF.js'nin sunduğu indirilecek veri akışı kullanılmıyordu.
+- **Yeni motor test değişikliği:** onExternalResponse → Android telefon indirme işleyicisi; `WebResponse.body` akışının yeniden HTTP isteği oluşturmadan asenkron kaydı. Android 10+ MediaStore Downloads + IS_PENDING, Android 8-9 SAF, kullanıcı onayı ve hata temizliği. Bunlar gerçek cihazda henüz doğrulanmadı.
+- **Tekrar test:** `v0.0.1-motor-test.4` yeni APK'sından sonra PDF belgeyi aç, **Download** düğmesine bas, EYMEN Browser onayını ver, `Dosyalar/İndirilenler` içerisinde aynı PDF'nin kaydedildiğini doğrula. Başarılı ise dosyanın açıldığını da bildir.
+- **Güvenlik:** İnternet bağlantısı tekrar açılmıyor; site sertifika kontrolleri değiştirilmedi. Yeni ekran tasarımı eklenmedi. TV, masaüstü, iOS kapsam dışı.
