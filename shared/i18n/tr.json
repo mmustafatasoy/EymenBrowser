@@ -175,5 +175,6 @@
   "update_install_permission_message": "Android güvenliği gereği EymenBrowser için uygulama yükleme izni vermeniz ve kurulum ekranında onaylamanız gerekir. Otomatik sessiz kurulum yapılmaz.",
   "update_open_permissions": "İzin ayarlarını aç",
   "update_installer_unavailable": "Android APK kurulum ekranı açılamadı.",
-  "update_manual_check": "Güncellemeleri denetle"
+  "update_manual_check": "Güncellemeleri denetle",
+  "update_debug_build": "Bu sürüm test (debug) anahtarıyla imzalı. Kararlı sürüm farklı bir üretim anahtarı kullanır; doğrudan üzerine kurulamaz. Önce verilerini yedekleyip test sürümünü kaldırman ve imzalı kararlı sürümü bir kez kurman gerekir. Sonraki güncellemeler uygulamanın içinden yapılır."
 }
