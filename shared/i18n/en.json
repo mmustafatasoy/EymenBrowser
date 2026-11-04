@@ -108,5 +108,6 @@
   "menu_change_address": "Choose address bar position",
   "menu_bookmark_prompt": "Bookmark this page",
   "menu_bookmark_open": "Open bookmarks",
-  "menu_search_not_found": "No matches on this page"
+  "menu_search_not_found": "No matches on this page",
+  "menu_dismiss": "Close menu"
 }
