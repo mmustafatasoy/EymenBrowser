@@ -83,6 +83,8 @@ class MainActivity : ComponentActivity() {
     private var settingsShowing = false
     private val globalShieldWanted = mutableStateOf(true)
     private val devicesRequested = mutableStateOf(false)
+    // Never persist site names visited in private browsing mode.
+    private val privateShieldOverrides = mutableMapOf<String, Boolean>()
 
     private val activeTab: BrowserTab?
         get() = tabs.firstOrNull { it.id == activeId.value }
@@ -301,7 +303,7 @@ class MainActivity : ComponentActivity() {
                     searchEngine = engine
                     globalShieldWanted.value = shield
                     tabs.forEach { tab ->
-                        tab.shieldEnabled = protectionFor(tab.url)
+                        tab.shieldEnabled = protectionFor(tab.url, tab.privateMode)
                         tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
                     }
                     addressBottom = bottom
@@ -337,7 +339,7 @@ class MainActivity : ComponentActivity() {
             onDownload = downloads::handleResponse,
             privateMode = privateMode,
             initialLoad = initialUrl != null,
-            trackingProtection = protectionFor(initialUrl),
+            trackingProtection = protectionFor(initialUrl, privateMode),
             onBlocked = {
                 runOnUiThread {
                     tabs.firstOrNull { it.id == id }?.let { tab ->
@@ -351,14 +353,14 @@ class MainActivity : ComponentActivity() {
             }
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl)
-        tab.shieldEnabled = protectionFor(initialUrl)
+        tab.shieldEnabled = protectionFor(initialUrl, privateMode)
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 runOnUiThread {
                     tab.url = url
                     tab.home = false
                     tab.blockedPage = 0
-                    tab.shieldEnabled = protectionFor(url)
+                    tab.shieldEnabled = protectionFor(url, privateMode)
                     tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
                     if (activeId.value == id) {
                         currentUrl.value = url
@@ -407,6 +409,7 @@ class MainActivity : ComponentActivity() {
         }
         tab.gecko.close()
         tabs.remove(tab)
+        if (tab.privateMode && tabs.none { it.privateMode }) privateShieldOverrides.clear()
         if (active) {
             if (tabs.isEmpty()) {
                 // Always leave a usable normal tab rather than a blank GeckoView.
@@ -474,7 +477,7 @@ class MainActivity : ComponentActivity() {
         activeTab?.let { tab ->
             tab.url = verified
             tab.home = false
-            tab.shieldEnabled = protectionFor(verified)
+            tab.shieldEnabled = protectionFor(verified, tab.privateMode)
             tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
             currentUrl.value = verified
             atHome.value = false
@@ -516,23 +519,32 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Per-host exceptions are local, never encoded into the visited URL. */
-    private fun protectionFor(url: String?): Boolean {
+    private fun protectionFor(url: String?, privateMode: Boolean = false): Boolean {
         val host = verifiedHost(url) ?: return globalShieldWanted.value
+        if (privateMode) {
+            return privateShieldOverrides[host] ?: globalShieldWanted.value
+        }
         return getSharedPreferences("eymen_browser_shield_sites", MODE_PRIVATE)
             .getBoolean("host_$host", globalShieldWanted.value)
     }
 
     private fun setShieldForCurrentSite(enabled: Boolean) {
-        val host = verifiedHost(activeTab?.url) ?: return
-        getSharedPreferences("eymen_browser_shield_sites", MODE_PRIVATE).edit()
-            .putBoolean("host_$host", enabled).apply()
+        val current = activeTab ?: return
+        val host = verifiedHost(current.url) ?: return
+        if (current.privateMode) {
+            // Ephemeral: no browsing host survives last private tab closure.
+            privateShieldOverrides[host] = enabled
+        } else {
+            getSharedPreferences("eymen_browser_shield_sites", MODE_PRIVATE).edit()
+                .putBoolean("host_$host", enabled).apply()
+        }
         tabs.forEach { tab ->
-            if (verifiedHost(tab.url) == host) {
+            if (tab.privateMode == current.privateMode && verifiedHost(tab.url) == host) {
                 tab.shieldEnabled = enabled
                 tab.gecko.settings.setUseTrackingProtection(enabled)
             }
         }
-        activeTab?.gecko?.reload()
+        current.gecko.reload()
     }
 
     private fun showShield() {
@@ -606,7 +618,12 @@ class MainActivity : ComponentActivity() {
         )
         tabs.forEach { tab ->
             val host = verifiedHost(tab.url)
-            if (host == null || !exceptions.contains("host_$host")) {
+            val overridden = if (tab.privateMode) {
+                host != null && privateShieldOverrides.containsKey(host)
+            } else {
+                host != null && exceptions.contains("host_$host")
+            }
+            if (!overridden) {
                 tab.shieldEnabled = enabled
                 tab.gecko.settings.setUseTrackingProtection(enabled)
             }
@@ -954,6 +971,7 @@ class MainActivity : ComponentActivity() {
         if (::view.isInitialized) view.releaseSession()
         tabs.forEach { it.gecko.close() }
         tabs.clear()
+        privateShieldOverrides.clear()
         super.onDestroy()
     }
 }
