@@ -36,3 +36,20 @@ iOS 15 simülatörü ve gerçek iPhone kontrol edilir. Gerçek sonuçları ve AP
 
 **Kapı 1: Açık.** Cihaz/site testleri tamamlanıp kullanıcı onayı alınmadan Aşama 2
 ekran kodlamasına başlanmaz.
+
+## GitHub Actions test APK'ları — gerçek boyut kaydı
+
+[GeckoView test derlemesi #41804932852](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41804932852) içindeki `EymenBrowser-Phase1-GeckoView-ABI-Debug` artefaktı altı APK içerir:
+
+| Paket | arm64-v8a | armeabi-v7a | x86_64 |
+| --- | --- | --- | --- |
+| `app-telefon` | 204171144 B | 164976220 B | 223765710 B |
+| `app-tv` | 205407384 B | 166212460 B | 225001950 B |
+
+Tek APK 500 MiB altında; bütün APK'ları içeren toplu ZIP bu miktarın üstüne çıkabilir. Boyutlar GitHub Actions Android derleme günlüklerinden alınmıştır.
+
+**Cihaz kurulumuna dikkat:** `arm64-v8a` çoğu modern 64 bit Android telefon/TV,
+`armeabi-v7a` 32 bit ARM TV/telefon, `x86_64` emülatör içindir.
+Cihazın ABI'si doğrulanmadan rastgele APK yüklenmemeli. Bunlar debug/test imzasıdır;
+kararlı uygulama değildir. Hata ayıklama olmadan gerçek siteler ve DRM testleri
+otomatik olarak başarıyla tamamlanmış sayılmaz.
