@@ -21,6 +21,13 @@ adb shell wm size 390x844
 adb shell wm density 160
 adb install -r "$APK"
 adb shell pm clear "$PKG"
+# The approved reference PNGs are Turkish; force the app locale on Android 35.
+# This avoids comparing English UI text against Turkish artwork.
+adb shell cmd locale set-app-locales "$PKG" --locales tr-TR
+adb shell cmd locale get-app-locales "$PKG" | grep -q 'tr-TR' || {
+  echo "Failed to switch the app locale to tr-TR; cannot compare references." >&2
+  exit 19
+}
 adb logcat -c
 adb shell am start -W -n "$PKG/.MainActivity"
 sleep 7
