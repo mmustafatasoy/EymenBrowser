@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var menuLayer: ComposeView
     private lateinit var shieldLayer: ComposeView
     private lateinit var downloadsLayer: ComposeView
+    private lateinit var settingsLayer: ComposeView
     private lateinit var prefs: SharedPreferences
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -74,11 +75,12 @@ class MainActivity : ComponentActivity() {
     private val downloads = AndroidDownloadDenemesi(this)
     private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
-    private var searchEngine = "Google"
+    private var searchEngine by mutableStateOf("Google")
     private var overviewShowing = false
     private var menuShowing = false
     private var shieldShowing = false
     private var downloadsShowing = false
+    private var settingsShowing = false
     private val globalShieldWanted = mutableStateOf(true)
     private val devicesRequested = mutableStateOf(false)
 
@@ -246,12 +248,28 @@ class MainActivity : ComponentActivity() {
             )
         }
         downloadsLayer.visibility = View.GONE
+        settingsLayer = ComposeView(this)
+        root.addView(settingsLayer, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        settingsLayer.setContent {
+            SettingsScreen(
+                globalShield = globalShieldWanted.value,
+                searchEngine = searchEngine,
+                dayMode = dayMode.value,
+                onBack = ::hideSettings,
+                onAction = ::handleSettingsAction
+            )
+        }
+        settingsLayer.visibility = View.GONE
         updateChromeMargins()
         updateHomeVisibility()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    settingsShowing -> hideSettings()
                     downloadsShowing -> hideDownloads()
                     shieldShowing -> hideShield()
                     menuShowing -> hideBrowserMenu()
@@ -530,10 +548,127 @@ class MainActivity : ComponentActivity() {
         if (::shieldLayer.isInitialized) shieldLayer.visibility = View.GONE
     }
 
+    private fun showSettings() {
+        if (!::settingsLayer.isInitialized || videoFullScreen) return
+        if (menuShowing) hideBrowserMenu()
+        if (downloadsShowing) hideDownloads()
+        if (shieldShowing) hideShield()
+        if (overviewShowing) hideTabs()
+        settingsShowing = true
+        settingsLayer.visibility = View.VISIBLE
+    }
+
+    private fun hideSettings() {
+        settingsShowing = false
+        if (::settingsLayer.isInitialized) settingsLayer.visibility = View.GONE
+    }
+
+    private fun handleSettingsAction(action: SettingsAction) {
+        when (action) {
+            SettingsAction.SHIELD -> {
+                val currentlyOn = globalShieldWanted.value
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.settings_shield)
+                    .setMessage(R.string.settings_shield_global_msg)
+                    .setPositiveButton(
+                        if (currentlyOn) R.string.settings_shield_global_off
+                        else R.string.settings_shield_global_on
+                    ) { _, _ -> setGlobalShield(!currentlyOn) }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()
+            SettingsAction.APPEARANCE -> showAppearanceOptions()
+            SettingsAction.DOWNLOADS -> {
+                hideSettings()
+                showDownloads()
+            }
+            SettingsAction.ABOUT -> {
+                val version = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName ?: "—"
+                } catch (_: Exception) { "—" }
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.settings_about_update)
+                    .setMessage(getString(R.string.settings_about_text, version))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+            else -> Unit
+        }
+    }
+
+    private fun setGlobalShield(enabled: Boolean) {
+        val previous = activeTab?.shieldEnabled
+        globalShieldWanted.value = enabled
+        prefs.edit().putBoolean("shield_wanted", enabled).apply()
+        val exceptions = getSharedPreferences(
+            "eymen_browser_shield_sites", MODE_PRIVATE
+        )
+        tabs.forEach { tab ->
+            val host = verifiedHost(tab.url)
+            if (host == null || !exceptions.contains("host_$host")) {
+                tab.shieldEnabled = enabled
+                tab.gecko.settings.setUseTrackingProtection(enabled)
+            }
+        }
+        if (!atHome.value && previous != activeTab?.shieldEnabled) {
+            activeTab?.gecko?.reload()
+        }
+    }
+
+    private fun showSearchEngineSelection() {
+        val engines = arrayOf("Google", "DuckDuckGo", "Bing", "Yandex")
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_change_search)
+            .setSingleChoiceItems(
+                engines, engines.indexOf(searchEngine).coerceAtLeast(0)
+            ) { dialog, index ->
+                searchEngine = engines[index]
+                prefs.edit().putString("search_engine", searchEngine).apply()
+                dialog.dismiss()
+            }.show()
+    }
+
+    private fun showAddressPositionSelection() {
+        val options = arrayOf(
+            getString(R.string.onboarding_bottom),
+            getString(R.string.onboarding_top)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_change_address)
+            .setSingleChoiceItems(
+                options, if (addressBottom) 0 else 1
+            ) { dialog, index ->
+                addressBottom = index == 0
+                prefs.edit().putBoolean("address_at_bottom", addressBottom).apply()
+                updateChromeMargins()
+                dialog.dismiss()
+            }.show()
+    }
+
+    private fun showAppearanceOptions() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.settings_appearance)
+            .setItems(arrayOf(
+                getString(R.string.theme_day),
+                getString(R.string.theme_night),
+                getString(R.string.menu_change_address)
+            )) { _, index ->
+                when (index) {
+                    0, 1 -> {
+                        dayMode.value = index == 0
+                        prefs.edit().putBoolean("day_theme", dayMode.value).apply()
+                    }
+                    2 -> showAddressPositionSelection()
+                }
+            }.show()
+    }
+
     private fun showDownloads() {
         if (!::downloadsLayer.isInitialized || videoFullScreen) return
         if (menuShowing) hideBrowserMenu()
         if (shieldShowing) hideShield()
+        if (settingsShowing) hideSettings()
         if (overviewShowing) hideTabs()
         savedFiles.clear()
         savedFiles.addAll(downloadRegistry.items())
@@ -597,7 +732,7 @@ class MainActivity : ComponentActivity() {
                 dayMode.value = !dayMode.value
                 prefs.edit().putBoolean("day_theme", dayMode.value).apply()
             }
-            MenuAction.SETTINGS -> showStarterSettings()
+            MenuAction.SETTINGS -> showSettings()
             else -> Unit // T07 unavailable actions are non-clickable.
         }
     }
@@ -785,6 +920,7 @@ class MainActivity : ComponentActivity() {
             hideBrowserMenu()
             hideShield()
             hideDownloads()
+            hideSettings()
         }
         if (::chrome.isInitialized) {
             chrome.visibility = if (enabled) View.GONE else View.VISIBLE
