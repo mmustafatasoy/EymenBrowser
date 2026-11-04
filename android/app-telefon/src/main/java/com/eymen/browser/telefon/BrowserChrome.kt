@@ -24,6 +24,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -253,7 +257,9 @@ private fun ToolbarButton(
     onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Box(
-        modifier.height(48.dp).clickable(onClick = onClick),
+        modifier.height(48.dp)
+            .semantics { contentDescription = label; role = Role.Button }
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         EymenVector(
@@ -282,6 +288,7 @@ internal fun BrowserToolbar(
         mutableStateOf(if (home) "" else currentUrl)
     }
     val keyboard = LocalSoftwareKeyboardController.current
+    val tabLabel = stringResource(R.string.tabs)
     val addressBox: @Composable () -> Unit = {
         Row(
             Modifier.fillMaxWidth().height(T.telefon_yukseklik_adresCubugu.dp)
@@ -355,7 +362,41 @@ internal fun BrowserToolbar(
                 onHome, Modifier.weight(1f)
             )
             Box(
-                Modifier.weight(1f).height(48.dp).clickable(onClick = onTabs),
+                Modifier.weight(1f).height(48.dp)
+                    .semantics { contentDescription = "${'
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    Modifier.size(24.dp).border(
+                        1.8.dp, p.text, RoundedCornerShape(7.dp)
+                    ), contentAlignment = Alignment.Center
+                ) {
+                    ChromeText("1", 12, p.text, weight = FontWeight.SemiBold)
+                }
+            }
+            ToolbarButton(
+                stringResource(R.string.menu),
+                EymenPaths.menu, p.text, onMenu, Modifier.weight(1f)
+            )
+        }
+    }
+    Column(
+        Modifier.fillMaxWidth()
+            .background(p.panel)
+            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (addressBottom) {
+            addressBox()
+            nav()
+        } else {
+            nav()
+            addressBox()
+        }
+    }
+}
+}{tabLabel}"; role = Role.Button }
+                    .clickable(onClick = onTabs),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
