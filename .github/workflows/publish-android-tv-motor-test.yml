@@ -1,0 +1,84 @@
+name: EymenBrowser - Android TV motor test APK files
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-android-tv-motor-test.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  tv_apks:
+    name: Build Android TV GeckoView direct APK assets
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: "9.3.1"}
+      - name: Install Android API 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Check stage 1 test constraints
+        run: |
+          python tools/generate.py
+          python tools/verify.py
+          python tools/check_rotation.py
+          python tools/check_drm_permission.py
+      - name: Build Android TV GeckoView APKs
+        working-directory: android
+        run: gradle --no-daemon :app-tv:assembleDebug --stacktrace
+      - name: Select separate ARM TV APKs and verify sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          for abi in arm64-v8a armeabi-v7a; do
+            SRC="android/app-tv/build/outputs/apk/debug/app-tv-${abi}-debug.apk"
+            python tools/verify.py --artifact "$SRC"
+            cp "$SRC" "release/EymenBrowser-TV-${abi}-MOTOR-TEST.apk"
+          done
+          test "$(find release -type f -name '*.apk' | wc -l)" -eq 2
+          sha256sum release/*.apk
+      - name: Publish 2 separate APK downloads in TV prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v0.0.1-tv-motor-test.1"
+          cat > RELEASE_NOTES.md <<'EOF'
+          # EymenBrowser — Android TV GeckoView Motor Testi
+
+          **İki ayrı ve doğrudan indirilebilen APK** (ZIP yok):
+          - arm64-v8a: 64 bit ARM tabanlı Android TV/Google TV.
+          - armeabi-v7a: 32 bit ARM tabanlı Android TV/Google TV.
+
+          Yalnızca TV'nizin CPU/ABI mimarisine uygun **tek APK** yükleyin.
+          Android 8.0 ve üzeri gerekir. Diğer işletim sistemlerinde çalışmaz.
+          Açıldığında yalnız https://example.org/ test sayfası gösterilir.
+          TV kumanda navigasyonu, DRM ve diğer gerçek site uyumlulukları
+          henüz gerçek TV cihazında doğrulanmadı.
+
+          Bu APK'lar **debug/test imzalıdır**, kararlı/üretim sürümü değildir.
+          TV V01-V03 tasarım ekranları Kapı 1 geçilmeden uygulanmadı.
+          Sertifika, site izolasyonu veya DRM güvenlik kontrolleri kapatılmadı.
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/*.apk --clobber
+          else
+            gh release create "$TAG" release/*.apk \
+              --title "EymenBrowser Android TV - GeckoView Motor Testi" \
+              --target "${{ github.sha }}" \
+              --notes-file RELEASE_NOTES.md --prerelease
+          fi
+          gh release view "$TAG" --json url,assets --jq '{url:.url,assets:[.assets[].name]}'

@@ -1,8 +1,9 @@
 # Aşama 1 — motor denemeleri
 
-Bu proje, onaylı 16 ekranın uygulaması değildir. **Gerçek sitelerin yüklenmesi,
-Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu işlevlerin
-çalıştığına kanıt sayılmaz.
+Bu proje, onaylı 16 ekranın uygulaması değildir. **Android telefonda temel HTTPS sayfaları,
+YouTube ve Sintel Widevine DRM oynatma kullanıcı tarafından doğrulandı.** Google hesabıyla
+oturum açma, TV/masaüstü/iOS DRM, PDF/indirme ve diğer motor testleri henüz tamamlanmadı.
+Derleme başarısı gerçek cihaz doğrulaması yerine geçmez.
 
 ## Motor denemeleri
 
@@ -23,7 +24,7 @@ Google girişi ve DRM sonuçları henüz denenmedi**. Derleme başarısı bu iş
 | --- | --- | --- | --- | --- |
 | Gerçek cihazda HTTPS sayfa | Başarılı: example.org ve Google (paylaşılan link) | Denenmedi | Denenmedi | Denenmedi |
 | Google hesabı giriş | Giriş formu açıldı; hesapla oturum açma DENENMEDİ | Denenmedi | Denenmedi | Denenmedi |
-| Korumalı video/DRM | Shaka Player açıldı; Sintel **NOT AVAILABLE**, oynatılmadı (kullanıcı fotoğrafı) | Denenmedi | Denenmedi | Denenmedi |
+| Korumalı video/DRM | **Başarılı: Sintel Widevine görüntülü + sesli oynuyor** (`v0.0.1-motor-test.3`, kullanıcı teyidi); diğer DRM örnekleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | e-Devlet | Başarılı: herkese açık ana sayfa açıldı; oturum açma denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | İki banka ve ödeme sayfası | Ziraat ve İş Bankası herkese açık ana sayfaları başarılı; ödeme/giriş denenmedi | Denenmedi | Denenmedi | Denenmedi |
 | YouTube, video, sosyal medya | YouTube video: görüntü + ses başarılı (kullanıcı doğruladı); diğerleri denenmedi | Denenmedi | Denenmedi | Denenmedi |
@@ -136,3 +137,17 @@ otomatik olarak başarıyla tamamlanmış sayılmaz.
 - Önceki `NOT AVAILABLE` göstergesine kıyasla DRM demo içerik açılışında **olumlu ilerleme** bildirildi.
 - **Henüz açık:** Gerçek Sintel videosunun görüntü ve sesle oynatılıp oynatılmadığı, DRM izin iletişim kutusu, kesintisiz oynatma süresi ve Chrome karşılaştırması bu kısa geri bildirimden kesinleştirilemiyor.
 - Sonuç bu nedenle **tam DRM oynatma başarılı** işaretlenmedi. Kullanıcıdan görüntü ve ses teyidi geldikten sonra matris güncellenecek.
+
+## Widevine Sintel tekrar testi — TAM oynatma teyidi (2026-11-04)
+
+- Kullanıcı, `v0.0.1-motor-test.3` sürümünde **Sintel DRM videosunun görüntülü ve sesli oynadığını** açıkça bildirdi.
+- **Başarılı:** Android telefonda GeckoView ile Shaka Player Sintel **Widevine DRM korumalı örneğinde görüntü ve ses**.
+- **Henüz doğrulanmadı:** Kesintisiz oynatma süresi, 4K kalitesi, Dolby özellikleri, diğer DRM servisleri (ör. Netflix), TV/PC/iOS korumalı içerik, DRM isteminin ne zaman gösterildiği.
+- Önceki `NOT AVAILABLE` denemesi önceki test sürümünün tarihsel sonucu olarak korunur; güncel matriste başarılı sonuç geçerlidir.
+
+## Sıradaki hedef — Philips Android TV GeckoView motor denemesi
+
+- GitHub Releases içindeki `v0.0.1-tv-motor-test.1` ön sürümünde **iki ayrı APK** yayımlanacak: `arm64-v8a` ve `armeabi-v7a`. ZIP gerekmez. TV işlemci mimarisine uygun **tek** APK kurulmalı.
+- Yalnız Android TV / Google TV (Android 8+) kapsamda; LG webOS, Samsung Tizen, Whale OS gibi diğer sistemler bu APK'yı doğrudan çalıştırmayabilir.
+- Uygulama açılınca `https://example.org/` sayfası görüntülenirse **yalnız başlangıç HTTPS motor testi** başarılı sayılır. Daha fazla site açma ve TV kumanda testleri ayrıca yapılır.
+- TV APK'sı **debug/test imzalıdır**, üretim sürümü değildir; Google hesabı/banka bilgileri TV üzerinde test amacıyla girilmemelidir.

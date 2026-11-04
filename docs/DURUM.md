@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açılmadı.** Gerçek Android telefonda `https://example.org/` sayfasının açıldığı fotoğrafla ve Google sayfasının paylaşım yoluyla açıldığı kullanıcı geri bildirimiyle doğrulandı. Google girişi, DRM, e-Devlet, bankalar, YouTube tam ekranı ve PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
+- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını ve **Sintel Widevine DRM görüntü/ses oynatımını** doğruladı. Gerçek Google/banka oturumu, PDF/indirme, sosyal medya, TV, masaüstü, iOS ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -63,5 +63,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Kod incelemesi:** Aşama 1 Android GeckoSession için `PermissionDelegate` henüz tanımlanmamıştı. Mozilla API'sinde DRM sistem medya anahtarına erişim (`PERMISSION_MEDIA_KEY_SYSTEM_ACCESS`) bir site iznidir; Shaka'nın uygun key system seçememesi diğer olası nedenlerden biridir.
 - **Düzeltme denemesi:** Her HTTPS sitesinden DRM izni gerektiğinde **kullanıcı onaylı** yerel Android istemi, reddedilirse hiçbir erişim yok. Kamera/mikrofon/konum veya başka izinler otomatik açılmaz. `shared/i18n` Türkçe/İngilizce metinleri; yeni statik regresyon kontrolü.
 - **Yeni sürüm yayımlandı:** [v0.0.1-motor-test.3](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v0.0.1-motor-test.3) içinde yalnızca `EymenBrowser-Android-Telefon-arm64-DRM-IZIN-TEST.apk` (**204173292 bayt**) doğrudan indirilebilir. [GitHub Actions #41816736583](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41816736583) derleme, dosya boyutu denetimi ve yayın adımlarının tamamı **başarılı**. Android telefonda yeni DRM sonucu **henüz doğrulanmadı**. Debug imzalı motor testidir, üretim değildir; Kapı 1 açık.
-- **Yeni kullanıcı geri bildirimi:** Kullanıcı `v0.0.1-motor-test.3` sonrası **"Bu sefer açılıyor"** dedi. Önceki `NOT AVAILABLE` durumuna kıyasla olumlu; ancak bu ifade tek başına videonun görüntülü/sesli kesintisiz oynadığını, DRM izin penceresinin göründüğünü veya Chrome ile karşılaştırma yapıldığını doğrulamıyor. Bu yüzden Widevine **ön iyileşme gözlendi; tam oynatma teyidi bekliyor** olarak kaydedildi.
-- **Sonraki iş:** Sintel oynatılırken görüntü ve sesin gelip gelmediğini bir kez doğrula; ardından Android TV ve masaüstü motor testlerini planlı sırada tamamla. Kapı 1 açık.
+- **İkinci kullanıcı geri bildirimi (2026-11-04):** Kullanıcı `v0.0.1-motor-test.3` sürümünde Sintel DRM videosunun **görüntülü ve sesli oynadığını** açıkça doğruladı. Android telefonda **Sintel Widevine oynatma testi başarılı**. İzleme süresi, çözünürlük, lisans sürekliliği, Chrome karşılaştırması ve diğer platformlarda DRM hâlâ denenmedi.
+- **Sonraki iş:** Android TV için işlemciye göre iki **ayrı, doğrudan indirilebilir APK** yayımla; gerçek Philips Android TV/Google TV'de ilk HTTPS açılışını dene. TV'de DRM ve kumanda akışı, ardından Electron masaüstü ve iOS motor testleri. Kapı 1 açık.
+
+## Aşama 1 — Android TV test paketi (2026-11-04)
+
+- Android TV GeckoView motor test APK'ları doğrudan Releases varlığı olarak `arm64-v8a` ve `armeabi-v7a` için **iki ayrı APK** şeklinde yayımlanacak. ZIP veya telefon APK'sı TV kullanıcısına dayatılmayacak.
+- Test APK'sı açıldığında `https://example.org/` görüntülenmesi **beklenir**, gerçek TV'de başarılı olduğu henüz doğrulanmadı.
+- **TV kumandasıyla tam gezinti, video DRM, giriş ekranları denenmedi**; bu aşama yalnız motor doğrulamasıdır ve V01–V03 ekranları Kapı 1 öncesi yapılmaz.
+- GitHub Actions test sürümünün yayın durumu CI tamamlandıktan sonra ayrıca doğrulanmalı.
