@@ -41,6 +41,7 @@ jobs:
         with: {distribution: temurin, java-version: "17"}
       - uses: actions/setup-python@v5
         with: {python-version: "3.11"}
+      - uses: android-actions/setup-android@v4
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: "9.3.1"}
       - run: python tools/generate.py
@@ -49,7 +50,7 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME/platforms"
           if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37"
+            sdkmanager --install "platforms;android-37"
           fi
       - name: GeckoView telefon ve TV APK'larını derle
         working-directory: android
