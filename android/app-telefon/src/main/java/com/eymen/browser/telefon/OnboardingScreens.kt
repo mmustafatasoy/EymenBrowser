@@ -133,7 +133,10 @@ private fun SetupView(
         ) {
             LabelText(
                 stringResource(R.string.onboarding_headline), 30,
-                FontWeight.SemiBold
+                FontWeight.SemiBold,
+                // The approved T02 heading wraps after "sonra" at 390dp.
+                // The system font is narrower than Sora; constrain its line width.
+                modifier = Modifier.widthIn(max = 300.dp)
             )
             LabelText(
                 stringResource(R.string.onboarding_caption), 15,
