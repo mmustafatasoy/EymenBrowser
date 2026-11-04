@@ -53,3 +53,17 @@ Tek APK 500 MiB altında; bütün APK'ları içeren toplu ZIP bu miktarın üst�
 Cihazın ABI'si doğrulanmadan rastgele APK yüklenmemeli. Bunlar debug/test imzasıdır;
 kararlı uygulama değildir. Hata ayıklama olmadan gerçek siteler ve DRM testleri
 otomatik olarak başarıyla tamamlanmış sayılmaz.
+
+## Kullanıcının doğruladığı ilk fiziksel test
+
+- 2026-11-04: Android telefonda `https://example.org/` örnek sayfasının yüklenip ekranda görüntülendiği fotoğrafla doğrulandı. Bu, yalnız basit HTTPS sayfa gösterimini doğrular; Google, YouTube, banka, giriş, DRM veya indirme için test sonucu değildir.
+- Aynı fotoğraf Android modelini/ABI'yi kanıtlamaz; cihaz ayrıntıları kesinleştirilmeden üretim uygunluğu kabul edilmez.
+
+## ADB kullanmadan yeni test yöntemi
+
+- GitHub Actions'tan yeni **test** APK'sı kurulduktan sonra Google, YouTube, e-Devlet veya başka HTTPS sitesinin bağlantısını başka bir uygulamada açın.
+- Bağlantıyı **Paylaş → EymenBrowser** ile gönderin. Desteklenen Android cihazlarda "Birlikte aç → EymenBrowser" de kullanılabilir.
+- Uygulama yalnızca HTTPS adresi kabul eder; HTTP, `file:`, `javascript:` vb. adresler reddedilir ve otomatik yürütülmez.
+- Test için aynı uygulamayı yeniden açmak `https://example.org/` ile başlayabilir; test bağlantısı paylaşmak daha doğrudan bir yöntemdir.
+- Yeni test yolunun uygulanması, başarılı derleme veya gerçek cihazda uyumluluk sonucu sayılmaz. Denemelerin sonucu cihaz başına kaydedilmelidir.
+- Google girişi veya banka sayfası denenirse **şifre, SMS kodu, çerez veya özel hesap sayfası ekran görüntüsü paylaşmayın**. Yalnız "açıldı/açılmadı" ve hata türünü yazın.

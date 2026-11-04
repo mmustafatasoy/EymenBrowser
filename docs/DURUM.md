@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açılmadı.** Gerçek cihazda Google girişi, DRM, e-Devlet, bankalar, video, PDF/indirme testleri yapılmadı ve kullanıcı onayı alınmadı.
+- **Kapı 1: açılmadı.** Kullanıcıdan gelen gerçek Android telefon görüntüsünde `https://example.org/` sayfasının GeckoView üzerinde açıldığı doğrulandı. Google girişi, DRM, e-Devlet, bankalar, video, PDF/indirme testleri yapılmadı; kullanıcı onayı alınmadı.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -28,6 +28,12 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - Gradle 9.3.1, Android Gradle eklentisi 9.1.1, Android `compileSdk 37`, `targetSdk 35`, `minSdk 26`.
 - AGP 9 yerleşik Kotlin sistemi ve Compose plugin 2.4.20. SDK37 için Android 17 `platforms;android-37.0`.
 - Şartnameye aykırı Android sürüm tabanı değişikliği veya güvenlik devre dışı bırakması yapılmadı.
+
+## Yeni adım — telefondan çoklu site testi
+
+- GeckoView'e yalnızca doğrulanmış HTTPS adreslerini alan Android `ACTION_SEND` ve `ACTION_VIEW` deneme niyetleri eklendi. Böylece telefondan başka uygulama üzerinden `Paylaş → EymenBrowser` kullanılarak Google, YouTube, e-Devlet vb. siteler ADB gerekmeksizin manuel denenebilecek.
+- Uygulama **yalnız motor testidir**: T01–T11/V01–V03 ekranları, adres çubuğu ve sekmeler şartnamedeki Kapı 1 tamamlanmadan oluşturulmadı.
+- Bu yeni işlevin GitHub Actions derleme sonucu henüz kontrol edilmedi. Gerçek cihazda paylaşım yoluyla sayfa açma testleri **denenmedi**.
 
 ## Sıradaki iş
 1. Fiziksel Android telefon ve Android TV'ye işlemciye uygun test APK'sı kurulup varsayılan HTTPS sayfası açma denenmeli.
