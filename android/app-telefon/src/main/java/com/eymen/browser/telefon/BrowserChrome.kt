@@ -363,7 +363,8 @@ internal fun BrowserToolbar(
             )
             Box(
                 Modifier.weight(1f).height(48.dp)
-                    .semantics { contentDescription = "${'
+                    .semantics { contentDescription = tabLabel; role = Role.Button }
+                    .clickable(onClick = onTabs),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
