@@ -4,7 +4,7 @@ Son güncelleme: 2026-11-04
 
 ## Mevcut aşama
 - **Aşama 1 — Motor denemesi: devam ediyor.**
-- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını ve **Sintel Widevine DRM görüntü/ses oynatımını** doğruladı. Gerçek Google/banka oturumu, PDF/indirme, sosyal medya, TV, masaüstü, iOS ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı.
+- **Kapı 1: açık.** Kullanıcı Android telefonda örnek HTTPS sayfası, Google giriş formu, YouTube görüntü/ses, tam ekran/yatay dönüş, e-Devlet ve iki bankanın herkese açık sayfalarını ve **Sintel Widevine DRM görüntü/ses oynatımını** doğruladı. Gerçek Google/banka oturumu, **dosyanın indirilmesi**, sosyal medya, TV, masaüstü, iOS ve kullanıcı Kapı 1 onayı hâlâ tamamlanmadı. **PDF belgesini görüntüleme** Android telefon ekran fotoğrafıyla doğrulandı.
 - Aşama 2 arayüz kodlamasına **başlanmadı**. `docs/SARTNAME.md` ve `design/` dosyaları değişmedi.
 
 ## Tamamlanan adımlar
@@ -79,3 +79,10 @@ Her APK ayrı ayrı 500 MiB üst sınırının altında. GitHub Actions'ın alt�
 - **Android TV, Windows/Linux/macOS ve iOS/iPadOS çalışmaları duraklatıldı.** Kullanıcı açıkça "başlayalım" demedikçe bu platformlar için yeni kodlama, derleme veya test talebi başlatılmayacak. Mevcut kod ve yayınlar korunur.
 - Aşama 1 Android telefon için sıradaki testler: sosyal medya web sayfası, PDF açma/indirme, kullanıcı verisi gerektirmeyen site uyumluluğu ve gerekli diğer motor kontrolleri.
 - **Şartname değişmedi:** Kapı 1'in tüm platformları kapsayan kabul ölçütleri tamamlanmadan Aşama 2'nin resmî olarak tamamlandığı iddia edilmeyecek; onaylı arayüzlere başlamak için gerekli aşama onayı ayrıca alınmalı.
+
+## Android telefon — PDF okuma testi (2026-11-04)
+
+- Kullanıcı `dummy.pdf` belgesinin EymenBrowser'da açıldığını gösteren gerçek telefon ekran fotoğrafı paylaştı. Beyaz PDF belgesi ve `Dummy PDF file` içeriği görüntüleniyor: **Android GeckoView PDF okuma testi başarılı.**
+- Ekranda üstte `Download` komutu var. **Bu düğmeye basılıp PDF'nin telefona kaydedildiği henüz doğrulanmadı.**
+- **Sıradaki Android testi:** PDF ekranındaki `Download` düğmesini kullan, ardından Dosyalar/İndirilenler'de `dummy.pdf` dosyasının gerçekten oluştuğunu kontrol et. Çalışmazsa indirme olay işleyicisi motor testinden ayrı incelenecek.
+- TV, PC ve Apple çalışmaları kullanıcının önceki isteği doğrultusunda **beklemede**. Kapı 1 açıktır.
