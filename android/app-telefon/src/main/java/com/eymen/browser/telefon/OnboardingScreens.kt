@@ -88,11 +88,11 @@ private fun SplashView() {
 }
 
 @Composable
-private fun BrandMark(sizeDp: Int) {
+internal fun BrandMark(sizeDp: Int, day: Boolean = false) {
     Canvas(Modifier.size(sizeDp.dp)) {
         val k = size.width / 64f
         drawArc(
-            T.gece_vurgu,
+            if (day) T.gunduz_vurgu else T.gece_vurgu,
             startAngle = 56f,
             sweepAngle = 248f,
             useCenter = false,
@@ -101,9 +101,9 @@ private fun BrandMark(sizeDp: Int) {
             style = Stroke(width = 7f * k, cap = StrokeCap.Round)
         )
         listOf(
-            Triple(17f, 33f, T.gece_yazi),
-            Triple(28.5f, 24f, T.gece_vurgu),
-            Triple(40f, 33f, T.gece_yazi)
+            Triple(17f, 33f, if (day) T.gunduz_yazi else T.gece_yazi),
+            Triple(28.5f, 24f, if (day) T.gunduz_vurgu else T.gece_vurgu),
+            Triple(40f, 33f, if (day) T.gunduz_yazi else T.gece_yazi)
         ).forEach { (y, w, c) ->
             drawRoundRect(
                 color = c,
@@ -143,7 +143,7 @@ private fun SetupView(
 
             SetupCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    LabelText("⬡", 24, color = T.gece_koruma)
+                    EymenVector(com.eymen.browser.tema.EymenPaths.kalkan, color = T.gece_koruma)
                     Spacer(Modifier.width(12.dp))
                     LabelText(
                         stringResource(R.string.onboarding_shield), 16,
@@ -178,7 +178,7 @@ private fun SetupView(
 
             SetupCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    LabelText("⌕", 24, color = T.gece_vurgu)
+                    EymenVector(com.eymen.browser.tema.EymenPaths.ara, color = T.gece_vurgu)
                     Spacer(Modifier.width(12.dp))
                     LabelText(
                         stringResource(R.string.onboarding_search_engine), 16,
