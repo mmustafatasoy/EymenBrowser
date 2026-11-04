@@ -2,19 +2,25 @@ package com.eymen.browser.tv
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
-import com.eymen.browser.tema.EymenTokens
+import com.eymen.browser.motor.GeckoMotorDenemesi
+import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoView
 
-/** Aşama 0: ekran ve kumanda kodu Aşama 4'te, yalnız boş Compose for TV uygulaması. */
+/** Aşama 1: yalnızca GeckoView motor denemesi, tasarım arayüzü değildir. */
 class MainActivity : ComponentActivity() {
+    private lateinit var view: GeckoView
+    private var session: GeckoSession? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            Box(Modifier.fillMaxSize().background(EymenTokens.gece_zemin))
-        }
+        view = GeckoView(this)
+        setContentView(view)
+        session = GeckoMotorDenemesi.attach(this, view, intent.getStringExtra("test_url"))
+    }
+
+    override fun onDestroy() {
+        GeckoMotorDenemesi.detach(view, session)
+        session = null
+        super.onDestroy()
     }
 }
