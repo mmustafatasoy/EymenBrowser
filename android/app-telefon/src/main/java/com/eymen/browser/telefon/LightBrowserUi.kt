@@ -352,172 +352,239 @@ private val browseChips = listOf(
     "Uygulamalar" to "https://play.google.com/store/apps"
 )
 
+
+/** Real controls laid out to match the approved 5 November phone mockup. */
 @Composable
 internal fun LightBrowserHome(
     recentUrls: List<String>,
     onSearch: (String) -> Unit,
-    onOpen: (String) -> Unit
+    onOpen: (String) -> Unit,
+    onVoiceSearch: () -> Unit
 ) {
     var input by remember { mutableStateOf("") }
     val keyboard = LocalSoftwareKeyboardController.current
-    Box(
-        Modifier.fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFF6F9FF), Color(0xFFEEF5FF), Color(0xFFF9FBFF))
-                )
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val compact = maxHeight < 650.dp
+        val topSpace = if (compact) 76.dp else 101.dp
+        val blockGap = if (compact) 14.dp else 22.dp
+        val brandSize = if (compact) 78.dp else 94.dp
+        val tileHeight = if (compact) 68.dp else 77.dp
+        val cardHeight = if (compact) 93.dp else 101.dp
+
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(listOf(
+                    Color(0xFFF9FBFF), Color(0xFFEEF5FF),
+                    Color(0xFFF7FAFF), Color(0xFFF6FAFF)
+                ))
             )
-    ) {
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-                .padding(start = 12.dp, end = 12.dp, top = 108.dp, bottom = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Gentle upper/lower blue waves from the reference; decorative only.
+            Canvas(Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+                val upper = Path().apply {
+                    moveTo(0f, h * .19f)
+                    cubicTo(w*.14f,h*.25f,w*.22f,h*.36f,w*.42f,h*.32f)
+                    cubicTo(w*.57f,h*.29f,w*.63f,h*.22f,w,h*.20f)
+                    lineTo(w, h*.31f)
+                    cubicTo(w*.65f,h*.33f,w*.52f,h*.41f,w*.35f,h*.39f)
+                    cubicTo(w*.18f,h*.38f,w*.09f,h*.29f,0f,h*.28f)
+                    close()
+                }
+                drawPath(upper, Brush.horizontalGradient(
+                    listOf(Color(0x552B8BFA),Color(0x185FA8FF),Color(0x00116BFC))
+                ))
+                val lower = Path().apply {
+                    moveTo(0f,h*.93f)
+                    cubicTo(w*.22f,h*.88f,w*.47f,h*1.02f,w*.72f,h*.965f)
+                    cubicTo(w*.86f,h*.94f,w*.91f,h*.92f,w,h*.925f)
+                    lineTo(w,h);lineTo(0f,h);close()
+                }
+                drawPath(lower, Brush.verticalGradient(
+                    listOf(Color(0xA5CCE2FF),Color(0xFFE2EFFF))
+                ))
+                val lower2 = Path().apply {
+                    moveTo(0f,h*.965f)
+                    cubicTo(w*.23f,h*.91f,w*.48f,h*1.035f,w*.73f,h*.975f)
+                    cubicTo(w*.86f,h*.958f,w*.94f,h*.952f,w,h*.96f)
+                    lineTo(w,h);lineTo(0f,h);close()
+                }
+                drawPath(lower2, Color(0x77C8E3FF))
+            }
             Column(
-                Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+                Modifier.fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 10.dp, end = 10.dp,
+                        top = topSpace, bottom = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(blockGap)
             ) {
-                AtasoySiteLogo(Modifier.size(112.dp).shadow(9.dp, RoundedCornerShape(26.dp)))
-                Spacer(Modifier.height(16.dp))
-                LightText("Eymen Browser", 30, Color(0xFF174CA7), bold = true, italic = true)
-                Spacer(Modifier.height(6.dp))
-                Box(
-                    Modifier.width(124.dp).height(3.dp)
-                        .background(Color(0xFF4896FD), RoundedCornerShape(2.dp))
-                )
-            }
-            Row(
-                Modifier.fillMaxWidth().height(58.dp)
-                    .shadow(4.dp, RoundedCornerShape(29.dp))
-                    .border(1.dp, outline, RoundedCornerShape(29.dp))
-                    .background(surface, RoundedCornerShape(29.dp))
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                GoogleLetter()
-                Spacer(Modifier.width(12.dp))
-                BasicTextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    textStyle = TextStyle(fontSize = 16.sp, color = ink),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = {
-                        onSearch(input)
-                        keyboard?.hide()
-                    }),
-                    decorationBox = { field ->
-                        Box {
-                            if (input.isBlank()) LightText("Google'da arayın...", 16, secondary)
-                            field()
-                        }
-                    }
-                )
-                LightIcon("Ara", EymenPaths.ara, onClick = {
-                    onSearch(input)
-                    keyboard?.hide()
-                }, Modifier.size(40.dp))
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                siteShortcuts.forEach { shortcut ->
-                    Column(
-                        Modifier.weight(1f).heightIn(min = 91.dp)
-                            .border(1.dp, outline, RoundedCornerShape(18.dp))
-                            .background(surface, RoundedCornerShape(18.dp))
-                            .clickable { onOpen(shortcut.url) }
-                            .padding(top = 10.dp, bottom = 8.dp, start = 2.dp, end = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            Modifier.size(37.dp)
-                                .background(shortcut.color, RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            LightText(shortcut.symbol, 23, Color.White, bold = true)
-                        }
-                        Spacer(Modifier.height(7.dp))
-                        LightText(shortcut.label, 10, ink)
-                    }
-                }
-            }
-            Row(
-                Modifier.fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                browseChips.forEachIndexed { index, pair ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AtasoySiteLogo(
+                        Modifier.size(brandSize)
+                            .shadow(9.dp, RoundedCornerShape(22.dp))
+                    )
+                    LightText(
+                        "Eymen Browser", if (compact) 25 else 28,
+                        Color(0xFF1557D2), bold = true, italic = true
+                    )
                     Box(
-                        Modifier.height(41.dp)
-                            .background(
-                                if (index == 0) blue else Color.White,
-                                RoundedCornerShape(22.dp)
-                            )
-                            .border(
-                                1.dp,
-                                if (index == 0) blue else outline,
-                                RoundedCornerShape(22.dp)
-                            )
-                            .clickable {
-                                if (pair.second.isNotEmpty()) onOpen(pair.second)
+                        Modifier.width(112.dp).height(3.dp).background(
+                            Brush.horizontalGradient(listOf(
+                                Color.Transparent, Color(0xFF1677F4),
+                                Color(0xFF4FA0FF), Color.Transparent
+                            )), RoundedCornerShape(6.dp)
+                        )
+                    )
+                }
+
+                // Search and microphone in a single airy pill.
+                Row(
+                    Modifier.fillMaxWidth().height(48.dp)
+                        .shadow(4.dp, RoundedCornerShape(26.dp))
+                        .border(1.dp, outline, RoundedCornerShape(26.dp))
+                        .background(Color(0xFFFDFEFF), RoundedCornerShape(26.dp))
+                        .padding(start = 15.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    GoogleLetter(Modifier.size(29.dp))
+                    Spacer(Modifier.width(10.dp))
+                    BasicTextField(
+                        value = input,
+                        onValueChange = { input = it },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 15.sp, color = ink),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = {
+                            onSearch(input); keyboard?.hide()
+                        }),
+                        decorationBox = { field ->
+                            Box {
+                                if (input.isBlank()) {
+                                    LightText("Google'da arayın...", 14, secondary)
+                                }
+                                field()
                             }
-                            .padding(horizontal = 13.dp),
+                        }
+                    )
+                    Box(
+                        Modifier.size(37.dp)
+                            .semantics {
+                                contentDescription = "Google sesli arama"; role = Role.Button
+                            }
+                            .clickable(onClick = onVoiceSearch),
                         contentAlignment = Alignment.Center
-                    ) {
-                        LightText(
-                            pair.first, 13,
-                            if (index == 0) Color.White else ink,
-                            bold = index == 0
-                        )
+                    ) { MicrophoneIcon(Modifier.size(23.dp)) }
+                }
+
+                // Six tappable, brand-specific vector marks, not placeholder letters.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    siteShortcuts.forEach { shortcut ->
+                        Column(
+                            Modifier.weight(1f).height(tileHeight)
+                                .shadow(2.dp, RoundedCornerShape(16.dp))
+                                .border(1.dp, Color(0xFFE0EAF9),
+                                    RoundedCornerShape(16.dp))
+                                .background(Color(0xFDFEFFFF),
+                                    RoundedCornerShape(16.dp))
+                                .clickable { onOpen(shortcut.url) }
+                                .padding(top = 8.dp, bottom = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            BrandShortcutIcon(shortcut.label)
+                            LightText(shortcut.label, if (compact) 9 else 10, ink)
+                        }
                     }
                 }
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                categories.forEach { category ->
-                    Column(
-                        Modifier.weight(1f).height(123.dp)
-                            .border(1.dp, outline, RoundedCornerShape(20.dp))
-                            .background(category.tile, RoundedCornerShape(20.dp))
-                            .clickable { onOpen(category.url) }
-                            .padding(horizontal = 3.dp, vertical = 13.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CategoryArtwork(category.symbol, category.symbolColor)
-                        Spacer(Modifier.height(9.dp))
-                        BasicText(
-                            category.title,
-                            style = TextStyle(
-                                color = ink, fontSize = 11.5.sp,
-                                lineHeight = 14.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        )
-                    }
-                }
-            }
-            // Real browsing history only, no fabricated sponsor/promo panel.
-            if (recentUrls.isNotEmpty()) {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    LightText("Son ziyaret edilenler", 16, ink, bold = true)
-                    recentUrls.take(2).forEach { url ->
+
+                // A single rounded category selector strip as in the mockup.
+                Row(
+                    Modifier.fillMaxWidth().height(36.dp)
+                        .shadow(2.dp, RoundedCornerShape(24.dp))
+                        .border(1.dp, outline, RoundedCornerShape(24.dp))
+                        .background(Color(0xFFFDFEFF), RoundedCornerShape(24.dp))
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    browseChips.forEachIndexed { index, pair ->
                         Row(
-                            Modifier.fillMaxWidth().heightIn(min = 45.dp)
-                                .background(Color.White, RoundedCornerShape(13.dp))
-                                .clickable { onOpen(url) }
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                            Modifier.weight(if (index == 0) 1.13f else 1f)
+                                .fillMaxHeight()
+                                .background(
+                                    if (index == 0) Color(0xFF1785F7)
+                                    else Color.Transparent,
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .clickable {
+                                    if (pair.second.isNotBlank()) onOpen(pair.second)
+                                },
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            LightText(
-                                url.removePrefix("https://"), 13, secondary,
-                                modifier = Modifier.weight(1f)
+                            val symbols = listOf("⌂", "♨", "♧", "▣", "⊞")
+                            LightText(symbols[index], 14,
+                                if (index == 0) Color.White else ink)
+                            Spacer(Modifier.width(3.dp))
+                            LightText(pair.first, if (compact) 9 else 10,
+                                if (index == 0) Color.White else ink,
+                                bold = index == 0)
+                        }
+                    }
+                }
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    categories.forEach { category ->
+                        Column(
+                            Modifier.weight(1f).height(cardHeight)
+                                .shadow(2.dp, RoundedCornerShape(20.dp))
+                                .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                                .background(category.tile, RoundedCornerShape(20.dp))
+                                .clickable { onOpen(category.url) }
+                                .padding(horizontal = 2.dp, vertical = 10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceAround
+                        ) {
+                            CategoryArtwork(category.symbol, category.symbolColor)
+                            BasicText(
+                                category.title,
+                                style = TextStyle(
+                                    color = ink,
+                                    fontSize = if (compact) 10.sp else 11.sp,
+                                    lineHeight = 13.sp,
+                                    textAlign = TextAlign.Center
+                                )
                             )
+                        }
+                    }
+                }
+                if (recentUrls.isNotEmpty()) {
+                    Column(Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LightText("Son ziyaret edilenler", 14, ink, bold = true)
+                        recentUrls.take(2).forEach { url ->
+                            Row(
+                                Modifier.fillMaxWidth().heightIn(min = 42.dp)
+                                    .background(Color.White, RoundedCornerShape(13.dp))
+                                    .clickable { onOpen(url) }
+                                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                LightText(url.removePrefix("https://"),
+                                    12, secondary, Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -526,24 +593,34 @@ internal fun LightBrowserHome(
     }
 }
 
+
 @Composable
 private fun LightMenuRow(
     title: String, symbol: String, enabled: Boolean = true,
+    highlighted: Boolean = false,
     onClick: () -> Unit
 ) {
     Row(
-        Modifier.fillMaxWidth().height(50.dp)
+        Modifier.fillMaxWidth()
+            .padding(horizontal = 7.dp, vertical = 1.dp)
+            .height(39.dp)
+            .background(
+                if (highlighted) Color(0xFFE0EEFE) else Color.Transparent,
+                RoundedCornerShape(13.dp)
+            )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LightText(symbol, 22, if (enabled) ink else Color(0xFFA6B0C0), bold = true)
-        Spacer(Modifier.width(18.dp))
-        LightText(title, 16, if (enabled) ink else Color(0xFFA6B0C0))
+        LightText(symbol, 21,
+            if (enabled) ink else Color(0xFFA6B0C0), bold = true)
+        Spacer(Modifier.width(12.dp))
+        LightText(title, 14,
+            if (enabled) ink else Color(0xFFA6B0C0))
     }
 }
 
-/** A real top-right three-dot popup, with browser Back/Forward moved here. */
+/** Eight rows anchored beneath the upper-right dots, as in approved PNG. */
 @Composable
 internal fun LightBrowserMenu(
     hasPage: Boolean,
@@ -553,37 +630,40 @@ internal fun LightBrowserMenu(
     onReload: () -> Unit,
     onAction: (MenuAction) -> Unit
 ) {
-    Box(Modifier.fillMaxSize().background(Color(0x250F172A))) {
+    Box(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().clickable(onClick = onDismiss))
         Column(
             Modifier.align(Alignment.TopEnd)
-                .padding(top = 68.dp, end = 8.dp)
-                .width(250.dp)
-                .heightIn(max = 520.dp)
-                .shadow(9.dp, RoundedCornerShape(23.dp))
-                .border(1.dp, outline, RoundedCornerShape(23.dp))
-                .background(Color.White, RoundedCornerShape(23.dp))
+                .padding(top = 63.dp, end = 6.dp)
+                .width(205.dp)
+                .heightIn(max = 490.dp)
+                .shadow(12.dp, RoundedCornerShape(23.dp))
+                .border(1.dp, Color(0xFFBED7F9), RoundedCornerShape(23.dp))
+                .background(Color(0xFAFFFFFF), RoundedCornerShape(23.dp))
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 8.dp)
+                .padding(vertical = 7.dp)
         ) {
-            LightMenuRow("Geri", "←") { onDismiss(); onBack() }
-            LightMenuRow("İleri", "→") { onDismiss(); onForward() }
-            LightMenuRow("Yenile", "⟳", enabled = hasPage) { onDismiss(); onReload() }
-            Box(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 7.dp)
-                    .height(1.dp).background(outline)
-            )
-            LightMenuRow("Paylaş", "◇", enabled = hasPage) {
+            LightMenuRow("Geri", "←", highlighted = true) {
+                onDismiss(); onBack()
+            }
+            LightMenuRow("İleri", "→", highlighted = true) {
+                onDismiss(); onForward()
+            }
+            LightMenuRow("Yenile", "⟳", enabled = hasPage) {
+                onDismiss(); onReload()
+            }
+            Box(Modifier.fillMaxWidth().padding(
+                horizontal = 13.dp, vertical = 5.dp
+            ).height(1.dp).background(outline))
+            LightMenuRow("Paylaş", "♧", enabled = hasPage) {
                 onAction(MenuAction.SHARE)
             }
             LightMenuRow("Yer İmleri", "☆") { onAction(MenuAction.BOOKMARKS) }
             LightMenuRow("İndirilenler", "↓") { onAction(MenuAction.DOWNLOADS) }
-            Box(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 7.dp)
-                    .height(1.dp).background(outline)
-            )
-            LightMenuRow("Gizli Sekme", "◉") { onAction(MenuAction.PRIVATE) }
-            LightMenuRow("Görünüm", "◑") { onAction(MenuAction.THEME) }
+            Box(Modifier.fillMaxWidth().padding(
+                horizontal = 13.dp, vertical = 5.dp
+            ).height(1.dp).background(outline))
+            LightMenuRow("Gizli Sekme", "◎") { onAction(MenuAction.PRIVATE) }
             LightMenuRow("Ayarlar", "⚙") { onAction(MenuAction.SETTINGS) }
         }
     }
