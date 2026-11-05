@@ -86,19 +86,12 @@ internal fun TabOverview(
     val outline = if (day) T.gunduz_cizgi else T.gece_cizgi
     val visible = tabs.filter { it.privateMode == (section == TabSection.PRIVATE) }
 
-    // Android 15/16 edge-to-edge can draw behind the phone's status icons.
-    // Use the actual device insets (including notches/punch-hole cutouts and
-    // landscape side cutouts) instead of a fixed 24.dp top margin.
-    // Only consume TOP + horizontal insets here; the footer handles the
-    // bottom navigation/gesture region separately.
+    // MainActivity reserves statusBars/displayCutout for the ENTIRE
+    // FrameLayout root. Do not add statusBarsPadding() here again: doubling
+    // it would push T06 down an extra notch-height on cutout devices.
     Column(
         Modifier.fillMaxSize()
             .background(background)
-            .windowInsetsPadding(
-                WindowInsets.safeDrawing.only(
-                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal
-                )
-            )
             .padding(top = 12.dp)
     ) {
         Row(
