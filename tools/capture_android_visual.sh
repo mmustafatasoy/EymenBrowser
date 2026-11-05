@@ -19,7 +19,22 @@ APK="${EY_APK_PATH:-$(find android/app-telefon/build/outputs/apk/debug -name '*x
 test -n "$APK" && test -f "$APK"
 adb shell wm size 390x844
 adb shell wm density 160
+# For stable release QA, install the previously published production APK
+# first, then upgrade to the candidate signed APK. This tests Android's
+# actual package-signature/version acceptance rather than only APK metadata.
+if [[ -n "${EY_PREVIOUS_APK_PATH:-}" ]]; then
+  test -f "$EY_PREVIOUS_APK_PATH"
+  echo "Checking signed upgrade from previous stable APK"
+  adb install -r "$EY_PREVIOUS_APK_PATH"
+  adb shell dumpsys package "$PKG" | grep -m 1 'versionCode=' || true
+fi
 adb install -r "$APK"
+if [[ -n "${EY_PREVIOUS_APK_PATH:-}" ]]; then
+  adb shell dumpsys package "$PKG" | grep -m 1 'versionCode=10001' || {
+    echo "Stable in-place APK update did not install versionCode 10001" >&2
+    exit 20
+  }
+fi
 adb shell pm clear "$PKG"
 # The approved reference PNGs are Turkish; force the app locale on Android 35.
 # This avoids comparing English UI text against Turkish artwork.
