@@ -71,7 +71,10 @@ assert 'Modifier.navigationBarsPadding()' not in chrome
 assert 'bottomSystemInsetPx' in main
 assert 'insets.getInsets(WindowInsets.Type.navigationBars()).bottom' in main
 assert 'root.setPadding(left, top, right, bottom)' in main
-assert 'val barHeight = (130f * resources.displayMetrics.density).roundToInt()' in main
+assert 'val barHeightDp = if (lightTopBar) 68f else 130f' in main
+assert 'LightBrowserHome(' in main
+assert 'LightBrowserToolbar(' in main
+assert 'LightBrowserMenu(' in main
 assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
 assert 'updater.onResumed()' in main
 assert 'updater.dispose()' in main
