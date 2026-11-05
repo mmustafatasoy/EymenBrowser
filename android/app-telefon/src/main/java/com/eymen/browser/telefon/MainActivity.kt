@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
-        dayMode.value = prefs.getBoolean("day_theme", false)
+        dayMode.value = prefs.getBoolean("day_theme", true)
         globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
@@ -191,6 +191,12 @@ class MainActivity : ComponentActivity() {
         homeLayer.setContent {
             if (activeTab?.privateMode == true) {
                 PrivateHome()
+            } else if (dayMode.value) {
+                LightBrowserHome(
+                    recentUrls = recent,
+                    onSearch = ::openAddress,
+                    onOpen = ::openUrl
+                )
             } else {
                 BrowserHome(
                     day = dayMode.value,
@@ -214,22 +220,35 @@ class MainActivity : ComponentActivity() {
             )
         )
         chrome.setContent {
-            BrowserToolbar(
-                currentUrl = currentUrl.value,
-                home = atHome.value,
-                day = dayMode.value,
-                addressBottom = addressBottom,
-                privateMode = activeTab?.privateMode == true,
-                tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
-                onGo = ::openAddress,
-                onBack = { activeTab?.gecko?.goBack() },
-                onForward = { activeTab?.gecko?.goForward() },
-                onHome = { showHome(true) },
-                onReload = { activeTab?.gecko?.reload() },
-                onTabs = ::showTabs,
-                onMenu = ::showBrowserMenu,
-                onShield = ::showShield
-            )
+            if (dayMode.value) {
+                LightBrowserToolbar(
+                    currentUrl = currentUrl.value,
+                    atHome = atHome.value,
+                    tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
+                    onGo = ::openAddress,
+                    onHome = { showHome(true) },
+                    onNewTab = { createTab(privateMode = false) },
+                    onTabs = ::showTabs,
+                    onMenu = ::showBrowserMenu
+                )
+            } else {
+                BrowserToolbar(
+                    currentUrl = currentUrl.value,
+                    home = atHome.value,
+                    day = dayMode.value,
+                    addressBottom = addressBottom,
+                    privateMode = activeTab?.privateMode == true,
+                    tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
+                    onGo = ::openAddress,
+                    onBack = { activeTab?.gecko?.goBack() },
+                    onForward = { activeTab?.gecko?.goForward() },
+                    onHome = { showHome(true) },
+                    onReload = { activeTab?.gecko?.reload() },
+                    onTabs = ::showTabs,
+                    onMenu = ::showBrowserMenu,
+                    onShield = ::showShield
+                )
+            }
         }
 
         tabsLayer = ComposeView(this)
@@ -275,13 +294,26 @@ class MainActivity : ComponentActivity() {
             )
         )
         menuLayer.setContent {
-            BrowserMenu(
-                hasPage = !atHome.value && GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
-                isDesktop = activeTab?.desktop == true,
-                dayMode = dayMode.value,
-                onDismiss = ::hideBrowserMenu,
-                onAction = ::handleMenuAction
-            )
+            if (dayMode.value) {
+                LightBrowserMenu(
+                    hasPage = !atHome.value &&
+                        GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
+                    onDismiss = ::hideBrowserMenu,
+                    onBack = { activeTab?.gecko?.goBack() },
+                    onForward = { activeTab?.gecko?.goForward() },
+                    onReload = { activeTab?.gecko?.reload() },
+                    onAction = ::handleMenuAction
+                )
+            } else {
+                BrowserMenu(
+                    hasPage = !atHome.value &&
+                        GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
+                    isDesktop = activeTab?.desktop == true,
+                    dayMode = dayMode.value,
+                    onDismiss = ::hideBrowserMenu,
+                    onAction = ::handleMenuAction
+                )
+            }
         }
         menuLayer.visibility = View.GONE
         shieldLayer = ComposeView(this)
@@ -608,15 +640,20 @@ class MainActivity : ComponentActivity() {
         if (!::chrome.isInitialized) return
         // Parent already reserves navigation/IME insets for ALL screens.
         // Adding them to the toolbar height would create a second gap.
-        val barHeight = (130f * resources.displayMetrics.density).roundToInt()
+        // Light approved UI has ONE compact top bar; dark legacy keeps its
+        // original top/bottom placement. Never overlay live Gecko content.
+        val lightTopBar = dayMode.value
+        val bottomBar = addressBottom && !lightTopBar
+        val barHeightDp = if (lightTopBar) 68f else 130f
+        val barHeight = (barHeightDp * resources.displayMetrics.density).roundToInt()
         val body = view.layoutParams as FrameLayout.LayoutParams
-        body.topMargin = if (videoFullScreen || addressBottom) 0 else barHeight
-        body.bottomMargin = if (videoFullScreen || !addressBottom) 0 else barHeight
+        body.topMargin = if (videoFullScreen || bottomBar) 0 else barHeight
+        body.bottomMargin = if (videoFullScreen || !bottomBar) 0 else barHeight
         view.layoutParams = body
         chrome.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.WRAP_CONTENT,
-            if (addressBottom) Gravity.BOTTOM else Gravity.TOP
+            if (bottomBar) Gravity.BOTTOM else Gravity.TOP
         )
     }
 
@@ -848,6 +885,7 @@ class MainActivity : ComponentActivity() {
                 dayMode.value = !dayMode.value
                 prefs.edit().putBoolean("day_theme", dayMode.value).apply()
                 updateSystemBarsAppearance()
+                updateChromeMargins()
             }
             MenuAction.SETTINGS -> showSettings()
             else -> Unit // T07 unavailable actions are non-clickable.
