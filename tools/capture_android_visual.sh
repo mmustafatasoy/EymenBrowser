@@ -101,8 +101,34 @@ if fraction > 0.35:
     raise SystemExit("T02 capture does not resemble the approved page; possibly a system dialog")
 PY
 
-# The approved T02 button sits near the bottom of a 390x844 viewport.
-adb shell input tap 190 734
+# Different Android system navigation modes move the primary start
+# button up/down. Hard-coding y=734 can hit "Make default browser" instead,
+# launching Android Settings and incorrectly reporting an app crash.
+# Locate the REAL bright-blue "Start" pill in the T02 screenshot.
+python - <<'PY'
+from PIL import Image
+from pathlib import Path
+image = Image.open("visual-captures/T02-Ilk-kurulum.png").convert("RGB")
+x = image.width // 2
+blue_rows = []
+for y in range(image.height // 2, image.height - 35):
+    red, green, blue = image.getpixel((x, y))
+    if 50 <= red <= 115 and 130 <= green <= 195 and blue >= 220:
+        blue_rows.append(y)
+runs = []
+for y in blue_rows:
+    if not runs or y > runs[-1][-1] + 1:
+        runs.append([y])
+    else:
+        runs[-1].append(y)
+primary = max(runs, key=len, default=[])
+if len(primary) < 15:
+    raise SystemExit("Primary onboarding Start button is clipped by system navigation")
+tap_y = primary[len(primary) // 2]
+Path("visual-captures/onboarding-start-tap.txt").write_text(str(tap_y))
+print(f"T02 primary Start button visible at y={primary[0]}..{primary[-1]}; tapping y={tap_y}")
+PY
+adb shell input tap 195 "$(cat visual-captures/onboarding-start-tap.txt)"
 sleep 4
 check_browser_foreground
 adb exec-out screencap -p > visual-captures/T03-Yeni-sekme.png
