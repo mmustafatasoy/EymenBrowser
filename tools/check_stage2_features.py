@@ -75,6 +75,10 @@ assert 'val barHeightDp = if (lightTopBar) 68f else 130f' in main
 assert 'LightBrowserHome(' in main
 assert 'LightBrowserToolbar(' in main
 assert 'LightBrowserMenu(' in main
+# Signed upgrades from <=v1.0.4 must not strand users on the saved dark default.
+assert 'light_design_default_migrated_v105' in main
+assert '.putBoolean("day_theme", true)' in main
+assert main.index('light_design_default_migrated_v105') < main.index('dayMode.value = prefs.getBoolean("day_theme", true)')
 assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
 assert 'updater.onResumed()' in main
 assert 'updater.dispose()' in main
