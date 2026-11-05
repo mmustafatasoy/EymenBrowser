@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -69,26 +70,58 @@ private fun LightText(
 }
 
 /** The exact mark geometry from atasoyyazilim.com/public/favicon.svg. */
+
+/** Draw the original blue A site identity without replacing it with a screenshot. */
 @Composable
 internal fun AtasoySiteLogo(modifier: Modifier = Modifier) {
     Canvas(modifier) {
-        val factor = size.minDimension / 36f
+        val u = size.minDimension / 36f
         drawRoundRect(
-            color = Color(0xFF2F5BFF),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(9f * factor)
+            brush = Brush.linearGradient(
+                listOf(Color(0xFF1983FF), Color(0xFF005BFF), Color(0xFF0751ED))
+            ),
+            cornerRadius = CornerRadius(9f * u)
         )
-        val cap = 2.6f * factor
-        val p = { x: Float, y: Float -> Offset(x * factor, y * factor) }
-        drawLine(Color.White, p(11f, 26f), p(18f, 9f), cap, cap = StrokeCap.Round)
-        drawLine(Color.White, p(18f, 9f), p(25f, 26f), cap, cap = StrokeCap.Round)
-        drawLine(Color.White, p(13.8f, 20f), p(22.2f, 20f), cap, cap = StrokeCap.Round)
+        val pt = { x: Float, y: Float -> Offset(x * u, y * u) }
+        drawLine(Color.White, pt(10f, 27f), pt(18f, 8f),
+            strokeWidth = 3.15f * u, cap = StrokeCap.Round)
+        drawLine(Color.White, pt(18f, 8f), pt(26f, 27f),
+            strokeWidth = 3.15f * u, cap = StrokeCap.Round)
+        drawLine(Color.White, pt(12.9f, 20.3f), pt(23.1f, 20.3f),
+            strokeWidth = 3.15f * u, cap = StrokeCap.Round)
+    }
+}
+
+/** Multi-colour Google mark rendered as vectors, not the old single blue G. */
+@Composable
+private fun GoogleLetter(modifier: Modifier = Modifier) {
+    Canvas(modifier.size(27.dp)) {
+        val u = size.minDimension / 40f
+        val tl = Offset(5f * u, 5f * u)
+        val sz = Size(30f * u, 30f * u)
+        val stroke = Stroke(width = 6.4f * u, cap = StrokeCap.Butt)
+        drawArc(Color(0xFF4285F4), -39f, 80f, false, tl, sz, style = stroke)
+        drawArc(Color(0xFF34A853), 41f, 85f, false, tl, sz, style = stroke)
+        drawArc(Color(0xFFFBBC05), 126f, 73f, false, tl, sz, style = stroke)
+        drawArc(Color(0xFFEA4335), 199f, 115f, false, tl, sz, style = stroke)
+        drawLine(Color(0xFF4285F4), Offset(21f*u,20f*u),
+            Offset(36f*u,20f*u), 6f*u, cap = StrokeCap.Square)
     }
 }
 
 @Composable
-private fun GoogleLetter() {
-    // Text only; no external Google image or SDK is required.
-    LightText("G", 24, Color(0xFF4285F4), bold = true)
+private fun MicrophoneIcon(modifier: Modifier = Modifier, color: Color = ink) {
+    Canvas(modifier.size(24.dp)) {
+        val u = size.minDimension / 28f
+        drawRoundRect(color, Offset(11f*u, 3f*u), Size(6f*u, 14f*u),
+            CornerRadius(3f*u))
+        drawArc(color, 0f, 180f, false, Offset(6f*u,5f*u),
+            Size(16f*u,17f*u), style = Stroke(2.7f*u, cap = StrokeCap.Round))
+        drawLine(color, Offset(14f*u,22f*u), Offset(14f*u,26f*u),
+            2.6f*u, cap = StrokeCap.Round)
+        drawLine(color, Offset(9f*u,26f*u), Offset(19f*u,26f*u),
+            2.6f*u, cap = StrokeCap.Round)
+    }
 }
 
 @Composable
@@ -97,16 +130,73 @@ private fun LightIcon(
     modifier: Modifier = Modifier, color: Color = ink
 ) {
     Box(
-        modifier.size(42.dp)
+        modifier.size(40.dp)
             .semantics { contentDescription = label; role = Role.Button }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        EymenVector(icon, color = color, iconSize = 25.dp)
+        EymenVector(icon, color = color, iconSize = 24.dp)
     }
 }
 
-/** Home + one editable URL/search pill + new tab + tab counter + 3-dot menu. */
+@Composable
+private fun BrandShortcutIcon(label: String) {
+    when (label) {
+        "Google" -> GoogleLetter(Modifier.size(33.dp))
+        "Facebook" -> Box(
+            Modifier.size(33.dp).background(
+                Color(0xFF1681F9), RoundedCornerShape(9.dp)
+            ), contentAlignment = Alignment.Center
+        ) { LightText("f", 30, Color.White, bold = true) }
+        "X" -> LightText("𝕏", 32, Color.Black)
+        else -> Canvas(Modifier.size(34.dp)) {
+            val u = size.minDimension / 40f
+            when (label) {
+                "YouTube" -> {
+                    drawRoundRect(Color(0xFFFF1025), Offset(1f*u,6f*u),
+                        Size(38f*u,28f*u), CornerRadius(8f*u))
+                    val play = Path().apply {
+                        moveTo(16f*u,12f*u); lineTo(29f*u,20f*u)
+                        lineTo(16f*u,28f*u); close()
+                    }
+                    drawPath(play, Color.White)
+                }
+                "Instagram" -> {
+                    drawRoundRect(
+                        Brush.linearGradient(listOf(
+                            Color(0xFF6428FF), Color(0xFFDC1B83),
+                            Color(0xFFFD8A1A), Color(0xFFFFCC34)
+                        )),
+                        Offset(2f*u,2f*u), Size(36f*u,36f*u), CornerRadius(10f*u)
+                    )
+                    drawRoundRect(Color.White, Offset(10f*u,10f*u),
+                        Size(20f*u,20f*u), CornerRadius(6f*u),
+                        style = Stroke(2.5f*u))
+                    drawCircle(Color.White, 5.1f*u, Offset(20f*u,20f*u),
+                        style = Stroke(2.4f*u))
+                    drawCircle(Color.White, 1.8f*u, Offset(28f*u,12f*u))
+                }
+                "WhatsApp" -> {
+                    drawRoundRect(Color(0xFF23CE64), Offset(1f*u,1f*u),
+                        Size(38f*u,38f*u), CornerRadius(11f*u))
+                    drawCircle(Color.White, 13.1f*u, Offset(20f*u,19f*u),
+                        style = Stroke(2.35f*u))
+                    val tail = Path().apply {
+                        moveTo(9f*u,28f*u); lineTo(7f*u,35f*u)
+                        lineTo(15f*u,31f*u); close()
+                    }
+                    drawPath(tail, Color.White)
+                    drawLine(Color.White, Offset(14f*u,13f*u),
+                        Offset(17f*u,20f*u), 3f*u, cap=StrokeCap.Round)
+                    drawLine(Color.White, Offset(17f*u,20f*u),
+                        Offset(26f*u,25f*u), 3f*u, cap=StrokeCap.Round)
+                }
+            }
+        }
+    }
+}
+
+/** Approved single top row: home, Google/address, working microphone, +, tabs, menu. */
 @Composable
 internal fun LightBrowserToolbar(
     currentUrl: String,
@@ -114,6 +204,7 @@ internal fun LightBrowserToolbar(
     tabCount: Int,
     onGo: (String) -> Unit,
     onHome: () -> Unit,
+    onVoiceSearch: () -> Unit,
     onNewTab: () -> Unit,
     onTabs: () -> Unit,
     onMenu: () -> Unit
@@ -124,27 +215,28 @@ internal fun LightBrowserToolbar(
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
         Modifier.fillMaxWidth()
-            .background(Color(0xFFF5F8FE))
-            .padding(start = 4.dp, end = 4.dp, top = 9.dp, bottom = 9.dp),
+            .background(Color(0xFFF3F7FD))
+            .padding(start = 3.dp, end = 6.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        LightIcon("Ana sayfa", EymenPaths.ev, onHome, Modifier.size(40.dp))
+        LightIcon("Ana sayfa", EymenPaths.ev, onHome, Modifier.size(36.dp))
         Row(
-            Modifier.weight(1f).height(50.dp)
+            Modifier.weight(1f).height(47.dp)
+                .shadow(2.dp, RoundedCornerShape(26.dp))
                 .border(1.dp, outline, RoundedCornerShape(26.dp))
-                .background(Color(0xFFECF3FD), RoundedCornerShape(26.dp))
-                .padding(start = 12.dp, end = 8.dp),
+                .background(Color(0xFFEAF1FB), RoundedCornerShape(26.dp))
+                .padding(start = 9.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            GoogleLetter()
-            Spacer(Modifier.width(8.dp))
+            GoogleLetter(Modifier.size(23.dp))
+            Spacer(Modifier.width(6.dp))
             BasicTextField(
                 value = input,
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                textStyle = TextStyle(color = ink, fontSize = 14.sp),
+                textStyle = TextStyle(color = ink, fontSize = 13.sp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
                     onGo(input)
@@ -152,45 +244,41 @@ internal fun LightBrowserToolbar(
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.isBlank()) {
-                            LightText("Arama veya URL girin", 13, secondary)
-                        }
+                        if (input.isBlank()) LightText("Arama yapın veya URL girin", 12, secondary)
                         field()
                     }
                 }
             )
+            Box(
+                Modifier.size(31.dp)
+                    .semantics { contentDescription = "Sesli arama"; role = Role.Button }
+                    .clickable(onClick = onVoiceSearch),
+                contentAlignment = Alignment.Center
+            ) { MicrophoneIcon(Modifier.size(21.dp)) }
         }
         Box(
-            Modifier.size(40.dp)
+            Modifier.size(35.dp)
                 .semantics { contentDescription = "Yeni sekme"; role = Role.Button }
                 .clickable(onClick = onNewTab),
             contentAlignment = Alignment.Center
-        ) {
-            LightText("+", 31, ink)
-        }
+        ) { LightText("+", 30, ink) }
         Box(
-            Modifier.size(40.dp)
+            Modifier.size(36.dp)
                 .semantics { contentDescription = "Sekmeler"; role = Role.Button }
                 .clickable(onClick = onTabs),
             contentAlignment = Alignment.Center
         ) {
             Box(
-                Modifier.size(25.dp)
-                    .border(1.9.dp, ink, RoundedCornerShape(6.dp)),
+                Modifier.size(25.dp).border(1.8.dp, ink, RoundedCornerShape(6.dp)),
                 contentAlignment = Alignment.Center
-            ) {
-                LightText(tabCount.toString(), 12, ink, bold = true)
-            }
+            ) { LightText(tabCount.toString(), 12, ink, bold = true) }
         }
         Box(
-            Modifier.size(40.dp)
-                .background(Color(0xFFDDEBFF), RoundedCornerShape(15.dp))
+            Modifier.size(35.dp).background(Color(0xFFB1D6FF), RoundedCornerShape(13.dp))
                 .semantics { contentDescription = "Tarayıcı menüsü"; role = Role.Button }
                 .clickable(onClick = onMenu),
             contentAlignment = Alignment.Center
-        ) {
-            LightText("⋮", 26, ink)
-        }
+        ) { LightText("⋮", 26, ink) }
     }
 }
 
