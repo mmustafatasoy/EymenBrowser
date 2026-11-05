@@ -34,6 +34,15 @@ must_exist = {
 for label, (body, needle) in must_exist.items():
     assert needle in body, f"T06/T09 static regression: {label}"
 
+# Android 15+ draws behind status/cutout bars by default. T06 must place
+# its entire header BELOW the device's real safe area, not a fixed 24.dp.
+assert "WindowInsets.safeDrawing.only(" in tabs
+assert "WindowInsetsSides.Top + WindowInsetsSides.Horizontal" in tabs
+assert ".navigationBarsPadding()" in tabs, "Tab footer can overlap gesture navigation"
+assert "Column(Modifier.fillMaxSize().background(background).padding(top = 24.dp))" not in tabs
+assert "root.setOnApplyWindowInsetsListener" in main
+assert "insets" in main
+
 assert (ROOT / "design/ekranlar/T06-Sekmeler.png").exists(), "T06 approved asset missing"
 assert (ROOT / "design/ekranlar/T09-Gizli.png").exists(), "T09 approved asset missing"
 print("T06/T09 static regression checks passed; real-device validation remains required.")
