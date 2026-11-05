@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -203,15 +205,53 @@ private val siteShortcuts = listOf(
     LightShortcut("Instagram", "◎", Color(0xFFC13584), "https://www.instagram.com/"),
     LightShortcut("WhatsApp", "☎", Color(0xFF16BD5B), "https://web.whatsapp.com/")
 )
+@Composable
+private fun CategoryArtwork(kind: String, color: Color) {
+    when (kind) {
+        "Android" -> Canvas(Modifier.size(33.dp)) {
+            val u = size.minDimension / 40f
+            drawArc(color, 180f, 180f, true, Offset(9f*u, 5f*u), Size(22f*u, 24f*u))
+            drawRoundRect(color, Offset(9f*u, 18f*u), Size(22f*u, 15f*u),
+                CornerRadius(2.5f*u))
+            drawLine(color, Offset(12f*u, 10f*u), Offset(8f*u, 4f*u), 2f*u)
+            drawLine(color, Offset(28f*u, 10f*u), Offset(32f*u, 4f*u), 2f*u)
+            drawLine(color, Offset(5f*u, 21f*u), Offset(5f*u, 30f*u),
+                4f*u, cap = StrokeCap.Round)
+            drawLine(color, Offset(35f*u, 21f*u), Offset(35f*u, 30f*u),
+                4f*u, cap = StrokeCap.Round)
+            drawLine(color, Offset(14f*u, 32f*u), Offset(14f*u, 37f*u),
+                4f*u, cap = StrokeCap.Round)
+            drawLine(color, Offset(26f*u, 32f*u), Offset(26f*u, 37f*u),
+                4f*u, cap = StrokeCap.Round)
+            drawCircle(Color.White, 1.4f*u, Offset(15f*u, 16f*u))
+            drawCircle(Color.White, 1.4f*u, Offset(25f*u, 16f*u))
+        }
+        "TV" -> EymenVector(EymenPaths.masaustu, color = color, iconSize = 33.dp)
+        "Araç" -> Canvas(Modifier.size(33.dp)) {
+            val u = size.minDimension / 40f
+            drawRoundRect(color, Offset(4f*u, 17f*u), Size(32f*u, 13f*u),
+                CornerRadius(4f*u))
+            drawLine(color, Offset(11f*u, 17f*u), Offset(15f*u, 9f*u), 3f*u)
+            drawLine(color, Offset(15f*u, 9f*u), Offset(27f*u, 9f*u), 3f*u)
+            drawLine(color, Offset(27f*u, 9f*u), Offset(31f*u, 17f*u), 3f*u)
+            drawCircle(color, 3.8f*u, Offset(12f*u, 31f*u))
+            drawCircle(color, 3.8f*u, Offset(28f*u, 31f*u))
+            drawLine(Color.White, Offset(8f*u, 23f*u), Offset(12f*u, 23f*u), 2f*u)
+            drawLine(Color.White, Offset(28f*u, 23f*u), Offset(32f*u, 23f*u), 2f*u)
+        }
+        else -> LightText("⬡", 31, color, bold = true)
+    }
+}
+
 private data class CategoryLink(
     val title: String, val symbol: String, val tile: Color, val symbolColor: Color, val url: String
 )
 private val categories = listOf(
-    CategoryLink("Android\nUygulamaları", "♟", Color(0xFFF1E8FF), Color(0xFF9347E9),
+    CategoryLink("Android\nUygulamaları", "Android", Color(0xFFF1E8FF), Color(0xFF9347E9),
         "https://play.google.com/store/apps"),
-    CategoryLink("TV\nUygulamaları", "▣", Color(0xFFFFEAF0), Color(0xFFF3474D),
+    CategoryLink("TV\nUygulamaları", "TV", Color(0xFFFFEAF0), Color(0xFFF3474D),
         "https://www.google.com/search?q=akilli+tv+uygulamalari"),
-    CategoryLink("Araç\nUygulamaları", "▰", Color(0xFFE1F0FF), Color(0xFF1675DE),
+    CategoryLink("Araç\nUygulamaları", "Araç", Color(0xFFE1F0FF), Color(0xFF1675DE),
         "https://www.google.com/search?q=android+auto+uygulamalari"),
     CategoryLink("Özel\nYazılımlar", "⬡", Color(0xFFDFF7F1), Color(0xFF11B98B),
         "https://www.google.com/search?q=yazilim+uygulamalari")
@@ -361,7 +401,7 @@ internal fun LightBrowserHome(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        LightText(category.symbol, 30, category.symbolColor, bold = true)
+                        CategoryArtwork(category.symbol, category.symbolColor)
                         Spacer(Modifier.height(9.dp))
                         BasicText(
                             category.title,
