@@ -178,10 +178,11 @@ jobs:
                 echo "::error::APK signature still fails after trusted re-sign for $ABI"; exit 1
               fi
             fi
-            grep -E '^(Verified|Signer #1 certificate SHA-256 digest:)' "$VERIFY_LOG" || true
-            # Avoid silent CI failures when a build-tools release changes
-            # formatting: detect absent fingerprints explicitly.
-            ACTUAL="$(awk '/^Signer #1 certificate SHA-256 digest:/ {print $NF; exit}' "$VERIFY_LOG" |
+            grep -E '^(Verified|Signer #1 certificate SHA-256 digest:|V[0-9]+ Signer: certificate SHA-256 digest:)' "$VERIFY_LOG" || true
+            # Android SDK build-tools may print V2 Signer, V3 Signer or
+            # Signer #1 for the certificate. Match the certificate digest
+            # field itself, NOT a format-specific prefix or public-key hash.
+            ACTUAL="$(awk '/certificate SHA-256 digest:/ {print $NF; exit}' "$VERIFY_LOG" |
               tr 'a-f' 'A-F')"
             if [[ -z "$ACTUAL" ]]; then
               cat "$VERIFY_LOG"
