@@ -15,7 +15,7 @@ on:
 permissions:
   contents: write
 concurrency:
-# v1 held by a stuck GitHub emulator job and blocked later runs. This v2
+  # v1 held by a stuck GitHub emulator job and blocked later runs. This v2
   # group safely isolates recovery from the stale v1 queue.
   group: eymen-browser-phone-production-release-v2
   cancel-in-progress: false
@@ -207,7 +207,7 @@ jobs:
             echo "::error::No distinct prior stable release was found for upgrade verification"
             exit 1
           fi
-          echo "Testing signed in-place upgrade: $PREVIOUS_TAG -> $RELEASE_TAG"
+          echo "Checking signed update compatibility: $PREVIOUS_TAG -> $RELEASE_TAG"
           gh release download "$PREVIOUS_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "EymenBrowser-Android-Phone-x86_64.apk" \
