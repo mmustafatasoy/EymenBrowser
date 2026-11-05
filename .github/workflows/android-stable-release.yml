@@ -6,7 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.3"
+        default: "1.0.4"
 permissions:
   contents: write
 concurrency:
@@ -243,6 +243,10 @@ jobs:
           - Durum cubugu, on kamera/delik/centik ve yatay ekran kesimi icin tum tarayici ekranlarinda Android WindowInsets guvenli alan duzenlemesi.
           - Android 8-16 boyunca ayni edge-to-edge pencere yapisi; tam ekran video bu kisitlamadan bilincli olarak haric.
           - Gece/gunduz temasi icin telefon durum cubugu simge kontrasti.
+          - Kullanici onayli acik renkli Eymen Browser ana sayfasi, atasoyyazilim.com sitesindeki ozgun mavi A logosu.
+          - Tek ust adres/arama cubugu, yeni sekme, sekme sayaci ve sagdaki uc nokta menusunde geri/ileri/yenile.
+          - YouTube, Google, Facebook, X, Instagram, WhatsApp kisayollari ve arama/baglantiya giden kategori kartlari; promosyon/reklam paneli yok.
+          - Dark tema secenek olarak korunur; acik arayuz yeni kurulumlarin varsayilanidir.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
