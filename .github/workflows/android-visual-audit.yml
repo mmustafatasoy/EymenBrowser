@@ -22,6 +22,10 @@ jobs:
   emulator-visual-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [35, 36]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -53,7 +57,7 @@ jobs:
       - name: Android emulatorunde ilk kurulum, yeni sekme ve T06 sistem cubugu uyumunu denetle
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.api-level }}
           # Lightweight AOSP launcher avoids Google Pixel Launcher ANR overlays.
           target: default
           arch: x86_64
@@ -74,7 +78,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: EymenBrowser-Android-Real-UI-Visual-Audit
+          name: EymenBrowser-Android-Real-UI-Visual-Audit-API${{ matrix.api-level }}
           path: |
             visual-captures/*.png
             visual-report/*.png
