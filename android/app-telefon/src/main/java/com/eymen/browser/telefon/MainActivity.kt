@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -592,6 +593,9 @@ class MainActivity : ComponentActivity() {
             root.paddingRight != right || root.paddingBottom != 0
         ) {
             root.setPadding(left, top, right, 0)
+            // QA can verify the actual root reservation on API 35/36;
+            // a segmented tab screenshot alone cannot prove this.
+            Log.i("EymenSafeArea", "top=$top left=$left right=$right fullscreen=$videoFullScreen")
         }
     }
 
