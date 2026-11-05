@@ -40,13 +40,15 @@ assert "WindowCompat.setDecorFitsSystemWindows(window, false)" in main
 assert "WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout()" in main
 assert "updateSystemBarsAppearance()" in main
 assert "root.setOnApplyWindowInsetsListener" in main
-assert "root.setPadding(left, top, right, 0)" in main
+assert "root.setPadding(left, top, right, bottom)" in main
+assert "WindowInsets.Type.ime()" in main
+assert "root.paddingBottom != bottom" in main
 assert "applyBrowserSafeArea()" in main
 assert "root.requestApplyInsets()" in main
 assert "maxOf(insets.systemWindowInsetTop, cutout?.safeInsetTop ?: 0)" in main
 assert "if (videoFullScreen) 0 else safeTopInsetPx" in main
 assert ".windowInsetsPadding(" not in tabs, "T06 would apply status inset twice"
-assert ".navigationBarsPadding()" in tabs, "Tab footer can overlap gesture navigation"
+assert ".navigationBarsPadding()" not in tabs, "T06 must not reserve root navigation inset twice"
 assert "Column(Modifier.fillMaxSize().background(background).padding(top = 24.dp))" not in tabs
 
 assert (ROOT / "design/ekranlar/T06-Sekmeler.png").exists(), "T06 approved asset missing"
