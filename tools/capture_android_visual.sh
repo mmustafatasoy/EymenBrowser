@@ -131,7 +131,9 @@ with Image.open("visual-captures/T06-Sekmeler.png") as raw:
     assert image.size == (390, 844), f"Unexpected emulator size: {image.size}"
     # The tab overview has a 48dp segmented header at x=160. Sample below
     # the status bar and assert the header actually appeared, not T03.
-    background = image.getpixel((160, 270))
+    # x=380 is outside the tab card grid and header, so it remains
+    # the actual root background even when a real tab preview is present.
+    background = image.getpixel((380, 270))
     first_header = None
     for y in range(5, 106):
         pixel = image.getpixel((160, y))
