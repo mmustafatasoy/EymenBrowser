@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
+import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
@@ -19,6 +20,7 @@ import android.widget.Toast
 import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -105,6 +107,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Make the inset contract deterministic on Android 8–16.
+        // Android 15/16 already enforce edge-to-edge for targetSdk 35;
+        // Android 8–14 must use the SAME geometry so status-bar padding
+        // is never applied on top of a decor-fitted window.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
@@ -113,6 +120,7 @@ class MainActivity : ComponentActivity() {
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
+        updateSystemBarsAppearance()
         // Android 15+ forces edge-to-edge for targetSdk 35. The decor can
         // extend beneath the camera hole, clock and carrier indicators.
         // Reserve the DEVICE-REPORTED status/cutout insets for the ENTIRE
@@ -560,6 +568,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun updateSystemBarsAppearance() {
+        // This background is visible only behind system bars and camera
+        // cutouts; every real browser screen begins below their safe area.
+        if (::root.isInitialized) {
+            root.setBackgroundColor(
+                if (dayMode.value) AndroidColor.rgb(245, 247, 251)
+                else AndroidColor.rgb(10, 15, 28)
+            )
+        }
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = dayMode.value
+    }
+
     private fun applyBrowserSafeArea() {
         if (!::root.isInitialized) return
         // Full-screen video intentionally covers the display; normal
@@ -742,6 +763,7 @@ class MainActivity : ComponentActivity() {
                     0, 1 -> {
                         dayMode.value = index == 0
                         prefs.edit().putBoolean("day_theme", dayMode.value).apply()
+                        updateSystemBarsAppearance()
                     }
                     2 -> showAddressPositionSelection()
                 }
@@ -815,6 +837,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.THEME -> {
                 dayMode.value = !dayMode.value
                 prefs.edit().putBoolean("day_theme", dayMode.value).apply()
+                updateSystemBarsAppearance()
             }
             MenuAction.SETTINGS -> showSettings()
             else -> Unit // T07 unavailable actions are non-clickable.
