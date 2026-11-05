@@ -6,7 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.1"
+        default: "1.0.2"
 permissions:
   contents: write
 concurrency:
@@ -191,11 +191,17 @@ jobs:
           check_artifacts(files)
           PY
           (cd release-staging && sha256sum *.apk > SHA256SUMS.txt)
-      - name: Download existing v1.0.0 APK to test real signature-preserving upgrade
+      - name: Download latest published stable APK and validate in-place signed upgrade
         run: |
           set -euo pipefail
           mkdir -p release-staging/previous
-          gh release download v1.0.0 \
+          PREVIOUS_TAG="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq '.tagName')"
+          if [[ -z "$PREVIOUS_TAG" || "$PREVIOUS_TAG" == "$RELEASE_TAG" ]]; then
+            echo "::error::No distinct prior stable release was found for upgrade verification"
+            exit 1
+          fi
+          echo "Testing signed in-place upgrade: $PREVIOUS_TAG -> $RELEASE_TAG"
+          gh release download "$PREVIOUS_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "EymenBrowser-Android-Phone-x86_64.apk" \
             --dir release-staging/previous
