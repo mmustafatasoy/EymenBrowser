@@ -811,6 +811,7 @@ class MainActivity : ComponentActivity() {
                         dayMode.value = index == 0
                         prefs.edit().putBoolean("day_theme", dayMode.value).apply()
                         updateSystemBarsAppearance()
+                        updateChromeMargins()
                     }
                     2 -> showAddressPositionSelection()
                 }
