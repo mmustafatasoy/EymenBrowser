@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
     private val activeTab: BrowserTab?
         get() = tabs.firstOrNull { it.id == activeId.value }
 
-    private var navigationInsetPx = 0
+    private var bottomSystemInsetPx = 0
     // The whole app viewport starts BELOW the device's camera/status bar,
     // not just one Compose header. Values come from Android WindowInsets.
     private var safeTopInsetPx = 0
@@ -128,8 +128,9 @@ class MainActivity : ComponentActivity() {
         // browser (GeckoView + home + overlays + toolbar), not a fixed
         // 24dp offset on only the tabs screen.
         //
-        // Do not consume the navigation-bar inset: bottom toolbars still use
-        // navigationBarsPadding(), and full-screen video may hide system bars.
+        // Navigation + keyboard safe area is reserved HERE too. All screens
+        // share the same viewport; Compose child layers must not pad it twice.
+        // Fullscreen video is the intentional exception.
         root.setOnApplyWindowInsetsListener { _, insets ->
             @Suppress("DEPRECATION")
             val top: Int
@@ -143,7 +144,10 @@ class MainActivity : ComponentActivity() {
                 top = safe.top
                 left = safe.left
                 right = safe.right
-                bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+                bottom = maxOf(
+                    insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
+                    insets.getInsets(WindowInsets.Type.ime()).bottom
+                )
             } else {
                 @Suppress("DEPRECATION")
                 val cutout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -161,10 +165,7 @@ class MainActivity : ComponentActivity() {
             safeTopInsetPx = top
             safeLeftInsetPx = left
             safeRightInsetPx = right
-            if (navigationInsetPx != bottom) {
-                navigationInsetPx = bottom
-                updateChromeMargins()
-            }
+            bottomSystemInsetPx = bottom
             applyBrowserSafeArea()
             insets
         }
@@ -589,20 +590,25 @@ class MainActivity : ComponentActivity() {
         val top = if (videoFullScreen) 0 else safeTopInsetPx
         val left = if (videoFullScreen) 0 else safeLeftInsetPx
         val right = if (videoFullScreen) 0 else safeRightInsetPx
+        val bottom = if (videoFullScreen) 0 else bottomSystemInsetPx
         if (root.paddingTop != top || root.paddingLeft != left ||
-            root.paddingRight != right || root.paddingBottom != 0
+            root.paddingRight != right || root.paddingBottom != bottom
         ) {
-            root.setPadding(left, top, right, 0)
-            // QA can verify the actual root reservation on API 35/36;
-            // a segmented tab screenshot alone cannot prove this.
-            Log.i("EymenSafeArea", "top=$top left=$left right=$right fullscreen=$videoFullScreen")
+            root.setPadding(left, top, right, bottom)
+            // Actual root insets allow QA to detect regressions on old
+            // 3-button, gesture, and camera-cutout phones.
+            Log.i(
+                "EymenSafeArea",
+                "top=$top left=$left right=$right bottom=$bottom fullscreen=$videoFullScreen"
+            )
         }
     }
 
     private fun updateChromeMargins() {
         if (!::chrome.isInitialized) return
-        val barHeight = (130f * resources.displayMetrics.density).roundToInt() +
-            if (addressBottom && !videoFullScreen) navigationInsetPx else 0
+        // Parent already reserves navigation/IME insets for ALL screens.
+        // Adding them to the toolbar height would create a second gap.
+        val barHeight = (130f * resources.displayMetrics.density).roundToInt()
         val body = view.layoutParams as FrameLayout.LayoutParams
         body.topMargin = if (videoFullScreen || addressBottom) 0 else barHeight
         body.bottomMargin = if (videoFullScreen || !addressBottom) 0 else barHeight
