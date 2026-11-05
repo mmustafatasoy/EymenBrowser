@@ -7,6 +7,7 @@ on:
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/OnboardingScreens.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/TabOverview.kt'
       - 'tools/capture_android_visual.sh'
       - 'tools/compare_approved_screenshots.py'
       - 'shared/i18n/tr.json'
@@ -49,7 +50,7 @@ jobs:
       - name: KVM erisimini etkinlestir
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
-      - name: Android emulatorunde ilk kurulum ve yeni sekme ekrani yakala
+      - name: Android emulatorunde ilk kurulum, yeni sekme ve T06 sistem cubugu uyumunu denetle
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
