@@ -227,6 +227,7 @@ jobs:
           NEW_PACKAGE="$(extract_package "$NEW_BADGING")"
           OLD_CODE="$(extract_code "$PREVIOUS_BADGING")"
           NEW_CODE="$(extract_code "$NEW_BADGING")"
+          echo "Old APK: package=$OLD_PACKAGE versionCode=$OLD_CODE; new APK: package=$NEW_PACKAGE versionCode=$NEW_CODE; expected releaseCode=$RELEASE_CODE"
           if [[ "$OLD_PACKAGE" != 'com.eymen.browser.telefon' ||
                 "$NEW_PACKAGE" != "$OLD_PACKAGE" ||
                 -z "$OLD_CODE" || -z "$NEW_CODE" ||
