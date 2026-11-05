@@ -66,7 +66,15 @@ assert 'EYMEN_ANDROID_KEY_PASSWORD' in release
 assert 'docs/ANDROID_RELEASE_CERT_SHA256.txt' in release
 assert 'apksigner" verify --verbose --print-certs' in release
 assert 'gh release create "$RELEASE_TAG"' in release
-assert 'script: bash tools/capture_android_visual.sh' in release
+# Emulator visual verification lives in a separate workflow so transient SDK
+# download/bootstrap failures cannot block the signed release indefinitely.
+visual_audit = (ROOT / ".github/workflows/android-visual-audit.yml").read_text()
+assert 'script: bash tools/capture_android_visual.sh' in visual_audit
+assert 'compare signed update compatibility' in release
+assert 'PREVIOUS_CERT' in release
+assert 'OLD_PACKAGE' in release and 'NEW_PACKAGE' in release
+assert 'NEW_CODE' in release and 'OLD_CODE' in release
+assert 'e ym en br ow ser' not in release
 assert 'versionName = "0.0.1"' in gradle  # Default version is still locked.
 
 fingerprint = (ROOT / "docs/ANDROID_RELEASE_CERT_SHA256.txt").read_text().strip()
