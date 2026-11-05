@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.0"
+  # One-time repository-side release request. Only this exact version file can
+  # trigger production publishing without a manual workflow_dispatch.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.0.txt'
 permissions:
   contents: write
 concurrency:
@@ -39,12 +45,19 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.0' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
             echo "::error::Release must run from main"
             exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            REQUEST_FILE=".github/release-requests/v1.0.0.txt"
+            if [[ ! -f "$REQUEST_FILE" ]] || [[ "$(cat "$REQUEST_FILE")" != "v1.0.0" ]]; then
+              echo "::error::One-time release request is missing or malformed"
+              exit 1
+            fi
           fi
           if ! [[ "$REQUESTED_VERSION" =~ ^[1-9][0-9]*\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
             echo "::error::Version must be major.minor.patch without prerelease suffixes"
@@ -65,6 +78,8 @@ jobs:
           echo "RELEASE_VERSION=$REQUESTED_VERSION" >> "$GITHUB_ENV"
           echo "RELEASE_CODE=$CODE" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+      - name: Install visual smoke-test dependencies
+        run: python -m pip install Pillow==11.3.0
       - name: Verify project sources and update security contract
         run: |
           set -euo pipefail
@@ -188,6 +203,9 @@ jobs:
           check_artifacts(files)
           PY
           (cd release-staging && sha256sum *.apk > SHA256SUMS.txt)
+      - name: Enable KVM for the Android emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
       - name: Boot and smoke-test the same signed x86_64 APK before publishing
         uses: reactivecircus/android-emulator-runner@v2
         env:
