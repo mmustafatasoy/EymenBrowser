@@ -123,14 +123,45 @@ jobs:
             SOURCE="$(find android/app-telefon/build/outputs/apk/release -maxdepth 1 -type f               -name "*$ABI*-release.apk" -print -quit)"
             if [[ -z "$SOURCE" ]]; then echo "::error::Missing $ABI APK"; exit 1; fi
             TARGET="release-staging/EymenBrowser-Android-Phone-$ABI.apk"
+            echo "::group::Verifying $ABI production APK"
             cp "$SOURCE" "$TARGET"
-            "$BUILD_TOOLS/zipalign" -c 4 "$TARGET"
-            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$TARGET" > "$RUNNER_TEMP/$ABI-signer.txt"
-            ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/$ABI-signer.txt" |
-              head -1 | awk '{print $NF}' | tr 'a-f' 'A-F')"
+            # Gradle APK splits can differ in native-library 16 KiB alignment.
+            # If alignment fails, repair it BEFORE applying the original
+            # production signature; never continue with an unverified APK.
+            if ! "$BUILD_TOOLS/zipalign" -c -v -P 16 4 "$TARGET"; then
+              echo "Gradle APK alignment needs repair for $ABI; aligning to 16 KiB."
+              ALIGNED="$RUNNER_TEMP/EymenBrowser-$ABI-aligned.apk"
+              "$BUILD_TOOLS/zipalign" -P 16 -f -v 4 "$SOURCE" "$ALIGNED"
+              "$BUILD_TOOLS/apksigner" sign \
+                --ks "$EY_SIGNING_KEYSTORE_FILE" \
+                --ks-key-alias "$EY_SIGNING_KEY_ALIAS" \
+                --ks-pass env:EY_SIGNING_STORE_PASSWORD \
+                --key-pass env:EY_SIGNING_KEY_PASSWORD \
+                --out "$TARGET" "$ALIGNED"
+              rm -f "$ALIGNED"
+            fi
+            if ! "$BUILD_TOOLS/zipalign" -c -v -P 16 4 "$TARGET"; then
+              echo "::error::Native library alignment failed for $ABI"; exit 1
+            fi
+            VERIFY_LOG="$RUNNER_TEMP/$ABI-signer.txt"
+            if ! "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$TARGET" > "$VERIFY_LOG" 2>&1; then
+              cat "$VERIFY_LOG"
+              echo "::error::APK signature verification failed for $ABI"; exit 1
+            fi
+            grep -E '^(Verified|Signer #1 certificate SHA-256 digest:)' "$VERIFY_LOG" || true
+            # Avoid silent CI failures when a build-tools release changes
+            # formatting: detect absent fingerprints explicitly.
+            ACTUAL="$(awk '/^Signer #1 certificate SHA-256 digest:/ {print $NF; exit}' "$VERIFY_LOG" |
+              tr 'a-f' 'A-F')"
+            if [[ -z "$ACTUAL" ]]; then
+              cat "$VERIFY_LOG"
+              echo "::error::apksigner did not return a certificate digest for $ABI"; exit 1
+            fi
             if [[ "$ACTUAL" != "$EXPECTED" ]]; then
               echo "::error::APK signing identity mismatch for $ABI"; exit 1
             fi
+            echo "Verified $ABI: aligned, signed, expected certificate and release version $RELEASE_VERSION"
+            echo "::endgroup::"
           done
           python - <<'PY'
           from pathlib import Path
