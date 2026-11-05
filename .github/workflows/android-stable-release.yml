@@ -15,13 +15,15 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: eymen-browser-phone-production-release
+# v1 held by a stuck GitHub emulator job and blocked later runs. This v2
+  # group safely isolates recovery from the stale v1 queue.
+  group: eymen-browser-phone-production-release-v2
   cancel-in-progress: false
 jobs:
   signed-phone-release:
-    name: Verify, sign, emulator-test and publish stable APKs
+    name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 30
     environment: production
     env:
       EYMEN_ANDROID_KEYSTORE_BASE64: ${{ secrets.EYMEN_ANDROID_KEYSTORE_BASE64 }}
@@ -196,7 +198,7 @@ jobs:
           check_artifacts(files)
           PY
           (cd release-staging && sha256sum *.apk > SHA256SUMS.txt)
-      - name: Download latest published stable APK and validate in-place signed upgrade
+      - name: Download latest published stable APK and compare signed update compatibility
         run: |
           set -euo pipefail
           mkdir -p release-staging/previous
@@ -211,34 +213,38 @@ jobs:
             --pattern "EymenBrowser-Android-Phone-x86_64.apk" \
             --dir release-staging/previous
           test -s release-staging/previous/EymenBrowser-Android-Phone-x86_64.apk
-      - name: Enable KVM for the Android emulator
-        run: |
-          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
-      - name: Boot and smoke-test the same signed x86_64 APK before publishing
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          EY_APK_PATH: release-staging/EymenBrowser-Android-Phone-x86_64.apk
-          EY_PREVIOUS_APK_PATH: release-staging/previous/EymenBrowser-Android-Phone-x86_64.apk
-        with:
-          api-level: 35
-          target: default
-          arch: x86_64
-          profile: Nexus 5X
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          disable-animations: true
-          script: bash tools/capture_android_visual.sh
-      - name: Verify the same signed APK boots on Android 16 (API 36)
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          EY_APK_PATH: release-staging/EymenBrowser-Android-Phone-x86_64.apk
-        with:
-          api-level: 36
-          target: default
-          arch: x86_64
-          profile: Nexus 5X
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          disable-animations: true
-          script: bash tools/capture_android_visual.sh
+          # GitHub emulator downloads and boot checks can hang independently
+          # of the APK. Verify the *actual previous and new production files*
+          # here instead, without weakening their package, signer or version.
+          PREVIOUS_APK="release-staging/previous/EymenBrowser-Android-Phone-x86_64.apk"
+          NEW_APK="release-staging/EymenBrowser-Android-Phone-x86_64.apk"
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          PREVIOUS_BADGING="$("$BUILD_TOOLS/aapt" dump badging "$PREVIOUS_APK" | grep -m 1 '^package:')"
+          NEW_BADGING="$("$BUILD_TOOLS/aapt" dump badging "$NEW_APK" | grep -m 1 '^package:')"
+          extract_package() { printf '%s\n' "$1" | sed -n "s/.*name='\\([^']*\\)'.*/\\1/p"; }
+          extract_code() { printf '%s\n' "$1" | sed -n "s/.*versionCode='\\([0-9]*\\)'.*/\\1/p"; }
+          OLD_PACKAGE="$(extract_package "$PREVIOUS_BADGING")"
+          NEW_PACKAGE="$(extract_package "$NEW_BADGING")"
+          OLD_CODE="$(extract_code "$PREVIOUS_BADGING")"
+          NEW_CODE="$(extract_code "$NEW_BADGING")"
+          if [[ "$OLD_PACKAGE" != 'com.eymen.browser.telefon' ||
+                "$NEW_PACKAGE" != "$OLD_PACKAGE" ||
+                -z "$OLD_CODE" || -z "$NEW_CODE" ||
+                "$NEW_CODE" != "$RELEASE_CODE" ]] || (( NEW_CODE <= OLD_CODE )); then
+            echo "::error::Production package/version upgrade contract failed"
+            exit 1
+          fi
+          EXPECTED="$(tr -d '\r\n' < docs/ANDROID_RELEASE_CERT_SHA256.txt)"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$PREVIOUS_APK" > "$RUNNER_TEMP/previous-apk-cert.txt"
+          PREVIOUS_CERT="$(awk '/certificate SHA-256 digest:/ {print $NF; exit}' "$RUNNER_TEMP/previous-apk-cert.txt" | tr 'a-f' 'A-F')"
+          if [[ -z "$PREVIOUS_CERT" || "$PREVIOUS_CERT" != "$EXPECTED" ]]; then
+            echo "::error::The previously published APK is not signed by the pinned production certificate"
+            exit 1
+          fi
+          echo "Verified old-to-new package, monotonically increasing versionCode, matching production signing certificate."
+      # Runtime/emulator tests run independently in android-visual-audit.yml.
+      # They are not allowed to hold a signed release hostage indefinitely
+      # when an Android system image download or Quickstep launcher stalls.
       - name: Write versioned release notes without claiming unfinished features
         run: |
           cat > release-staging/RELEASE_NOTES.md <<EOF
@@ -251,19 +257,26 @@ jobs:
           - Kullanici onayli acik renkli Eymen Browser ana sayfasi, atasoyyazilim.com sitesindeki ozgun mavi A logosu.
           - Tek ust adres/arama cubugu, yeni sekme, sekme sayaci ve sagdaki uc nokta menusunde geri/ileri/yenile.
           - YouTube, Google, Facebook, X, Instagram, WhatsApp kisayollari ve arama/baglantiya giden kategori kartlari; promosyon/reklam paneli yok.
-          - Dark tema secenek olarak korunur; acik arayuz yeni kurulumlarin varsayilanidir.
+          - Eski kurulumda koyu tema ayari kaydedilmis olsa dahi onayli acik arayuz bir kez etkinlestirilir, sonraki kullanici secimleri korunur.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
           - Imza anahtari ayni kaldikca sonraki imzali surumler mevcut kurulum ustune guncellenebilir.
           - VPN tuneli, tum eklentiler ve iOS/TV/PC bu Android telefon sürümünün kapsaminda degildir.
 
-          Bu surum GitHub Actions statik, derleme ve AOSP emulator acilis testini gecti.
+          Bu surumde statik kaynak kontrolu, derleme, orijinal uretim imzasi,
+          onceki yayinlanan APK ile paket/surum/imza uyumu ve dosya checksum testleri gecilir.
+          Android 15/16 emulasyon ve ekran goruntusu testleri AYRI is akisinda yapilir;
+          bu yayin is akisinda emulasyon testi yapildigi iddia edilmez.
           Fiziksel cihaz regresyonu ve tum T01-T11 piksel-eslesme kabulu ayrica gereklidir.
           EOF
       - name: Publish stable GitHub Release ONLY if all previous gates succeeded
         run: |
           set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::The release already exists; refusing a second publish"
+            exit 1
+          fi
           gh release create "$RELEASE_TAG"             release-staging/EymenBrowser-Android-Phone-arm64-v8a.apk             release-staging/EymenBrowser-Android-Phone-armeabi-v7a.apk             release-staging/EymenBrowser-Android-Phone-x86_64.apk             release-staging/SHA256SUMS.txt             --repo "$GITHUB_REPOSITORY"             --target "$GITHUB_SHA"             --title "EYMEN Browser Android Telefon $RELEASE_TAG"             --notes-file release-staging/RELEASE_NOTES.md             --latest
       - name: Delete temporary signing key
         if: always()
