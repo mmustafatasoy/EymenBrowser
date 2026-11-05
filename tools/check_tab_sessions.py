@@ -36,7 +36,9 @@ for label, (body, needle) in must_exist.items():
 
 # Android 15+ can draw BEHIND the camera and status indicators. Every
 # browser screen must share ONE activity-level status/cutout safe viewport.
+assert "WindowCompat.setDecorFitsSystemWindows(window, false)" in main
 assert "WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout()" in main
+assert "updateSystemBarsAppearance()" in main
 assert "root.setOnApplyWindowInsetsListener" in main
 assert "root.setPadding(left, top, right, 0)" in main
 assert "applyBrowserSafeArea()" in main
