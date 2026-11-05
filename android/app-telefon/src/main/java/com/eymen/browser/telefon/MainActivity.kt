@@ -116,6 +116,15 @@ class MainActivity : ComponentActivity() {
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
+        // v1.0.4 changed the default to light but old installs retain the legacy
+        // saved false value. Migrate that legacy default ONCE so upgrades actually
+        // show the newly approved light UI; later user theme choices persist.
+        if (!prefs.getBoolean("light_design_default_migrated_v105", false)) {
+            prefs.edit()
+                .putBoolean("day_theme", true)
+                .putBoolean("light_design_default_migrated_v105", true)
+                .apply()
+        }
         dayMode.value = prefs.getBoolean("day_theme", true)
         globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
