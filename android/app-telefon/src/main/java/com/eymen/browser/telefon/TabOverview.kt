@@ -86,7 +86,21 @@ internal fun TabOverview(
     val outline = if (day) T.gunduz_cizgi else T.gece_cizgi
     val visible = tabs.filter { it.privateMode == (section == TabSection.PRIVATE) }
 
-    Column(Modifier.fillMaxSize().background(background).padding(top = 24.dp)) {
+    // Android 15/16 edge-to-edge can draw behind the phone's status icons.
+    // Use the actual device insets (including notches/punch-hole cutouts and
+    // landscape side cutouts) instead of a fixed 24.dp top margin.
+    // Only consume TOP + horizontal insets here; the footer handles the
+    // bottom navigation/gesture region separately.
+    Column(
+        Modifier.fillMaxSize()
+            .background(background)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                )
+            )
+            .padding(top = 12.dp)
+    ) {
         Row(
             Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -263,9 +277,11 @@ internal fun TabOverview(
         }
 
         Row(
-            Modifier.fillMaxWidth().background(surface).padding(
-                start = 16.dp, end = 16.dp, top = 10.dp, bottom = 18.dp
-            ),
+            Modifier.fillMaxWidth().background(surface)
+                // Keep 'close all' and '+ new tab' above the system gesture
+                // handle and 3-button navigation area on every device.
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
