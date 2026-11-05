@@ -134,39 +134,37 @@ check_browser_foreground
 adb exec-out screencap -p > visual-captures/T03-Yeni-sekme.png
 test -s visual-captures/T03-Yeni-sekme.png
 
-# A white Gecko about:blank viewport is NOT the approved dark T03 homepage.
-# Do not produce misleading pixel metrics if internal Gecko navigation hid it.
+# New approved T03 is LIGHT, branded with the actual blue Atasoy A
+# logo. Never compare it to the obsolete DARK T03 PNG in design/ekranlar:
+# such pixel metrics would be false evidence for this user-approved redesign.
 python - <<'PY'
 from PIL import Image
 from pathlib import Path
-
-path = Path("visual-captures/T03-Yeni-sekme.png")
-with Image.open(path) as image:
-    sample = image.convert("RGB").crop((0, 55, image.width, image.height - 135))
-    sample.thumbnail((90, 130))
+with Image.open("visual-captures/T03-Yeni-sekme.png") as raw:
+    image = raw.convert("RGB")
+    if image.size != (390, 844):
+        raise SystemExit("T03 unexpected emulator screen size")
+    # Count bright points around the ACTUAL content area, not system bars.
+    sample = image.crop((20, 105, 370, 680))
+    sample.thumbnail((80, 120))
     pixels = list(sample.getdata())
-bright_fraction = sum(
-    1 for red, green, blue in pixels if min(red, green, blue) >= 235
-) / len(pixels)
-print(f"T03 bright-background fraction: {bright_fraction:.3f}")
-if bright_fraction > 0.35:
-    raise SystemExit("T03 is predominantly white; refused to compare blank Gecko content as homepage")
-with Image.open("design/ekranlar/T03-Yeni-sekme.png") as image:
-    expected = image.convert("RGB")
-with Image.open(path) as image:
-    observed = image.convert("RGB").resize(expected.size, Image.Resampling.LANCZOS)
-from PIL import ImageChops
-diff = ImageChops.difference(expected, observed)
-fraction = sum(max(pixel) >= 25 for pixel in diff.getdata()) / (expected.width * expected.height)
-print(f"T03 screen identity error fraction: {fraction:.3f}")
-if fraction > 0.20:
-    raise SystemExit("T03 capture resembles a different page (e.g. onboarding); refused wrong-page metric")
+    light = sum(min(rgb) >= 210 for rgb in pixels) / len(pixels)
+    # Atasoy website A mark is blue and must appear near the center of the
+    # actual homepage, otherwise this may be a blank Gecko white page.
+    logo = image.crop((110, 130, 280, 440))
+    blues = sum(
+        r < 115 and 50 < g < 180 and b > 185
+        for r, g, b in logo.getdata()
+    )
+    print(f"New light T03: light fraction={light:.3f}, official-blue logo pixels={blues}")
+    if light < 0.45 or blues < 130:
+        raise SystemExit("T03 is not the approved LIGHT home with the real blue A mark")
 PY
 
-# T06: reproduce the real device path to the tab overview (4th toolbar
-# button on the 390x844 reference emulator). Never audit just T02/T03 while
-# an edge-to-edge regression makes the tabs cover the status bar.
-adb shell input tap 268 754
+# T06: real LIGHT TOP toolbar tab-count control: x≈324, y≈58 in
+# 390x844/160dpi AOSP with a 24px status bar. The old bottom-toolbar
+# click (268,754) would now click homepage content instead.
+adb shell input tap 324 58
 sleep 3
 check_browser_foreground
 adb exec-out screencap -p > visual-captures/T06-Sekmeler.png
