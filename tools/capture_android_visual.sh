@@ -58,6 +58,28 @@ check_browser_foreground() {
   fi
 }
 check_browser_foreground
+# Verify the ENTIRE FrameLayout uses the device-reported insets. A T06-only
+# Compose padding could pass a header screenshot while GeckoView, Home,
+# Settings, and other browser screens still overlap the camera/status bar.
+adb logcat -d -s EymenSafeArea:I > visual-captures/actual-safe-insets.txt || true
+python - <<'PY'
+from pathlib import Path
+import re
+text = Path("visual-captures/actual-safe-insets.txt").read_text()
+values = [
+    tuple(map(int, match))
+    for match in re.findall(
+        r"EymenSafeArea:\s+top=(\d+) left=(\d+) right=(\d+) fullscreen=false",
+        text,
+    )
+]
+print(f"Activity root safe-area measurements (top,left,right): {values}")
+if not values or max(item[0] for item in values) <= 0:
+    raise SystemExit(
+        "No positive device status/camera-safe inset applied to the browser root; "
+        "refusing to treat a T06-only header as a whole-app fix"
+    )
+PY
 adb exec-out screencap -p > visual-captures/T02-Ilk-kurulum.png
 test -s visual-captures/T02-Ilk-kurulum.png
 
