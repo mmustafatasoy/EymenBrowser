@@ -271,9 +271,8 @@ internal fun TabOverview(
 
         Row(
             Modifier.fillMaxWidth().background(surface)
-                // Keep 'close all' and '+ new tab' above the system gesture
-                // handle and 3-button navigation area on every device.
-                .navigationBarsPadding()
+                // Root window padding handles actual system navigation and
+                // keyboard insets on every device; no double padding here.
                 .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
