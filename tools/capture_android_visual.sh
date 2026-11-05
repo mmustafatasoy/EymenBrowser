@@ -83,6 +83,38 @@ PY
 adb exec-out screencap -p > visual-captures/T02-Ilk-kurulum.png
 test -s visual-captures/T02-Ilk-kurulum.png
 
+# Some Android 16 AOSP emulator instances have a stuck Quickstep launcher
+# ANR ON TOP of our correctly resumed Activity. This is an OS test-fixture
+# problem, not a valid EYMEN screenshot. Dismiss only a demonstrably large
+# light system overlay, restart the foreground browser and recheck twice.
+# NEVER weaken the final screenshot identity check or publish a wrong page.
+t02_is_uncovered() {
+  python - <<'PY'
+from PIL import Image
+from pathlib import Path
+with Image.open("visual-captures/T02-Ilk-kurulum.png") as raw:
+    image = raw.convert("RGB").crop((30, 70, 360, 680))
+    image.thumbnail((60, 110))
+    pixels = list(image.getdata())
+dark = sum(max(rgb) < 95 for rgb in pixels) / len(pixels)
+print(f"T02 unobscured dark-layout fraction: {dark:.3f}")
+if dark < 0.52:
+    raise SystemExit(1)
+PY
+}
+if ! t02_is_uncovered; then
+  for attempt in 1 2; do
+    echo "System launcher overlay detected; recovery attempt $attempt"
+    adb shell am force-stop com.android.launcher3 >/dev/null 2>&1 || true
+    adb shell am force-stop com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+    adb shell am start -W -n "$PKG/.MainActivity" >/dev/null
+    sleep 4
+    check_browser_foreground
+    adb exec-out screencap -p > visual-captures/T02-Ilk-kurulum.png
+    if t02_is_uncovered; then break; fi
+  done
+fi
+
 # Android can layer a system ANR dialog OVER the foreground app. Such a
 # capture is not comparable to the approved dark T02 design.
 python - <<'PY'
