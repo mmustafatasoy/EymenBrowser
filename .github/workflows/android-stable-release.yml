@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.3"
+  # One-time, exact-file request for signed v1.0.3. This is removed after
+  # a verified successful release; regular releases require user approval.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.3.txt'
 permissions:
   contents: write
 concurrency:
@@ -39,12 +45,19 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.3' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
             echo "::error::Release must run from main"
             exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            REQUEST_FILE=".github/release-requests/v1.0.3.txt"
+            if [[ ! -f "$REQUEST_FILE" ]] || [[ "$(cat "$REQUEST_FILE")" != "v1.0.3" ]]; then
+              echo "::error::One-time release request is missing or malformed"
+              exit 1
+            fi
           fi
           if ! [[ "$REQUESTED_VERSION" =~ ^[1-9][0-9]*\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
             echo "::error::Version must be major.minor.patch without prerelease suffixes"
