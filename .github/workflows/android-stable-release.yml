@@ -6,7 +6,13 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.0"
+        default: "1.0.1"
+  # A one-time, exact-file trigger to publish the corrected follow-up release.
+  # A successful publication will immediately remove this temporary trigger.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.1.txt'
 permissions:
   contents: write
 concurrency:
@@ -39,12 +45,19 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.1' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
             echo "::error::Release must run from main"
             exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            REQUEST_FILE=".github/release-requests/v1.0.1.txt"
+            if [[ ! -f "$REQUEST_FILE" ]] || [[ "$(cat "$REQUEST_FILE")" != "v1.0.1" ]]; then
+              echo "::error::One-time release request is missing or malformed"
+              exit 1
+            fi
           fi
           if ! [[ "$REQUESTED_VERSION" =~ ^[1-9][0-9]*\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
             echo "::error::Version must be major.minor.patch without prerelease suffixes"
@@ -55,7 +68,7 @@ jobs:
           if ((CODE <= 1 || CODE > 2000000000)); then exit 1; fi
           TAG="v$REQUESTED_VERSION"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::Release already exists: $TAG"
+            echo "::error::Release already exists: $TAG. Published tags cannot be released twice; use a NEW version (e.g. v1.0.1)."
             exit 1
           fi
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
@@ -200,6 +213,18 @@ jobs:
           EY_APK_PATH: release-staging/EymenBrowser-Android-Phone-x86_64.apk
         with:
           api-level: 35
+          target: default
+          arch: x86_64
+          profile: Nexus 5X
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash tools/capture_android_visual.sh
+      - name: Verify the same signed APK boots on Android 16 (API 36)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          EY_APK_PATH: release-staging/EymenBrowser-Android-Phone-x86_64.apk
+        with:
+          api-level: 36
           target: default
           arch: x86_64
           profile: Nexus 5X
