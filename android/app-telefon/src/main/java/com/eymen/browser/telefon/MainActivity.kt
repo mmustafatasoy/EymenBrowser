@@ -94,6 +94,11 @@ class MainActivity : ComponentActivity() {
         get() = tabs.firstOrNull { it.id == activeId.value }
 
     private var navigationInsetPx = 0
+    // The whole app viewport starts BELOW the device's camera/status bar,
+    // not just one Compose header. Values come from Android WindowInsets.
+    private var safeTopInsetPx = 0
+    private var safeLeftInsetPx = 0
+    private var safeRightInsetPx = 0
     private var videoFullScreen = false
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
@@ -108,17 +113,50 @@ class MainActivity : ComponentActivity() {
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
-        // Keep Gecko content clear of the actual OS navigation bar when the
-        // Compose toolbar grows by navigationBarsPadding().
+        // Android 15+ forces edge-to-edge for targetSdk 35. The decor can
+        // extend beneath the camera hole, clock and carrier indicators.
+        // Reserve the DEVICE-REPORTED status/cutout insets for the ENTIRE
+        // browser (GeckoView + home + overlays + toolbar), not a fixed
+        // 24dp offset on only the tabs screen.
+        //
+        // Do not consume the navigation-bar inset: bottom toolbars still use
+        // navigationBarsPadding(), and full-screen video may hide system bars.
         root.setOnApplyWindowInsetsListener { _, insets ->
             @Suppress("DEPRECATION")
-            val bottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                insets.getInsets(WindowInsets.Type.navigationBars()).bottom
-            } else insets.systemWindowInsetBottom
+            val top: Int
+            val left: Int
+            val right: Int
+            val bottom: Int
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val safe = insets.getInsets(
+                    WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout()
+                )
+                top = safe.top
+                left = safe.left
+                right = safe.right
+                bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            } else {
+                @Suppress("DEPRECATION")
+                val cutout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    insets.displayCutout
+                } else null
+                @Suppress("DEPRECATION")
+                top = maxOf(insets.systemWindowInsetTop, cutout?.safeInsetTop ?: 0)
+                @Suppress("DEPRECATION")
+                left = maxOf(insets.systemWindowInsetLeft, cutout?.safeInsetLeft ?: 0)
+                @Suppress("DEPRECATION")
+                right = maxOf(insets.systemWindowInsetRight, cutout?.safeInsetRight ?: 0)
+                @Suppress("DEPRECATION")
+                bottom = insets.systemWindowInsetBottom
+            }
+            safeTopInsetPx = top
+            safeLeftInsetPx = left
+            safeRightInsetPx = right
             if (navigationInsetPx != bottom) {
                 navigationInsetPx = bottom
                 updateChromeMargins()
             }
+            applyBrowserSafeArea()
             insets
         }
         view = GeckoView(this)
@@ -519,6 +557,20 @@ class MainActivity : ComponentActivity() {
         if (::homeLayer.isInitialized) {
             homeLayer.visibility =
                 if (atHome.value && !videoFullScreen) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun applyBrowserSafeArea() {
+        if (!::root.isInitialized) return
+        // Full-screen video intentionally covers the display; normal
+        // browser content and all dialogs stay beneath the camera cutout.
+        val top = if (videoFullScreen) 0 else safeTopInsetPx
+        val left = if (videoFullScreen) 0 else safeLeftInsetPx
+        val right = if (videoFullScreen) 0 else safeRightInsetPx
+        if (root.paddingTop != top || root.paddingLeft != left ||
+            root.paddingRight != right || root.paddingBottom != 0
+        ) {
+            root.setPadding(left, top, right, 0)
         }
     }
 
@@ -928,6 +980,8 @@ class MainActivity : ComponentActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         GeckoMotorDenemesi.onConfigurationChanged(newConfig)
+        // Rotating a notched phone changes top vs side display cutout insets.
+        if (::root.isInitialized) root.requestApplyInsets()
     }
 
     @Suppress("DEPRECATION")
@@ -954,6 +1008,10 @@ class MainActivity : ComponentActivity() {
             hideDownloads()
             hideSettings()
         }
+        // Entering/exiting immersive video must remove/restore the device
+        // camera/status bar reservation without restarting Gecko sessions.
+        applyBrowserSafeArea()
+        root.requestApplyInsets()
         if (::chrome.isInitialized) {
             chrome.visibility = if (enabled) View.GONE else View.VISIBLE
             updateChromeMargins()
