@@ -69,14 +69,14 @@ text = Path("visual-captures/actual-safe-insets.txt").read_text()
 values = [
     tuple(map(int, match))
     for match in re.findall(
-        r"EymenSafeArea:\s+top=(\d+) left=(\d+) right=(\d+) fullscreen=false",
+        r"EymenSafeArea:\s+top=(\d+) left=(\d+) right=(\d+) bottom=(\d+) fullscreen=false",
         text,
     )
 ]
-print(f"Activity root safe-area measurements (top,left,right): {values}")
-if not values or max(item[0] for item in values) <= 0:
+print(f"Activity root safe-area measurements (top,left,right,bottom): {values}")
+if not values or max(item[0] for item in values) <= 0 or max(item[3] for item in values) <= 0:
     raise SystemExit(
-        "No positive device status/camera-safe inset applied to the browser root; "
+        "No positive top camera/status or bottom navigation inset on the app root; "
         "refusing to treat a T06-only header as a whole-app fix"
     )
 PY
