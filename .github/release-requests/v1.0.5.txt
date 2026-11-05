@@ -1,6 +1,0 @@
-v1.0.5
-release recovery: 2026-11-06
-source UI: approved EYMEN Browser light design
-fix: signed APK build and compatibility gates; emulator visual QA runs separately
-recovery attempt: capture old-to-new package and version gate diagnostics
-release repair: anchored aapt package field; verified sample parser returns com.eymen.browser.telefon
