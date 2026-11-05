@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [35, 36]
+        api: [35, 36]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -57,7 +57,7 @@ jobs:
       - name: Android emulatorunde ilk kurulum, yeni sekme ve T06 sistem cubugu uyumunu denetle
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.api-level }}
+          api-level: ${{ matrix.api }}
           # Lightweight AOSP launcher avoids Google Pixel Launcher ANR overlays.
           target: default
           arch: x86_64
@@ -78,7 +78,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: EymenBrowser-Android-Real-UI-Visual-Audit-API${{ matrix.api-level }}
+          name: EymenBrowser-Android-Real-UI-Visual-Audit-API${{ matrix.api }}
           path: |
             visual-captures/*.png
             visual-report/*.png
