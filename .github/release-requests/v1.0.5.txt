@@ -1,1 +1,2 @@
 v1.0.5
+validated no-scrim menu pixel regression: b6c110e978fdb5fdc30142a8ea13d11fcebe2494
