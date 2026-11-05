@@ -30,8 +30,9 @@ if [[ -n "${EY_PREVIOUS_APK_PATH:-}" ]]; then
 fi
 adb install -r "$APK"
 if [[ -n "${EY_PREVIOUS_APK_PATH:-}" ]]; then
-  adb shell dumpsys package "$PKG" | grep -m 1 'versionCode=10001' || {
-    echo "Stable in-place APK update did not install versionCode 10001" >&2
+  EXPECTED_CODE="${RELEASE_CODE:?Signed release version code required for upgrade test}"
+  adb shell dumpsys package "$PKG" | grep -m 1 "versionCode=$EXPECTED_CODE" || {
+    echo "Stable in-place APK update did not install versionCode $EXPECTED_CODE" >&2
     exit 20
   }
 fi
