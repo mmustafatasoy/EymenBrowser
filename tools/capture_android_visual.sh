@@ -161,6 +161,28 @@ with Image.open("visual-captures/T03-Yeni-sekme.png") as raw:
         raise SystemExit("T03 is not the approved LIGHT home with the real blue A mark")
 PY
 
+# T07: the approved compact three-dot menu must really open at the top
+# right and contain working Back/Forward actions (not a decorative image).
+adb shell input tap 365 58
+sleep 2
+check_browser_foreground
+adb exec-out screencap -p > visual-captures/T07-Acik-Menu.png
+python - <<'PY'
+from PIL import Image, ImageChops
+with Image.open("visual-captures/T03-Yeni-sekme.png") as original:
+    base = original.convert("RGB").crop((125, 90, 388, 585))
+with Image.open("visual-captures/T07-Acik-Menu.png") as current:
+    menu = current.convert("RGB").crop((125, 90, 388, 585))
+diff = ImageChops.difference(base, menu)
+fraction = sum(max(p) >= 24 for p in diff.getdata()) / (diff.width * diff.height)
+print(f"Actual T07 top-right popup screen delta: {fraction:.3f}")
+if fraction < 0.23:
+    raise SystemExit("Three-dot popup did not open as a top-right menu")
+PY
+adb shell input keyevent 4
+sleep 1
+check_browser_foreground
+
 # T06: real LIGHT TOP toolbar tab-count control: x≈324, y≈58 in
 # 390x844/160dpi AOSP with a 24px status bar. The old bottom-toolbar
 # click (268,754) would now click homepage content instead.
