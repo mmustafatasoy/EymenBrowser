@@ -2,6 +2,8 @@ package com.eymen.browser.telefon
 
 import android.app.AlertDialog
 import android.app.DownloadManager
+import android.content.ActivityNotFoundException
+import android.speech.RecognizerIntent
 import android.content.Intent
 import android.net.Uri
 import android.content.SharedPreferences
@@ -21,6 +23,7 @@ import android.widget.Toast
 import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -80,6 +83,16 @@ class MainActivity : ComponentActivity() {
     private val downloads = AndroidDownloadDenemesi(this)
     // Safe to create only when onCreate/onResume has attached the Activity Context.
     private val updater by lazy { BrowserUpdateManager(this) }
+    private val voiceSearchLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val phrase = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()?.trim()
+            if (!phrase.isNullOrEmpty()) openAddress(phrase)
+        }
+    }
     private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
     private var searchEngine by mutableStateOf("Google")
@@ -204,7 +217,8 @@ class MainActivity : ComponentActivity() {
                 LightBrowserHome(
                     recentUrls = recent,
                     onSearch = ::openAddress,
-                    onOpen = ::openUrl
+                    onOpen = ::openUrl,
+                    onVoiceSearch = ::startVoiceSearch
                 )
             } else {
                 BrowserHome(
@@ -236,6 +250,7 @@ class MainActivity : ComponentActivity() {
                     tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
                     onGo = ::openAddress,
                     onHome = { showHome(true) },
+                    onVoiceSearch = ::startVoiceSearch,
                     onNewTab = { createTab(privateMode = false) },
                     onTabs = ::showTabs,
                     onMenu = ::showBrowserMenu
@@ -552,6 +567,22 @@ class MainActivity : ComponentActivity() {
     private fun hideTabs() {
         overviewShowing = false
         if (::tabsLayer.isInitialized) tabsLayer.visibility = View.GONE
+    }
+
+    /** Uses an installed speech recognizer without requesting microphone permission ourselves. */
+    private fun startVoiceSearch() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Arama yapmak için konuşun")
+        }
+        try {
+            voiceSearchLauncher.launch(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, "Bu telefonda sesli arama hizmeti bulunamadı.",
+                Toast.LENGTH_LONG).show()
+        }
     }
 
     /** Only validated HTTPS destinations are loaded into GeckoSession. */
