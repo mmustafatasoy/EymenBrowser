@@ -97,8 +97,12 @@ with Image.open(capture) as image:
 diff = ImageChops.difference(expected, observed)
 fraction = sum(max(pixel) >= 25 for pixel in diff.getdata()) / (expected.width * expected.height)
 print(f"T02 screen identity error fraction: {fraction:.3f}")
-if fraction > 0.35:
-    raise SystemExit("T02 capture does not resemble the approved page; possibly a system dialog")
+# AOSP's 3-button navigation region can be unusually tall (as much
+# as ~125px on some runner images), contributing ~0.15 pixel difference
+# even when the REAL T02 screen is visible. Follow this with the strict
+# blue primary-button detector below to reject a wrong foreground page.
+if fraction > 0.55:
+    raise SystemExit("T02 screenshot is likely a different page or a system dialog")
 PY
 
 # Different Android system navigation modes move the primary start
