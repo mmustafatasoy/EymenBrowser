@@ -208,12 +208,20 @@ from PIL import Image, ImageChops
 with Image.open("visual-captures/T03-Yeni-sekme.png") as original:
     base = original.convert("RGB").crop((125, 90, 388, 585))
 with Image.open("visual-captures/T07-Acik-Menu.png") as current:
-    menu = current.convert("RGB").crop((125, 90, 388, 585))
+    full = current.convert("RGB")
+    menu = full.crop((125, 90, 388, 585))
+    # The approved popup has no screen-darkening scrim. Check the real
+    # light-blue Back/Forward rows rather than requiring an old dark overlay.
+    highlighted = full.crop((191, 100, 372, 178))
+    blue = sum(
+        205 <= r < 239 and 215 <= g <= 248 and b > 246
+        for r, g, b in highlighted.getdata()
+    )
 diff = ImageChops.difference(base, menu)
 fraction = sum(max(p) >= 24 for p in diff.getdata()) / (diff.width * diff.height)
-print(f"Actual T07 top-right popup screen delta: {fraction:.3f}")
-if fraction < 0.23:
-    raise SystemExit("Three-dot popup did not open as a top-right menu")
+print(f"Actual T07 top-right popup delta={fraction:.3f}, blue row pixels={blue}")
+if fraction < 0.12 or blue < 1100:
+    raise SystemExit("Approved three-dot popup with blue Back/Forward rows did not open")
 PY
 adb shell input keyevent 4
 sleep 1
