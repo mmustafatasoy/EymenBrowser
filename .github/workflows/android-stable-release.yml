@@ -221,7 +221,7 @@ jobs:
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           PREVIOUS_BADGING="$("$BUILD_TOOLS/aapt" dump badging "$PREVIOUS_APK" | grep -m 1 '^package:')"
           NEW_BADGING="$("$BUILD_TOOLS/aapt" dump badging "$NEW_APK" | grep -m 1 '^package:')"
-          extract_package() { printf '%s\n' "$1" | sed -n "s/.*name='\\([^']*\\)'.*/\\1/p"; }
+          extract_package() { printf '%s\n' "$1" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p"; }
           extract_code() { printf '%s\n' "$1" | sed -n "s/.*versionCode='\\([0-9]*\\)'.*/\\1/p"; }
           OLD_PACKAGE="$(extract_package "$PREVIOUS_BADGING")"
           NEW_PACKAGE="$(extract_package "$NEW_BADGING")"
