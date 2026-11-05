@@ -7,6 +7,7 @@ on:
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/OnboardingScreens.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/TabOverview.kt'
       - 'tools/capture_android_visual.sh'
       - 'tools/compare_approved_screenshots.py'
@@ -71,9 +72,10 @@ jobs:
           if test -s visual-captures/T02-Ilk-kurulum.png; then
             python tools/compare_approved_screenshots.py --screen T02-Ilk-kurulum --capture visual-captures/T02-Ilk-kurulum.png --output visual-report
           fi
-          if test -s visual-captures/T03-Yeni-sekme.png; then
-            python tools/compare_approved_screenshots.py --screen T03-Yeni-sekme --capture visual-captures/T03-Yeni-sekme.png --output visual-report
-          fi
+          # T03 changed to the user-approved light design. Do not compare
+          # against the previous DARK reference; capture + semantic checks
+          # in capture_android_visual.sh are authoritative until the light
+          # reference is checked into design/ekranlar.
       - name: Yakalanan gercek ekranlar ve fark raporlari
         if: always()
         uses: actions/upload-artifact@v4
