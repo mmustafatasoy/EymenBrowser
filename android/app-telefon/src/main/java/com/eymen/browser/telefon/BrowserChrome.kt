@@ -394,9 +394,8 @@ internal fun BrowserToolbar(
     Column(
         Modifier.fillMaxWidth()
             .background(p.panel)
-            // API 35 edge-to-edge and older 3-button navigation must not
-            // overlap Back/Home/Tabs/Menu. Keep the panel color behind the bar.
-            .then(if (addressBottom) Modifier.navigationBarsPadding() else Modifier)
+            // MainActivity already reserves the actual bottom system
+            // navigation/IME inset for the whole app. Don't reserve it twice.
             .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 18.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
