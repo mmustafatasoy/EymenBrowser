@@ -115,4 +115,37 @@ if fraction > 0.20:
     raise SystemExit("T03 capture resembles a different page (e.g. onboarding); refused wrong-page metric")
 PY
 
-echo "Browser foreground, Turkish locale and T03 dark homepage validated."
+# T06: reproduce the real device path to the tab overview (4th toolbar
+# button on the 390x844 reference emulator). Never audit just T02/T03 while
+# an edge-to-edge regression makes the tabs cover the status bar.
+adb shell input tap 268 754
+sleep 3
+check_browser_foreground
+adb exec-out screencap -p > visual-captures/T06-Sekmeler.png
+test -s visual-captures/T06-Sekmeler.png
+
+python - <<'PY'
+from PIL import Image
+with Image.open("visual-captures/T06-Sekmeler.png") as raw:
+    image = raw.convert("RGB")
+    assert image.size == (390, 844), f"Unexpected emulator size: {image.size}"
+    # The tab overview has a 48dp segmented header at x=160. Sample below
+    # the status bar and assert the header actually appeared, not T03.
+    background = image.getpixel((160, 270))
+    first_header = None
+    for y in range(5, 106):
+        pixel = image.getpixel((160, y))
+        if max(abs(a - b) for a, b in zip(pixel, background)) >= 8:
+            first_header = y
+            break
+    print(f"T06 first segmented-header pixel: y={first_header}")
+    if first_header is None:
+        raise SystemExit("T06 tabs overview did not open; refusing misleading safe-area metrics")
+    # 160 dpi emulator: the status bar occupies at least ~24px. A fixed
+    # 24dp top inset collides with edge-to-edge status icons; the actual
+    # safe area + interior spacing must keep the segment below 32px.
+    if first_header < 32:
+        raise SystemExit(f"T06 tabs header overlaps the OS status bar (y={first_header})")
+PY
+
+echo "Browser foreground, Turkish locale, T03 home and T06 device-safe tabs validated."
