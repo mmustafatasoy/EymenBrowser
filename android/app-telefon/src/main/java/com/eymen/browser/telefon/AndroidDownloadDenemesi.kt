@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -14,9 +15,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import org.mozilla.geckoview.WebResponse
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.URLDecoder
 import java.util.Locale
 import java.util.concurrent.Executors
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Stage 1 ONLY: consume GeckoView's original download InputStream.
@@ -26,11 +30,16 @@ import java.util.concurrent.Executors
  * Android 10+: stream directly into Downloads via MediaStore with IS_PENDING.
  * Android 8-9: let the user choose a save location through SAF.
  */
-internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) {
+internal class AndroidDownloadDenemesi(
+    private val activity: ComponentActivity,
+    private val onProgress: (ActiveDownload?) -> Unit = {},
+    private val onCompleted: (SavedDownload) -> Unit = {}
+) {
     private data class Pending(
         val fileName: String,
         val mimeType: String,
-        val body: InputStream
+        val body: InputStream,
+        val expectedBytes: Long? = null
     )
 
     private val worker = Executors.newSingleThreadExecutor()
@@ -40,6 +49,25 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
     private var choosing: Pending? = null
     private var saveAs: Pending? = null
     private var busy = false
+    private val cancelled = AtomicBoolean(false)
+    @Volatile private var activeBody: InputStream? = null
+    @Volatile private var lastProgress: ActiveDownload? = null
+
+    /** Cancel the current transfer; never show a fake successful download. */
+    fun cancelActive() {
+        if (lastProgress == null) return
+        cancelled.set(true)
+        lastProgress?.let { publishProgress(it.copy(cancelling = true)) }
+        // Closing the GeckoView stream can wake a blocked network read.
+        activeBody?.closeSafely()
+    }
+
+    private fun publishProgress(progress: ActiveDownload?) {
+        lastProgress = progress
+        activity.runOnUiThread {
+            if (!activity.isFinishing && !activity.isDestroyed) onProgress(progress)
+        }
+    }
 
     private val documentPicker = activity.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -82,7 +110,9 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
             } else "application/octet-stream"
 
         val filename = safeName(response, mime)
-        offerDownload(Pending(filename, mime, body))
+        val total = header(response, "content-length")?.trim()
+            ?.toLongOrNull()?.takeIf { it > 0 }
+        offerDownload(Pending(filename, mime, body, total))
     }
 
     /** Native GeckoSession.saveAsPdf() supplies the original PDF stream. */
@@ -145,11 +175,47 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
         }
     }
 
+    /**
+     * Only bytes ACTUALLY copied from the Gecko WebResponse body are reported.
+     * Progress is throttled to avoid excessive Compose/UI updates.
+     */
+    private fun copyWithProgress(
+        source: InputStream, output: OutputStream, request: Pending
+    ): Long {
+        val buffer = ByteArray(64 * 1024)
+        var written = 0L
+        var lastUpdate = 0L
+        while (true) {
+            if (cancelled.get()) throw CancellationException("User cancelled")
+            val count = source.read(buffer)
+            if (count < 0) break
+            if (count == 0) continue
+            if (cancelled.get()) throw CancellationException("User cancelled")
+            output.write(buffer, 0, count)
+            written += count
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - lastUpdate >= 150L) {
+                publishProgress(ActiveDownload(request.fileName, written, request.expectedBytes))
+                lastUpdate = now
+            }
+        }
+        if (cancelled.get()) throw CancellationException("User cancelled")
+        output.flush()
+        publishProgress(ActiveDownload(request.fileName, written, request.expectedBytes))
+        return written
+    }
+
     private fun writeInBackground(request: Pending, userPickedUri: Uri?) {
         val resolver = activity.applicationContext.contentResolver
+        cancelled.set(false)
         worker.execute {
             var createdDownload: Uri? = null
+            var completed: SavedDownload? = null
+            var cancelledByUser = false
+            activeBody = request.body
+            publishProgress(ActiveDownload(request.fileName, 0L, request.expectedBytes))
             try {
+                if (cancelled.get()) throw CancellationException("User cancelled")
                 val destination = if (userPickedUri != null) {
                     userPickedUri
                 } else {
@@ -171,10 +237,11 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                 val bytes = request.body.use { source ->
                     (resolver.openOutputStream(destination, "w")
                         ?: throw IOException("Could not open destination")).use { output ->
-                        source.copyTo(output, bufferSize = 64 * 1024)
+                        copyWithProgress(source, output, request)
                     }
                 }
                 if (bytes <= 0L) throw IOException("Empty response")
+                if (cancelled.get()) throw CancellationException("User cancelled")
 
                 createdDownload?.let { downloadUri ->
                     val publish = ContentValues().apply {
@@ -183,29 +250,51 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
                     check(resolver.update(downloadUri, publish, null, null) > 0)
                 }
 
+                completed = SavedDownload(
+                    uri = destination.toString(),
+                    name = request.fileName,
+                    mimeType = request.mimeType,
+                    bytes = bytes,
+                    savedAt = System.currentTimeMillis()
+                )
                 try {
-                    registry.record(SavedDownload(
-                        uri = destination.toString(),
-                        name = request.fileName,
-                        mimeType = request.mimeType,
-                        bytes = bytes,
-                        savedAt = System.currentTimeMillis()
-                    ))
+                    registry.record(completed)
                 } catch (_: Exception) {
-                    // The saved file is valid even if history metadata cannot persist.
+                    // Saved file remains valid even when history cannot persist.
                 }
                 activity.runOnUiThread {
-                    busy = false
-                    message(R.string.download_saved, request.fileName)
+                    if (!activity.isFinishing && !activity.isDestroyed) {
+                        onCompleted(completed)
+                        message(R.string.download_saved, request.fileName)
+                    }
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                cancelledByUser = cancelled.get() || error is CancellationException
                 request.body.closeSafely()
                 createdDownload?.let { downloadUri ->
+                    // Pending MediaStore content is never published after failure.
                     try { resolver.delete(downloadUri, null, null) } catch (_: Exception) {}
                 }
+                if (cancelledByUser && userPickedUri != null) {
+                    // ACTION_CREATE_DOCUMENT creates a user-chosen new document.
+                    // Best-effort removal of incomplete output; provider may
+                    // reject deletion, so never claim it was always removed.
+                    try { DocumentsContract.deleteDocument(resolver, userPickedUri) }
+                    catch (_: Exception) {}
+                }
+                activity.runOnUiThread {
+                    if (!activity.isFinishing && !activity.isDestroyed) {
+                        message(
+                            if (cancelledByUser) R.string.download_cancelled
+                            else R.string.download_failed
+                        )
+                    }
+                }
+            } finally {
+                activeBody = null
                 activity.runOnUiThread {
                     busy = false
-                    message(R.string.download_failed)
+                    onProgress(null)
                 }
             }
         }
@@ -250,10 +339,12 @@ internal class AndroidDownloadDenemesi(private val activity: ComponentActivity) 
     }
 
     fun dispose() {
+        cancelled.set(true)
+        activeBody?.closeSafely()
         choosing?.body?.closeSafely()
         choosing = null
         saveAs?.body?.closeSafely()
         saveAs = null
-        worker.shutdown()
+        worker.shutdownNow()
     }
 }
