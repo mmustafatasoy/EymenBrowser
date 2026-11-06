@@ -190,5 +190,14 @@
   "update_open_permissions": "Open permission settings",
   "update_installer_unavailable": "Android couldn't open the APK installer.",
   "update_manual_check": "Check for updates",
-  "update_debug_build": "This is a debug-signed build. A stable release uses a different production signing certificate and cannot upgrade this install in place. Back up data, uninstall the debug build and install the signed stable APK once. Future updates can then be installed from within the app."
+  "update_debug_build": "This is a debug-signed build. A stable release uses a different production signing certificate and cannot upgrade this install in place. Back up data, uninstall the debug build and install the signed stable APK once. Future updates can then be installed from within the app.",
+  "shield_profile_title": "Protection level",
+  "shield_profile_standard": "Standard",
+  "shield_profile_strict": "Strict",
+  "shield_profile_standard_desc": "Known ad and analytics trackers are blocked.",
+  "shield_profile_strict_desc": "More known trackers are blocked; some sites may not work correctly.",
+  "shield_ads_trackers": "Ad trackers",
+  "shield_analytics_trackers": "Analytics trackers",
+  "shield_other_trackers": "Other blocked",
+  "shield_count_scope": "Counts come from requests actually blocked by GeckoView. This does not mean every ad is removed."
 }
