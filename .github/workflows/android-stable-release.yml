@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         default: "1.0.11"
+  # One-time reviewed release request. Ordinary code pushes never publish.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.11.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +46,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.11' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -81,6 +86,7 @@ jobs:
           python tools/check_tab_sessions.py
           python tools/check_menu_actions.py
           python tools/check_stage2_features.py
+          python tools/check_vpn_contract.py
           python tools/check_update_contract.py
       - name: Verify that the original production signing identity is available
         run: |
@@ -290,12 +296,27 @@ jobs:
             cerez bilgileri eklentiye gonderilmez.
           - Harici reklam listesi indirme, tum reklamlari engelleme veya
             YouTube reklamlarini kaldirma bu surumde sunulmaz.
+          - v1.0.11: Resmi WireGuard GoBackend ile gercek Android
+            VpnService tüneli kullaniciya ait .conf ile baslatilabilir.
+          - Android'in gercek VPN izin ekrani kullanilir; APK icinde VPN
+            sunucusu, kullanici anahtari veya sunucu hesabi yoktur.
+          - Yalniz EYMEN Browser paketine izin veren uygulama listesi,
+            tam IPv4/IPv6 rotalari ve VPN DNS zorunlu kisilir.
+          - Kullanici konfigurasyonu Android Keystore AES-256-GCM ile
+            yedek disi ozel uygulama dosyasinda sifrelenir.
+          - TUN arayuzunun acilmasi ile sunucudan alinan yakin tarihli
+            WireGuard el sikismasi ayri gosterilir; sahte baglanti yoktur.
+          - VPN ayarlarinda ice aktarma, baglanma, baglantiyi kesme,
+            durumu yenileme ve sifreli dosyayi silme mevcuttur.
+          - Dahili VPN sunucusu, otomatik yeniden baglanma ve sistem
+            kill-switch saglanmaz. Fiziksel cihaz DNS/IPv6/WebRTC
+            sizinti testleri henuz tamamlanmamistir.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
           - Imza anahtari ayni kaldikca sonraki imzali surumler mevcut kurulum ustune guncellenebilir.
-          - Gercek VPN tuneli, harici eklenti magazasi ve iOS/TV/PC
-            bu Android telefon surumunun kapsaminda degildir.
+          - Harici eklenti magazasi ve iOS/TV/PC bu Android telefon
+            surumunun kapsaminda degildir. VPN icin kullanici sunucusu gerekir.
 
           Bu surumde statik kaynak kontrolu, derleme, orijinal uretim imzasi,
           onceki yayinlanan APK ile paket/surum/imza uyumu ve dosya checksum testleri gecilir.
