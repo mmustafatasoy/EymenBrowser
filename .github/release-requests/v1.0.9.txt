@@ -1,5 +1,0 @@
-v1.0.9
-Verified GeckoView standard/strict real tracker-blocking categories; local protected site exceptions and ephemeral private exceptions; accurate ad/analytics/other observed blocking counts; accessible global switch via Settings > Protection.
-Source and Android compilation run: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42183016150
-Original production certificate, signed ABI split APKs, SHA256 checksums and package/versionCode compatibility with v1.0.8 must pass before release.
-Scope: known tracker blocking only; do not claim all ads or cosmetic ad placeholders removed.
