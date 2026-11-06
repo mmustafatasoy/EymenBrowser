@@ -61,6 +61,7 @@ private fun VpnAction(
 internal fun VpnSettingsScreen(
     status: EymenVpnStatus,
     configPresent: Boolean,
+    importing: Boolean,
     message: String,
     onBack: () -> Unit,
     onImport: () -> Unit,
@@ -69,7 +70,7 @@ internal fun VpnSettingsScreen(
     onRefresh: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val title = when (status) {
+    val title = if (importing) R.string.vpn_importing else when (status) {
         EymenVpnStatus.NO_CONFIGURATION -> R.string.vpn_status_none
         EymenVpnStatus.READY -> R.string.vpn_status_ready
         EymenVpnStatus.CONNECTING -> R.string.vpn_status_connecting
@@ -81,7 +82,7 @@ internal fun VpnSettingsScreen(
     }
     val tunnelActive = status == EymenVpnStatus.TUNNEL_UNVERIFIED ||
         status == EymenVpnStatus.HANDSHAKE_CONFIRMED
-    val busy = status == EymenVpnStatus.CONNECTING ||
+    val busy = importing || status == EymenVpnStatus.CONNECTING ||
         status == EymenVpnStatus.DISCONNECTING
     // ERROR can happen after Android created the TUN; always allow a
     // disconnect/recovery path before changing or deleting credentials.
@@ -174,6 +175,8 @@ internal fun VpnSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             VpnText(stringResource(R.string.vpn_no_fake), 13, color = T.gece_yaziIkincil)
+            VpnText(stringResource(R.string.vpn_monitoring), 13, color = T.gece_yaziIkincil)
+            VpnText(stringResource(R.string.vpn_always_on_unavailable), 13, color = T.gece_yaziIkincil)
             VpnText(stringResource(R.string.vpn_dual_stack), 13, color = T.gece_yaziIkincil)
             VpnText(stringResource(R.string.vpn_privacy_note), 13, color = T.gece_yaziIkincil)
         }
