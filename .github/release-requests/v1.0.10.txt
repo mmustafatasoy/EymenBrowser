@@ -1,0 +1,7 @@
+v1.0.10
+Approved scope: opt-in, fail-closed APK-bundled GeckoView WebExtension hiding conservative ad slots only; native GeckoSession validated policy including per-site exceptions. No network-request interception or universal ad blocking.
+Existing v1.0.9 tracker blocking retained; no user URL, cookies or private history sent to extension.
+Android source and JS checks: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42201980609
+Android 15/16 visual audit: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42202370753 (independent and must not be mislabeled as completed if still running).
+VPN next-stage threat model: docs/ANDROID_VPN_ARCHITECTURE_V110.md. No actual VPN connection in this release.
+Require original signing cert, monotonic versionCode, exact package, ABI split, sha256 and v1.0.9 update compatibility before public release.
