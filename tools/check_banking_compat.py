@@ -20,6 +20,20 @@ assert "request.hasUserGesture" in motor
 assert "request.triggerUri" in motor
 assert "onExternalAppLink(uri, request.triggerUri, request.hasUserGesture)" in motor
 assert "AllowOrDeny.DENY" in motor
+assert "override fun onNewSession(" in motor
+assert "onUserOpenedWindow: (String) -> GeckoSession?" in motor
+assert "request.target == GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW" in motor
+assert "request.hasUserGesture &&" in motor
+assert 'uri == "about:blank" || verifiedHttpsUrl(uri) == uri' in motor
+assert "userPopupUri = null" in motor
+assert "onUserOpenedWindow(uri) ?: return null" in motor
+assert "val child = onUserOpenedWindow(uri)" in motor
+assert "return GeckoResult.fromValue(child)" in motor
+assert "onUserOpenedWindow = { popupUri ->" in activity
+assert "activeId.value != id" in activity
+assert "createTab(privateMode = privateMode)" in activity
+assert "it.id == activeId.value && it.id != oldId" in activity
+assert 'GeckoMotorDenemesi.verifiedHttpsUrl(parent.url) != parent.url' in activity
 assert '"https", "http", "about", "data", "blob", "javascript"' in motor
 
 assert "fun fromWebsite(" in policy
