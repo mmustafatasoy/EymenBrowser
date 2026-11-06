@@ -983,6 +983,98 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
+     * GeckoView has no built-in Android UI for JavaScript alert/confirm/prompt.
+     * Some authentication flows rely on these. Browser-provided dialogs
+     * display the actual current origin and never intercept/log credentials.
+     */
+    private fun installStandardWebPrompts(tab: BrowserTab) {
+        tab.gecko.promptDelegate = object : GeckoSession.PromptDelegate {
+            override fun onAlertPrompt(
+                session: GeckoSession,
+                prompt: GeckoSession.PromptDelegate.AlertPrompt
+            ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
+                val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
+                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                    result.complete(prompt.dismiss())
+                    return result
+                }
+                val done = AtomicBoolean(false)
+                fun finish() {
+                    if (done.compareAndSet(false, true)) result.complete(prompt.dismiss())
+                }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
+                    .setMessage(prompt.message.orEmpty().take(3000))
+                    .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
+                    .setOnCancelListener { finish() }
+                    .show()
+                return result
+            }
+
+            override fun onButtonPrompt(
+                session: GeckoSession,
+                prompt: GeckoSession.PromptDelegate.ButtonPrompt
+            ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
+                val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
+                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                    result.complete(prompt.dismiss())
+                    return result
+                }
+                val done = AtomicBoolean(false)
+                fun finish(accept: Boolean) {
+                    if (done.compareAndSet(false, true)) {
+                        result.complete(prompt.confirm(
+                            if (accept) GeckoSession.PromptDelegate.ButtonPrompt.Type.POSITIVE
+                            else GeckoSession.PromptDelegate.ButtonPrompt.Type.NEGATIVE
+                        ))
+                    }
+                }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
+                    .setMessage(prompt.message.orEmpty().take(3000))
+                    .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
+                    .setPositiveButton(android.R.string.ok) { _, _ -> finish(true) }
+                    .setOnCancelListener { finish(false) }
+                    .show()
+                return result
+            }
+
+            override fun onTextPrompt(
+                session: GeckoSession,
+                prompt: GeckoSession.PromptDelegate.TextPrompt
+            ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
+                val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
+                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                    result.complete(prompt.dismiss())
+                    return result
+                }
+                val edit = EditText(this@MainActivity).apply {
+                    setSingleLine(true)
+                    setText(prompt.defaultValue.orEmpty().take(2048))
+                    setSelectAllOnFocus(true)
+                }
+                val done = AtomicBoolean(false)
+                fun finish(accept: Boolean) {
+                    if (done.compareAndSet(false, true)) {
+                        if (accept) result.complete(prompt.confirm(edit.text.toString()))
+                        else result.complete(prompt.dismiss())
+                        edit.text.clear()
+                    }
+                }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
+                    .setMessage(prompt.message.orEmpty().take(3000))
+                    .setView(edit)
+                    .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
+                    .setPositiveButton(android.R.string.ok) { _, _ -> finish(true) }
+                    .setOnCancelListener { finish(false) }
+                    .show()
+                return result
+            }
+        }
+    }
+
+    /**
      * Only opens a native-app deep link after a real HTTPS page user gesture
      * and a SECOND explicit Android dialog. Never relays page-supplied Intent
      * extras/components, JavaScript, files, implicit permissions or credentials.
