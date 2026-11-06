@@ -331,8 +331,11 @@ class MainActivity : ComponentActivity() {
                 onClose = ::closeTab,
                 onCloseAll = ::closeAllOfType,
                 onNew = { privateMode, groupId ->
+                    val previousId = activeId.value
                     createTab(privateMode)
-                    if (!privateMode) {
+                    // If MAX_TABS prevented creation, do not accidentally
+                    // reassign the previously active tab to another group.
+                    if (!privateMode && activeId.value != previousId) {
                         activeTab?.groupId = groupId?.takeIf { id ->
                             tabGroups.any { it.id == id }
                         }
@@ -639,7 +642,13 @@ class MainActivity : ComponentActivity() {
     private fun restoreLastClosedNormalTab() {
         val closed = lastClosedNormalTab ?: return
         recentlyClosedNormal.removeAt(recentlyClosedNormal.lastIndex)
+        val previousId = activeId.value
         createTab(privateMode = false, initialUrl = closed.safeUrl)
+        if (activeId.value == previousId) {
+            // Reopen was blocked by the 32-tab cap: preserve undo history.
+            recentlyClosedNormal.add(closed)
+            return
+        }
         // Group may have been deleted while the tab was closed.
         activeTab?.groupId = closed.groupId?.takeIf { id ->
             tabGroups.any { it.id == id }
