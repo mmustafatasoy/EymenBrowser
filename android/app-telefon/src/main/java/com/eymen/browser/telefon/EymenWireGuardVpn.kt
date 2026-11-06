@@ -28,7 +28,17 @@ internal enum class EymenVpnStatus {
  * be killed or revoked by Android; only a recent real peer handshake
  * earns HANDSHAKE_CONFIRMED. No config or VPN permission -> no connection.
  */
-internal class EymenWireGuardVpn(context: Context) {
+internal class EymenWireGuardVpn private constructor(context: Context) {
+    companion object {
+        @Volatile private var shared: EymenWireGuardVpn? = null
+
+        fun get(context: Context): EymenWireGuardVpn =
+            shared ?: synchronized(this) {
+                shared ?: EymenWireGuardVpn(context.applicationContext)
+                    .also { shared = it }
+            }
+    }
+
     private val app = context.applicationContext
     private val configStore = EymenVpnConfigStore(app)
     private val main = Handler(Looper.getMainLooper())
