@@ -82,9 +82,11 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
      * copied to cache, external storage, SharedPreferences or a log file.
      */
     fun importConfig(uri: Uri) {
-        if (status == EymenVpnStatus.CONNECTING ||
-            status == EymenVpnStatus.TUNNEL_UNVERIFIED ||
-            status == EymenVpnStatus.HANDSHAKE_CONFIRMED
+        if (status !in listOf(
+                EymenVpnStatus.NO_CONFIGURATION,
+                EymenVpnStatus.READY,
+                EymenVpnStatus.DISCONNECTED
+            )
         ) {
             message = "Önce açık VPN tünelini kapat."
             return
