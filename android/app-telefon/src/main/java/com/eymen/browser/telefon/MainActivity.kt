@@ -106,8 +106,17 @@ class MainActivity : ComponentActivity() {
     private val dayMode = mutableStateOf(false)
     private val recent = mutableStateListOf<String>()
     private val savedFiles = mutableStateListOf<SavedDownload>()
+    private var activeDownload by mutableStateOf<ActiveDownload?>(null)
     private val downloadRegistry by lazy { DownloadRegistry(this) }
-    private val downloads = AndroidDownloadDenemesi(this)
+    private val downloads = AndroidDownloadDenemesi(
+        this,
+        onProgress = { progress -> activeDownload = progress },
+        onCompleted = { file ->
+            savedFiles.removeAll { it.uri == file.uri }
+            savedFiles.add(0, file)
+            while (savedFiles.size > 100) savedFiles.removeAt(savedFiles.lastIndex)
+        }
+    )
     // Safe to create only when onCreate/onResume has attached the Activity Context.
     private val updater by lazy { BrowserUpdateManager(this) }
     private val vpn by lazy { EymenWireGuardVpn.get(applicationContext) }
@@ -452,8 +461,10 @@ class MainActivity : ComponentActivity() {
         downloadsLayer.setContent {
             DownloadsScreen(
                 files = savedFiles,
+                active = activeDownload,
                 onBack = ::hideDownloads,
                 onOpen = ::openDownloadedFile,
+                onCancelActive = downloads::cancelActive,
                 onClear = ::confirmClearDownloadedFiles
             )
         }
