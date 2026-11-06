@@ -190,5 +190,14 @@
   "update_open_permissions": "İzin ayarlarını aç",
   "update_installer_unavailable": "Android APK kurulum ekranı açılamadı.",
   "update_manual_check": "Güncellemeleri denetle",
-  "update_debug_build": "Bu sürüm test (debug) anahtarıyla imzalı. Kararlı sürüm farklı bir üretim anahtarı kullanır; doğrudan üzerine kurulamaz. Önce verilerini yedekleyip test sürümünü kaldırman ve imzalı kararlı sürümü bir kez kurman gerekir. Sonraki güncellemeler uygulamanın içinden yapılır."
+  "update_debug_build": "Bu sürüm test (debug) anahtarıyla imzalı. Kararlı sürüm farklı bir üretim anahtarı kullanır; doğrudan üzerine kurulamaz. Önce verilerini yedekleyip test sürümünü kaldırman ve imzalı kararlı sürümü bir kez kurman gerekir. Sonraki güncellemeler uygulamanın içinden yapılır.",
+  "shield_profile_title": "Koruma seviyesi",
+  "shield_profile_standard": "Standart",
+  "shield_profile_strict": "Sıkı",
+  "shield_profile_standard_desc": "Bilinen reklam ve analiz takipçileri engellenir.",
+  "shield_profile_strict_desc": "Daha fazla bilinen takipçi engellenir; bazı siteler bozulabilir.",
+  "shield_ads_trackers": "Reklam takipçileri",
+  "shield_analytics_trackers": "Analiz takipçileri",
+  "shield_other_trackers": "Diğer engellenenler",
+  "shield_count_scope": "Sayılar GeckoView tarafından gerçekten engellenen isteklerden gelir. Tüm reklamların kaldırıldığı anlamına gelmez."
 }
