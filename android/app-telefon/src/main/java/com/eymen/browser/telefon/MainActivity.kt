@@ -468,6 +468,7 @@ class MainActivity : ComponentActivity() {
                     status = vpn.status,
                     configPresent = vpn.configPresent,
                     importing = vpn.importing,
+                    peerStats = vpn.peerStats,
                     message = vpn.message,
                     onBack = {
                         vpn.stopUiMonitoring()
