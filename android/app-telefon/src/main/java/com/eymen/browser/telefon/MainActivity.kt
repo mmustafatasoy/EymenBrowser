@@ -537,6 +537,8 @@ class MainActivity : ComponentActivity() {
                     }
                     tab.url = url
                     tab.home = false
+                    // Never show an obsolete screenshot after a new navigation.
+                    tab.thumbnail = null
                     tab.blockedPage = 0
                     tab.shieldEnabled = protectionFor(url, privateMode)
                     tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
@@ -781,12 +783,15 @@ class MainActivity : ComponentActivity() {
         if (tab.privateMode || tab.home || tab.pendingRestoreUrl != null ||
             videoFullScreen || !::view.isInitialized
         ) return
+        val capturedUrl = tab.url
         try {
             view.capturePixels().accept(
                 { pixels ->
                     if (pixels == null) return@accept
                     runOnUiThread {
-                        if (tabs.none { it.id == tab.id } || tab.privateMode) return@runOnUiThread
+                        if (tabs.none { it.id == tab.id } || tab.privateMode ||
+                            tab.url != capturedUrl
+                        ) return@runOnUiThread
                         try {
                             if (pixels.width < 1 || pixels.height < 1) return@runOnUiThread
                             val cropHeight = minOf(
