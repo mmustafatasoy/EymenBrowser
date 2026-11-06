@@ -11,12 +11,12 @@ assert 'com.eymen.browser.telefon.test/com.eymen.browser.telefon.BrowserUiInstru
 PY
 adb shell cmd locale set-app-locales com.eymen.browser.telefon --locales tr-TR
 set +e
-timeout 180 adb shell am instrument -w -r \
+timeout 480 adb shell am instrument -w -r \
   com.eymen.browser.telefon.test/com.eymen.browser.telefon.BrowserUiInstrumentation \
   | tee browser-ui-audit/instrumentation.txt
 TEST_EXIT=${PIPESTATUS[0]}
 set -e
-for NAME in settings-light.png appearance-night.png downloads-light.png failure.png hierarchy.txt; do
+for NAME in settings-light.png appearance-night.png downloads-light.png privacy-settings.png extensions-installed.png child-mode.png language-english.png site-permissions.png failure.png hierarchy.txt; do
   adb exec-out run-as com.eymen.browser.telefon cat "cache/browser-ui-audit/$NAME" \
     > "browser-ui-audit/$NAME" || true
 done

@@ -36,6 +36,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             app.getSharedPreferences("eymen_browser_setup", Context.MODE_PRIVATE).edit()
                 .putBoolean("setup_completed", true).putBoolean("day_theme", true)
                 .putBoolean("light_design_default_migrated_v105", true).commit();
+            app.getSharedPreferences("eymen_child_mode", Context.MODE_PRIVATE).edit().clear().commit();
             new DownloadRegistry(app).clearListOnly();
             createFixture(app);
             AccessibilityServiceInfo info = getUiAutomation().getServiceInfo();
@@ -115,8 +116,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> field(address) != null && "".equals(text(field(address))), "home resets the address editor");
             click("Yeni sekme");
             await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
+            advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close,tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,confirm_clear_keeps_file,back_navigation,home_new_tab_reset,light_dark_captures");
+            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -126,6 +128,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             if (activity != null) runOnMainSync(() -> activity.finish());
             if (fixtureUri != null) getTargetContext().getContentResolver().delete(fixtureUri, null, null);
             new DownloadRegistry(getTargetContext()).clearListOnly();
+            getTargetContext().getSharedPreferences("eymen_child_mode", Context.MODE_PRIVATE).edit().clear().commit();
         }
         finish(code, result);
     }
@@ -136,6 +139,180 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         java.lang.reflect.Field value = MainActivity.class.getDeclaredField("view");
         value.setAccessible(true);
         return (org.mozilla.geckoview.GeckoView) value.get(activity);
+    }
+    private Object controller(String name) {
+        try { java.lang.reflect.Field f = MainActivity.class.getDeclaredField(name); f.setAccessible(true); return f.get(activity); }
+        catch (Exception error) { throw new RuntimeException(error); }
+    }
+    private org.mozilla.geckoview.GeckoRuntime runtime() {
+        return com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.getRuntime(activity);
+    }
+    private void openSettingsItem(int labelId) throws Exception {
+        click(label(R.string.browser_menu)); click(label(R.string.settings));
+        search(label(R.string.settings_search_hint), label(labelId)); click(label(labelId));
+    }
+    private void advancedSettings() throws Exception {
+        BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");
+        java.util.concurrent.atomic.AtomicReference<String> pageTitle = new java.util.concurrent.atomic.AtomicReference<>("");
+        org.mozilla.geckoview.GeckoSession page = currentSession();
+        runOnMainSync(() -> {
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s, String value) {
+                    pageTitle.set(value); original.onTitleChange(s, value);
+                }
+            });
+            page.loadUri("https://example.com/");
+        });
+        await(() -> pageTitle.get() != null && pageTitle.get().contains("Example Domain"), "HTTPS page for real privacy settings");
+        openSettingsItem(R.string.settings_shield);
+        click(label(R.string.shield_cookie_dialog));
+        await(services::getCookieReject, "cookie rejection preference enabled");
+        await(() -> pageTitle.get() != null && pageTitle.get().contains("Example Domain"), "privacy reload returns HTTPS page");
+        String fixture = "javascript:void(function(){var b=document.createElement('button');b.id='onetrust-reject-all-handler';b.textContent='Reject all test cookies';b.onclick=function(){document.title='Eymen cookie rejected';};document.body.prepend(b);document.cookie='eymen_ui_cookie=1;SameSite=Lax;Secure';localStorage.setItem('eymen_ui_cookie','1');}())";
+        waitForIdleSync(); SystemClock.sleep(500);
+        runOnMainSync(() -> page.loadUri(fixture));
+        await(() -> "Eymen cookie rejected".equals(pageTitle.get()), "real bundled extension clicks explicit reject, without accepting");
+        click(label(R.string.shield_fingerprint));
+        await(() -> Boolean.TRUE.equals(runtime().getSettings().getFingerprintingProtection()), "fingerprinting toggle changes actual Gecko runtime");
+        click(label(R.string.shield_fingerprint));
+        click(label(R.string.shield_https));
+        await(() -> runtime().getSettings().getAllowInsecureConnections() == org.mozilla.geckoview.GeckoRuntimeSettings.ALLOW_ALL, "HTTPS-only setting changes real runtime");
+        click(label(R.string.shield_https));
+        await(() -> runtime().getSettings().getAllowInsecureConnections() == org.mozilla.geckoview.GeckoRuntimeSettings.HTTPS_ONLY, "HTTPS-only restored");
+        scrollClick(label(R.string.cookie_policy_first));
+        await(() -> runtime().getSettings().getContentBlocking().getCookieBehavior() == org.mozilla.geckoview.ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY, "cookie policy changes real storage behavior");
+        scrollClick(label(R.string.cookie_policy_partition));
+        capture("privacy-settings.png", true);
+        scrollClick(label(R.string.cookie_clear));
+        click(activity.getString(android.R.string.ok));
+        await(() -> !services.getClearing() && currentSession() != page, "clearing closes old Gecko sessions and finishes actual storage removal");
+        click(label(R.string.back)); click(label(R.string.back));
+        org.mozilla.geckoview.GeckoSession clean = currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> cleanTitle = new java.util.concurrent.atomic.AtomicReference<>("");
+        runOnMainSync(() -> {
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original = clean.getContentDelegate();
+            clean.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s, String value) { cleanTitle.set(value); original.onTitleChange(s, value); }
+            });
+            clean.loadUri("https://example.com/");
+        });
+        await(() -> cleanTitle.get() != null && cleanTitle.get().contains("Example Domain"), "new clean HTTPS session");
+        runOnMainSync(() -> clean.loadUri("javascript:void(document.title=(document.cookie.includes('eymen_ui_cookie=')||localStorage.getItem('eymen_ui_cookie'))?'Eymen storage dirty':'Eymen storage cleared')"));
+        await(() -> "Eymen storage cleared".equals(cleanTitle.get()), "real cookies and DOM storage were removed");
+
+        openSettingsItem(R.string.settings_passwords);
+        click(label(R.string.autofill_title));
+        require(!services.getAutofill(), "autofill preference disabled");
+        java.util.concurrent.atomic.AtomicBoolean autofillEnabled = new java.util.concurrent.atomic.AtomicBoolean(true);
+        runOnMainSync(() -> { try { autofillEnabled.set(browserView().getAutofillEnabled()); } catch (Exception e) { throw new RuntimeException(e); } });
+        require(!autofillEnabled.get(), "actual GeckoView autofill participation disabled");
+        click(label(R.string.autofill_title));
+        click(label(R.string.back)); click(label(R.string.back));
+
+        openSettingsItem(R.string.settings_site_permissions);
+        click(label(R.string.popup_allow));
+        require(services.popupAllowed("https://example.com/", false), "site popup permission is persisted for its real HTTPS origin");
+        click(label(R.string.popup_allow));
+        require(!services.popupAllowed("https://example.com/", false), "site popup permission can be revoked");
+        capture("site-permissions.png", true);
+        click(label(R.string.back)); click(label(R.string.back));
+
+        openSettingsItem(R.string.menu_extensions);
+        BrowserAddons addons = (BrowserAddons) controller("addons");
+        search(label(R.string.addon_url_hint), "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi");
+        click(label(R.string.addon_install));
+        awaitLong(() -> find(label(R.string.addon_permissions), false) != null, "Mozilla-signed XPI reaches native permission prompt", 90000);
+        click(label(R.string.addon_install));
+        awaitLong(() -> !addons.getItems().isEmpty() && !addons.getBusy(), "real Mozilla-signed extension installed", 90000);
+        String addOnName = addons.getItems().get(0).metaData.name;
+        scrollClick(addOnName);
+        await(() -> !addons.getItems().get(0).metaData.enabled, "installed extension disabled through Gecko");
+        click(addOnName);
+        await(() -> addons.getItems().get(0).metaData.enabled, "installed extension re-enabled through Gecko");
+        capture("extensions-installed.png", true);
+        scrollClick(label(R.string.addon_remove)); click(activity.getString(android.R.string.ok));
+        await(() -> addons.getItems().isEmpty(), "real extension uninstalled");
+        click(label(R.string.back)); click(label(R.string.back));
+
+        openSettingsItem(R.string.settings_child_mode);
+        click(label(R.string.child_set_pin)); enterPin("947251"); enterPin("947251");
+        android.content.SharedPreferences childPrefs = getTargetContext().getSharedPreferences("eymen_child_mode", 0);
+        await(() -> childPrefs.contains("hash"), "parent PIN stored as salted hash");
+        search(label(R.string.child_host_hint), "example.com");
+        scrollClick(label(R.string.child_add_host)); enterPin("947251");
+        await(() -> childPrefs.getStringSet("hosts", java.util.Collections.emptySet()).contains("example.com"), "allowlist saved after parent authentication");
+        scrollClick(label(R.string.child_enable)); enterPin("947251");
+        await(() -> childPrefs.getBoolean("enabled", false), "PIN enables real child mode");
+        require(currentSession().getSettings().getUsePrivateMode(), "child browsing uses a real private Gecko session");
+        capture("child-mode.png", true);
+        click(label(R.string.child_disable)); enterPin("000000");
+        await(() -> find(label(R.string.child_wrong_pin), false) != null, "incorrect parent PIN is rejected");
+        require(childPrefs.getBoolean("enabled", false), "wrong PIN cannot exit child mode");
+        click(label(R.string.child_disable)); enterPin("947251");
+        await(() -> !childPrefs.getBoolean("enabled", true), "correct PIN exits child mode");
+        require(!currentSession().getSettings().getUsePrivateMode(), "parent mode restores normal browsing");
+        click(label(R.string.back)); click(label(R.string.back));
+
+        verifyQrImage();
+        openSettingsItem(R.string.settings_language);
+        click("English");
+        await(() -> find("Device language", false) != null, "actual Activity recreation displays English settings");
+        require("en".equals(prefs().getString("app_language", "")), "English preference persisted");
+        capture("language-english.png", true);
+        click("Türkçe");
+        await(() -> find("Telefonun dili", false) != null, "Turkish UI restored after locale recreation");
+    }
+    private void verifyQrImage() throws Exception {
+        String expected = "https://example.com/eymen-qr-acceptance";
+        com.google.zxing.common.BitMatrix matrix = new com.google.zxing.MultiFormatWriter().encode(expected, com.google.zxing.BarcodeFormat.QR_CODE, 384, 384);
+        Bitmap bitmap = Bitmap.createBitmap(384, 384, Bitmap.Config.ARGB_8888);
+        for (int y=0; y<384; y++) for (int x=0; x<384; x++) bitmap.setPixel(x,y,matrix.get(x,y)?Color.BLACK:Color.WHITE);
+        File file = new File(getTargetContext().getCacheDir(), "qr-acceptance.png");
+        try {
+            try (FileOutputStream stream = new FileOutputStream(file)) { bitmap.compress(Bitmap.CompressFormat.PNG,100,stream); }
+            require(expected.equals(BrowserQrScanner.decode(file)), "real Android bitmap decoded locally as a QR URL");
+        } finally { bitmap.recycle(); file.delete(); }
+    }
+    private void enterPin(String value) throws Exception {
+        await(() -> pinEditor() != null, "native parent PIN editor");
+        Bundle args = new Bundle(); args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
+        require(pinEditor().performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,args), "enter test-only PIN");
+        click(activity.getString(android.R.string.ok));
+    }
+    private AccessibilityNodeInfo pinEditor() {
+        AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+        if (root == null) return null;
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>(); queue.add(root);
+        while (!queue.isEmpty()) {
+            AccessibilityNodeInfo node=queue.removeFirst(); if (!node.refresh()) continue;
+            if (node.isVisibleToUser() && node.isEditable() && node.isPassword()) return node;
+            for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
+        }
+        return null;
+    }
+    private void scrollClick(String label) throws Exception {
+        if (clickTarget(label)==null) for(int attempt=0;attempt<3 && clickTarget(label)==null;attempt++) swipe(false);
+        for(int attempt=0;attempt<8 && clickTarget(label)==null;attempt++) swipeUp();
+        click(label);
+    }
+    private void swipeUp() {
+        swipe(true);
+    }
+    private void swipe(boolean up) {
+        Bitmap bitmap=getUiAutomation().takeScreenshot(); int width=bitmap.getWidth(),height=bitmap.getHeight(); bitmap.recycle();
+        long start=SystemClock.uptimeMillis();
+        for(int step=0;step<=12;step++){
+            float y=height*(up ? 0.76f-0.38f*step/12f : 0.38f+0.38f*step/12f);
+            int action=step==0?MotionEvent.ACTION_DOWN:step==12?MotionEvent.ACTION_UP:MotionEvent.ACTION_MOVE;
+            MotionEvent event=MotionEvent.obtain(start,SystemClock.uptimeMillis(),action,width*0.65f,y,0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            getUiAutomation().injectInputEvent(event,true);event.recycle();SystemClock.sleep(25);
+        }
+        waitForIdleSync();SystemClock.sleep(150);
+    }
+    private static void awaitLong(BooleanSupplier condition,String name,long timeout) throws Exception {
+        long until=SystemClock.elapsedRealtime()+timeout;
+        while(!condition.getAsBoolean()){if(SystemClock.elapsedRealtime()>until)throw new AssertionError("Timed out: "+name);Thread.sleep(100);}
     }
     private org.mozilla.geckoview.GeckoSession currentSession() {
         java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession> result = new java.util.concurrent.atomic.AtomicReference<>();

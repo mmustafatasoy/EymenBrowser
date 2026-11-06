@@ -384,5 +384,6 @@
   "home_live": "Live TV",
   "home_apps": "Apps",
   "home_recent": "Recently visited",
-  "about_licenses": "Open-source licenses"
+  "about_licenses": "Open-source licenses",
+  "menu_reload": "Reload"
 }

@@ -62,6 +62,9 @@
       if (!scheduled) { scheduled = true; setTimeout(attempt, 80); }
     });
     if (document.documentElement) observer.observe(document.documentElement, { childList: true, subtree: true });
+    else document.addEventListener("DOMContentLoaded", () => {
+      if (!attempt() && document.documentElement) observer.observe(document.documentElement, { childList: true, subtree: true });
+    }, { once: true });
     setTimeout(() => observer.disconnect(), 15000);
   }
 

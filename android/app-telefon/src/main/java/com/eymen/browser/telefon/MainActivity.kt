@@ -549,7 +549,7 @@ class MainActivity : ComponentActivity() {
                     onDelete = ::confirmDeleteVpnConfiguration
                 )
             } else if (functionalSettingsPage != null) {
-                val back = { functionalSettingsPage = null }
+                val back = { hideBrowserKeyboard(); functionalSettingsPage = null }
                 when (functionalSettingsPage) {
                     FunctionalSettingsPage.PRIVACY -> PrivacySettingsScreen(settingsServices, dayMode.value, back, ::clearBrowsingData)
                     FunctionalSettingsPage.PERMISSIONS -> PermissionsSettingsScreen(settingsServices, dayMode.value, back,
