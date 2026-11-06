@@ -87,7 +87,12 @@ assert 'updater.dispose()' in main
 # (not the previously oversized menu), native vector icons and two-tone title.
 light_ui = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt").read_text()
 assert "internal fun LightBrowserMenu(" in light_ui
-assert ".width(154.dp)" in light_ui
+assert ".width(148.dp)" in light_ui
+assert "menuOpen: Boolean" in light_ui
+assert "maxWidth * -0.15f" in light_ui
+assert ".fillMaxWidth(if (menuOpen) 0.59f else 1f)" in light_ui
+assert "private var menuShowing by mutableStateOf(false)" in main
+assert "menuOpen = menuShowing" in main
 assert ".padding(top = 57.dp, end = 6.dp)" in light_ui
 assert "ReferenceMenuIcon(symbol, enabled)" in light_ui
 assert 'LightMenuRow("Geri", "←", highlighted = true)' in light_ui
