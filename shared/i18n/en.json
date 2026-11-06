@@ -199,5 +199,9 @@
   "shield_ads_trackers": "Ad trackers",
   "shield_analytics_trackers": "Analytics trackers",
   "shield_other_trackers": "Other blocked",
-  "shield_count_scope": "Counts come from requests actually blocked by GeckoView. This does not mean every ad is removed."
+  "shield_count_scope": "Counts come from requests actually blocked by GeckoView. This does not mean every ad is removed.",
+  "shield_cosmetic_title": "Hide ad placeholders (Beta)",
+  "shield_cosmetic_beta": "Optional visual cleanup is available",
+  "shield_cosmetic_unavailable": "Visual filter module is unavailable",
+  "shield_cosmetic_scope": "Hides selected ad containers only; does not block ad network requests. Some pages may look incorrect. Disable site protection to exclude that site."
 }
