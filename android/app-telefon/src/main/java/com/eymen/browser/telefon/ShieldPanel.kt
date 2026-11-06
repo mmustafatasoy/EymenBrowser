@@ -53,11 +53,14 @@ internal fun ShieldPanel(
     otherTrackerBlocked: Int,
     strictMode: Boolean,
     globalEnabled: Boolean,
+    cosmeticEnabled: Boolean,
+    cosmeticAvailable: Boolean,
     canToggle: Boolean,
     onDismiss: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onModeChange: (Boolean) -> Unit,
-    onGlobalToggle: (Boolean) -> Unit
+    onGlobalToggle: (Boolean) -> Unit,
+    onCosmeticToggle: (Boolean) -> Unit
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
         val close = stringResource(R.string.shield_close)
@@ -238,6 +241,50 @@ internal fun ShieldPanel(
             ShieldText(
                 stringResource(R.string.shield_count_scope), 12, T.gece_yaziIkincil
             )
+            Column(
+                Modifier.fillMaxWidth().background(
+                    T.gece_yuzey2, RoundedCornerShape(14.dp)
+                ).padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth()
+                        .heightIn(min = 44.dp)
+                        .clickable(enabled = cosmeticAvailable) {
+                            onCosmeticToggle(!cosmeticEnabled)
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        ShieldText(
+                            stringResource(R.string.shield_cosmetic_title),
+                            15, T.gece_yazi, strong = true
+                        )
+                        ShieldText(
+                            stringResource(
+                                if (cosmeticAvailable) R.string.shield_cosmetic_beta
+                                else R.string.shield_cosmetic_unavailable
+                            ),
+                            12, T.gece_yaziIkincil
+                        )
+                    }
+                    ShieldText(
+                        stringResource(
+                            if (cosmeticAvailable && cosmeticEnabled)
+                                R.string.settings_enabled
+                            else R.string.settings_disabled
+                        ),
+                        14,
+                        if (cosmeticAvailable && cosmeticEnabled)
+                            T.gece_koruma else T.gece_yaziPasif,
+                        strong = true
+                    )
+                }
+                ShieldText(
+                    stringResource(R.string.shield_cosmetic_scope),
+                    12, T.gece_yaziIkincil
+                )
+            }
             Column {
                 listOf(
                     R.string.shield_cookie_dialog to R.string.shield_cookie_dialog_desc,
