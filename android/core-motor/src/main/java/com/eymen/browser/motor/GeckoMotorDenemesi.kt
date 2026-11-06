@@ -17,10 +17,30 @@ import java.util.Locale
 object GeckoMotorDenemesi {
     private const val DEFAULT_URL = "https://example.org/"
     private var runtime: GeckoRuntime? = null
+    @Volatile private var strictTrackingMode: Boolean = false
 
     @Synchronized
     private fun getRuntime(context: Context): GeckoRuntime =
         runtime ?: GeckoRuntime.create(context.applicationContext).also { runtime = it }
+
+    /**
+     * Global Gecko tracking list policy. Individual website exceptions are
+     * still enforced per GeckoSession via setUseTrackingProtection(enabled).
+     * This blocks *known trackers*, not every cosmetic ad or sponsored item.
+     */
+    fun configureTrackerProtection(context: Context, strict: Boolean) {
+        strictTrackingMode = strict
+        val content = getRuntime(context).settings.contentBlocking
+        content.setAntiTracking(
+            if (strict) ContentBlocking.AntiTracking.STRICT
+            else ContentBlocking.AntiTracking.DEFAULT
+        )
+        content.setEnhancedTrackingProtectionLevel(
+            if (strict) ContentBlocking.EtpLevel.STRICT
+            else ContentBlocking.EtpLevel.DEFAULT
+        )
+        content.setStrictSocialTrackingProtection(strict)
+    }
 
     /**
      * Only HTTPS URLs are accepted from untrusted Android share/open intents.
@@ -77,7 +97,7 @@ object GeckoMotorDenemesi {
         initialLoad: Boolean = true,
         onTitle: (String?) -> Unit = {},
         trackingProtection: Boolean = false,
-        onBlocked: () -> Unit = {}
+        onBlocked: (Int) -> Unit = { _ -> Unit }
     ): GeckoSession {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
@@ -86,7 +106,8 @@ object GeckoMotorDenemesi {
         val session = GeckoSession(settings)
         session.setContentBlockingDelegate(object : ContentBlocking.Delegate {
             override fun onContentBlocked(session: GeckoSession, event: ContentBlocking.BlockEvent) {
-                onBlocked()
+                // Do not count "could have blocked" or allowed resources.
+                if (event.isBlocking) onBlocked(event.antiTrackingCategory)
             }
         })
         session.contentDelegate = object : GeckoSession.ContentDelegate {
@@ -152,7 +173,10 @@ object GeckoMotorDenemesi {
         }
         val geckoRuntime = getRuntime(context)
         // Gecko categorizes known trackers. Individual GeckoSessions opt in/out.
-        geckoRuntime.settings.contentBlocking.setAntiTracking(ContentBlocking.AntiTracking.DEFAULT)
+        geckoRuntime.settings.contentBlocking.setAntiTracking(
+            if (strictTrackingMode) ContentBlocking.AntiTracking.STRICT
+            else ContentBlocking.AntiTracking.DEFAULT
+        )
         session.open(geckoRuntime)
         view.setSession(session)
         if (initialLoad || url != null) {
