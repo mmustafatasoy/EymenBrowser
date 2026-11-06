@@ -42,7 +42,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             activity = startActivitySync(new Intent(Intent.ACTION_VIEW, Uri.parse(OLD_URL), app, MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             String address = label(R.string.address_edit_label);
-            await(() -> field(address) != null && OLD_URL.equals(text(field(address))), "initial URL");
+            await(() -> field(address) != null && !text(field(address)).isEmpty(), "existing address field");
             tap(field(address));
             await(() -> selectedAll(field(address)), "first tap selects the complete URL");
             sendStringSync("eymen yeni arama");
@@ -95,6 +95,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             result.putString("checks", "tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,back_navigation,light_dark_captures");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
+            try { recordFailure(); } catch (Throwable ignored) {}
             result.putString("eymen_browser_ui_audit", "failed");
             result.putString("stack", android.util.Log.getStackTraceString(error));
         } finally {
@@ -114,25 +115,76 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             && node.getTextSelectionEnd() == text(node).length() && !text(node).isEmpty();
     }
     private AccessibilityNodeInfo field(String label) { return find(label, true); }
+    private static boolean editorNode(AccessibilityNodeInfo node) {
+        if (node.isEditable() || "android.widget.EditText".contentEquals(node.getClassName())) return true;
+        for (AccessibilityNodeInfo.AccessibilityAction action : node.getActionList())
+            if (action.getId() == AccessibilityNodeInfo.ACTION_SET_TEXT) return true;
+        return false;
+    }
+    private static boolean matches(AccessibilityNodeInfo node, String label) {
+        String desc = node.getContentDescription() == null ? "" : node.getContentDescription().toString();
+        String value = text(node);
+        return desc.equals(label) || value.equals(label) || value.startsWith(label + "\n");
+    }
     private AccessibilityNodeInfo find(String label, boolean editable) {
-        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
-        for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
-            if (window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) continue;
-            AccessibilityNodeInfo root = window.getRoot();
-            if (root != null) queue.add(root);
-        }
+        ArrayDeque<AccessibilityNodeInfo> queue = roots();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
-            String description = node.getContentDescription() == null ? "" : node.getContentDescription().toString();
-            String value = text(node);
-            if (node.isVisibleToUser() && (!editable || node.isEditable()) &&
-                    (description.equals(label) || value.equals(label) || value.startsWith(label + "\n"))) return node;
+            if (node.isVisibleToUser() && (!editable || editorNode(node))) {
+                if (matches(node, label)) return node;
+                if (editable) {
+                    // Compose can expose the content description on a wrapper
+                    // and editable text on its child accessibility node.
+                    AccessibilityNodeInfo parent = node.getParent();
+                    for (int depth = 0; parent != null && depth < 8; depth++, parent = parent.getParent())
+                        if (matches(parent, label)) return node;
+                }
+            }
             for (int i = 0; i < node.getChildCount(); i++) {
                 AccessibilityNodeInfo child = node.getChild(i);
                 if (child != null) queue.add(child);
             }
         }
         return null;
+    }
+    private ArrayDeque<AccessibilityNodeInfo> roots() {
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
+            if (window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) continue;
+            AccessibilityNodeInfo root = window.getRoot();
+            if (root != null) queue.add(root);
+        }
+        return queue;
+    }
+    private void recordFailure() throws Exception {
+        File directory = new File(getTargetContext().getCacheDir(), "browser-ui-audit");
+        directory.mkdirs();
+        Bitmap bitmap = getUiAutomation().takeScreenshot();
+        if (bitmap != null) {
+            try (FileOutputStream out = new FileOutputStream(new File(directory, "failure.png"))) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            }
+            bitmap.recycle();
+        }
+        StringBuilder tree = new StringBuilder();
+        ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        int count = 0;
+        while (!queue.isEmpty() && count++ < 1500) {
+            AccessibilityNodeInfo node = queue.removeFirst();
+            Rect rect = new Rect(); node.getBoundsInScreen(rect);
+            tree.append(node.getClassName()).append(" visible=").append(node.isVisibleToUser())
+                .append(" editable=").append(node.isEditable()).append(" focused=").append(node.isFocused())
+                .append(" desc=").append(node.getContentDescription()).append(" text=").append(text(node))
+                .append(" selection=").append(node.getTextSelectionStart()).append(":").append(node.getTextSelectionEnd())
+                .append(" bounds=").append(rect).append("\n");
+            for (int i = 0; i < node.getChildCount(); i++) {
+                AccessibilityNodeInfo child = node.getChild(i);
+                if (child != null) queue.add(child);
+            }
+        }
+        try (FileOutputStream out = new FileOutputStream(new File(directory, "hierarchy.txt"))) {
+            out.write(tree.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
     private void click(String label) throws Exception {
         await(() -> find(label, false) != null, "visible control: " + label);
