@@ -231,5 +231,16 @@
   "vpn_last_handshake": "Last server handshake",
   "vpn_seconds_ago": "seconds ago",
   "vpn_never": "Not yet available",
-  "vpn_stats_note": "These are real WireGuard tunnel counters. They do not prove there are no DNS or IP leaks."
+  "vpn_stats_note": "These are real WireGuard tunnel counters. They do not prove there are no DNS or IP leaks.",
+  "menu_open_official_app": "Open in mobile app",
+  "menu_open_official_app_hint": "If installed",
+  "bank_external_title": "Open external app",
+  "bank_external_prompt": "This website wants to open a different app on your phone. Check the destination before proceeding.",
+  "bank_external_missing": "No installed app can open this link, or the link is unsupported.",
+  "bank_external_origin": "Requesting website",
+  "bank_external_target": "App link",
+  "bank_external_confirm": "Open app",
+  "bank_https_handoff_prompt": "Select the bank's official installed app only. Verify it before entering passwords, SMS codes, or account information outside this browser.",
+  "bank_js_prompt_title": "Website message",
+  "bank_js_cancel": "Cancel"
 }
