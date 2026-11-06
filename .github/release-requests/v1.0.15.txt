@@ -1,0 +1,12 @@
+v1.0.15 — EYMEN Browser genuine download progress and cancellation.
+- Live Downloads screen shows actual byte count written from GeckoView WebResponse.body, not a simulated transfer.
+- Percent visible ONLY if valid Content-Length exists; otherwise "total size unknown". Progress math bounded in JUnit tests.
+- User can cancel active transfer. Network body close occurs off UI thread, pending MediaStore item deleted on failure/cancel.
+- Android 8–9 SAF selected document is removed best-effort; explicit warning when the provider cannot delete the incomplete output.
+- Completed file list refreshes immediately and only truly saved files are recorded. No second HTTP request, cookie export or invented  background download service.
+- One transfer at a time. No process-death continuation, queue or pause/resume claim.
+- Banking web login and WireGuard physical-device acceptance remain on final manual validation list.
+Source/JVM/Android build passing: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42217820444
+Android 15/16 independent visual audit: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42217960017
+Docs: docs/ANDROID_DOWNLOADS_V115.md
+Release gated by production signing identity, 3 ABI artifacts, SHA-256 and signed upgrade from v1.0.14.
