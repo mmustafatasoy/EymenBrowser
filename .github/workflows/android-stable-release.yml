@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.15"
+  # One-shot approved release request; only a passing code/JVM/security,
+  # production-signing and previous-version update check can publish.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.15.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +47,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.15' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -350,6 +356,18 @@ jobs:
           - Banka uygulamalarinin kendi cihaz kaydi, biyometri,
             FIDO ve cihaz guvenligi testleri atlatilmaz.
             Tum bankalarin girisinin duzeldigi iddia edilmez.
+          - v1.0.15: Indirilenler ekraninda GeckoView dosya akisindan
+            gercek yazilan bayt sayisi ve Content-Length varsa yuzde.
+          - Dosya boyutu bilinmiyorsa sahte yuzde veya sure yok.
+            Devam eden indirmenin kullanici tarafindan iptali eklendi.
+          - Iptal/hata durumunda yarim kalmis MediaStore kaydi silinir.
+            Android 8-9 SAF dosyasinin silinmesi saglayiciya bagli.
+          - Kaydedilmis dosya acik Indirilenler ekranina aninda eklenir;
+            yalniz gercek tamamlanmis dosyalar gecmise girer.
+          - Bir seferde tek aktif dosya aktarimi vardir; uygulama
+            sureci sonlandirilinca arka planda devam garantisi yoktur.
+          - Bilinen/bilinmeyen buyukluk yuzdeleri icin JVM sinir
+            testleri vardir, fiziksel indirme testleri ayridir.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
