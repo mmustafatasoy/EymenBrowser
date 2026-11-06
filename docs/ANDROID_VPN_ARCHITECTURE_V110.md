@@ -1,8 +1,10 @@
 # EYMEN Browser — VPN entegrasyonu güvenlik ve ürün planı (v1.0.10 hazırlık)
 
-## Mevcut durum
+## Mevcut durum (v1.0.11 ile güncellendi)
 
-**Henüz VPN bağlantısı, sunucu veya kullanıcıya açılmış bir VPN düğmesi yoktur.** v1.0.10'daki mevcut iş; GeckoView korumasına ayrı, APK içinde taşınan opt-in reklam alanı temizleme modülü ve daha sonra kurulacak gerçek VPN için tanımlanmış gereksinimlerdir. İzin ekranı ve bağlantı durumunun yanlış gösterilmesi kabul edilmez.
+v1.0.10 döneminde gerçek VPN yoktu. **v1.0.11'de resmi WireGuard GoBackend tüneli, Android VpnService izni ve sadece tarayıcı paketi için yönlendirme kodlandı.** Kullanıcı geçerli çift-yığınlı WireGuard sunucu dosyasını telefondan seçerek tüneli başlatabilir. Sunucu, özel anahtar ve VPN hizmeti **uygulamayla birlikte sunulmaz**. Bu altyapının gerçek sunucuyla bağlantı, Android 8–16 cihaz yaşam döngüsü, DNS/WebRTC/IPv6 sızıntısı ve sistem kill-switch davranışı için saha testleri henüz tamamlanmadı.
+
+Kullanım, anahtar saklama, el sıkışma durumu, güvenlik ve bilinen sınırlamalar: **[ANDROID_VPN_V111.md](ANDROID_VPN_V111.md)**. Aşağıdaki hedefler sonraki güvenlik ve servis geliştirmeleri için saklanmaktadır.
 
 ## Hedef mimari
 
