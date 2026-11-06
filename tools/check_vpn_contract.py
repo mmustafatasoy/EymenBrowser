@@ -24,6 +24,10 @@ assert 'com.wireguard.android.backend.GoBackend$VpnService' in manifest
 assert 'android.permission.BIND_VPN_SERVICE' in manifest
 assert 'android:exported="false"' in manifest
 assert 'android.net.VpnService' in manifest
+# The app has not implemented system-boot Always-on restoration. Android
+# must not display the lockdown toggle while this is still unsupported.
+assert 'android.net.VpnService.SUPPORTS_ALWAYS_ON' in manifest
+assert 'android:value="false"' in manifest
 assert 'android:allowBackup="false"' in manifest
 assert 'android:usesCleartextTraffic="false"' in manifest
 
@@ -37,6 +41,9 @@ assert 'KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT' in store
 assert 'AES/GCM/NoPadding' in store
 assert 'GCMParameterSpec(128,' in store
 assert 'noBackupFilesDir.resolve("eymen-wg-v1.bin")' in store
+assert 'deleteEntry(alias)' in store
+assert 'ciphertext.fill(0)' in store
+assert 'raw.fill(0)' in store
 assert 'file.startWrite()' in store
 assert 'file.finishWrite(output)' in store
 assert 'file.failWrite(output)' in store
@@ -61,7 +68,11 @@ assert 'VpnSettingsScreen(' in activity
 assert 'onDisconnect = vpn::disconnect' in activity
 assert 'onRefresh = vpn::refreshState' in activity
 assert 'onDelete = ::confirmDeleteVpnConfiguration' in activity
-assert 'settingsShowing && vpnScreenVisible -> vpnScreenVisible = false' in activity
+assert 'settingsShowing && vpnScreenVisible -> {' in activity
+assert 'vpn.stopUiMonitoring()' in activity
+assert 'vpn.startUiMonitoring()' in activity
+assert 'if (vpnScreenVisible) vpn.startUiMonitoring()' in activity
+assert 'importing = vpn.importing' in activity
 assert 'SettingsAction.VPN' in settings
 assert 'SettingRow(R.string.vpn_title' in settings
 
@@ -73,6 +84,14 @@ assert 'check(VpnService.prepare(app) == null)' in backend
 assert 'EymenVpnStatus.TUNNEL_UNVERIFIED' in backend
 assert 'EymenVpnStatus.HANDSHAKE_CONFIRMED' in backend
 assert 'latestHandshakeEpochMillis()' in backend
+assert 'val ageMillis = System.currentTimeMillis() - handshake' in backend
+assert 'ageMillis in 0L..179_999L' in backend
+assert 'private val operationEpoch = AtomicLong(0)' in backend
+assert 'if (operationEpoch.get() != expectedEpoch) return@post' in backend
+assert 'main.postDelayed(this, 15_000L)' in backend
+assert 'fun startUiMonitoring()' in backend
+assert 'fun stopUiMonitoring()' in backend
+assert 'var importing by mutableStateOf(false)' in backend
 assert 'configStore.load()' in backend
 assert 'configStore.importBytes(bytes)' in backend
 assert 'bytes.fill(0)' in backend
@@ -84,6 +103,10 @@ assert 'EymenVpnStatus.HANDSHAKE_CONFIRMED' in ui
 assert 'vpn_no_fake' in ui
 assert 'vpn_dual_stack' in ui
 assert 'vpn_privacy_note' in ui
+assert 'vpn_always_on_unavailable' in ui
+assert 'vpn_monitoring' in ui
+assert 'vpn_importing' in ui
+assert 'val busy = importing ||' in ui
 assert 'onImport: () -> Unit' in ui
 assert 'onConnect: () -> Unit' in ui
 assert 'onDelete: () -> Unit' in ui
@@ -93,7 +116,8 @@ en = json.loads((root / "shared/i18n/en.json").read_text())
 for k in (
     "vpn_title", "vpn_import", "vpn_connect", "vpn_disconnect", "vpn_refresh",
     "vpn_remove", "vpn_status_unverified", "vpn_status_verified",
-    "vpn_no_fake", "vpn_dual_stack", "vpn_saved_crypt", "vpn_privacy_note"
+    "vpn_no_fake", "vpn_dual_stack", "vpn_saved_crypt", "vpn_privacy_note",
+    "vpn_monitoring", "vpn_always_on_unavailable", "vpn_importing"
 ):
     assert k in tr and tr[k] and k in en and en[k], k
 
