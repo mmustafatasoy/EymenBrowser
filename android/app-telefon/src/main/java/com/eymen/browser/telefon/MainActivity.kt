@@ -83,8 +83,10 @@ class MainActivity : ComponentActivity() {
     private var nextTabGroupId = 1L
     private val workspaceStore by lazy { TabWorkspaceStore(applicationContext) }
     private var restoringWorkspace = false
-    // A single ephemeral undo slot; no private URLs or private tabs are stored.
-    private var lastClosedNormalTab by mutableStateOf<ClosedNormalTab?>(null)
+    // Bounded history of only normal closed tabs, never private URLs.
+    private val recentlyClosedNormal = mutableStateListOf<ClosedNormalTab>()
+    private val lastClosedNormalTab: ClosedNormalTab?
+        get() = recentlyClosedNormal.lastOrNull()
     private val activeId = mutableStateOf(-1L)
     private val atHome = mutableStateOf(true)
     private val currentUrl = mutableStateOf("")
@@ -317,6 +319,7 @@ class MainActivity : ComponentActivity() {
                 openDevices = devicesRequested.value,
                 groups = tabGroups.toList(),
                 undoAvailable = lastClosedNormalTab != null,
+                undoCount = recentlyClosedNormal.size,
                 day = dayMode.value,
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
@@ -335,6 +338,7 @@ class MainActivity : ComponentActivity() {
                 onRemoveGroup = ::confirmRemoveTabGroup,
                 onAssignGroup = ::promptTabGroupSelection,
                 onUndoClose = ::restoreLastClosedNormalTab,
+                onMoveTab = ::moveTabWithinSection,
                 onDismiss = ::hideTabs
             )
         }
@@ -520,7 +524,9 @@ class MainActivity : ComponentActivity() {
                 runOnUiThread {
                     // Gecko can signal its internal about:blank document on a new
                     // empty session. This is not a user navigation: keep T03 home.
-                    if (tab.home && url.equals("about:blank", ignoreCase = true)) {
+                    if ((tab.home || tab.pendingRestoreUrl != null) &&
+                        url.equals("about:blank", ignoreCase = true)
+                    ) {
                         return@runOnUiThread
                     }
                     tab.url = url
@@ -586,11 +592,14 @@ class MainActivity : ComponentActivity() {
         // Restoring always creates a NEW session; closed GeckoSessions never
         // get reattached, which protects resources and session isolation.
         if (!tab.privateMode) {
-            lastClosedNormalTab = ClosedNormalTab(
-                safeUrl = if (tab.home) null
-                    else GeckoMotorDenemesi.verifiedHttpsUrl(tab.url),
-                groupId = tab.groupId
+            recentlyClosedNormal.add(
+                ClosedNormalTab(
+                    safeUrl = if (tab.home) null
+                        else workspaceStore.safeHttpsUrl(tab.url),
+                    groupId = tab.groupId
+                )
             )
+            while (recentlyClosedNormal.size > 10) recentlyClosedNormal.removeAt(0)
         }
         tab.gecko.close()
         tabs.remove(tab)
@@ -619,13 +628,31 @@ class MainActivity : ComponentActivity() {
 
     private fun restoreLastClosedNormalTab() {
         val closed = lastClosedNormalTab ?: return
-        lastClosedNormalTab = null
+        recentlyClosedNormal.removeAt(recentlyClosedNormal.lastIndex)
         createTab(privateMode = false, initialUrl = closed.safeUrl)
         // Group may have been deleted while the tab was closed.
         activeTab?.groupId = closed.groupId?.takeIf { id ->
             tabGroups.any { it.id == id }
         }
         saveNormalWorkspace()
+    }
+
+    private fun moveTabWithinSection(tabId: Long, direction: Int, selectedGroupId: Long?) {
+        if (direction !in -1..1 || direction == 0) return
+        val tab = tabs.firstOrNull { it.id == tabId } ?: return
+        val candidates = tabs.filter {
+            it.privateMode == tab.privateMode &&
+                (tab.privateMode || selectedGroupId == null || it.groupId == selectedGroupId)
+        }
+        val index = candidates.indexOfFirst { it.id == tabId }
+        val next = index + direction
+        if (index < 0 || next !in candidates.indices) return
+        val target = candidates[next]
+        val sourcePosition = tabs.indexOf(tab)
+        val destinationPosition = tabs.indexOf(target)
+        tabs.removeAt(sourcePosition)
+        tabs.add(destinationPosition, tab)
+        if (!tab.privateMode) saveNormalWorkspace()
     }
 
     private fun promptNewTabGroup() {
@@ -1407,7 +1434,7 @@ class MainActivity : ComponentActivity() {
         tabs.forEach { it.gecko.close() }
         tabs.clear()
         tabGroups.clear()
-        lastClosedNormalTab = null
+        recentlyClosedNormal.clear()
         privateShieldOverrides.clear()
         super.onDestroy()
     }
