@@ -3,6 +3,7 @@ package com.eymen.browser.telefon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,8 +28,11 @@ internal data class TabPreview(
     val title: String,
     val url: String,
     val privateMode: Boolean,
-    val selected: Boolean
+    val selected: Boolean,
+    val groupId: Long? = null
 )
+
+internal data class TabGroupPreview(val id: Long, val title: String)
 
 private enum class TabSection { NORMAL, PRIVATE, DEVICES }
 
@@ -61,10 +65,17 @@ internal fun TabOverview(
     activePrivate: Boolean,
     openDevices: Boolean,
     day: Boolean,
+    groups: List<TabGroupPreview>,
+    undoAvailable: Boolean,
     onOpen: (Long) -> Unit,
     onClose: (Long) -> Unit,
     onCloseAll: (Boolean) -> Unit,
     onNew: (Boolean) -> Unit,
+    onNewGroup: () -> Unit,
+    onRenameGroup: (Long) -> Unit,
+    onRemoveGroup: (Long) -> Unit,
+    onAssignGroup: (Long) -> Unit,
+    onUndoClose: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var section by remember { mutableStateOf(
@@ -77,6 +88,13 @@ internal fun TabOverview(
             else -> TabSection.NORMAL
         }
     }
+    // Normal groups are never applied to private sessions, nor to devices.
+    var selectedGroupId by remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(groups.map { it.id }) {
+        if (selectedGroupId != null && groups.none { it.id == selectedGroupId }) {
+            selectedGroupId = null
+        }
+    }
     val background = if (day) T.gunduz_zemin else T.gece_zemin
     val surface = if (day) T.gunduz_yuzey1 else T.gece_yuzey1
     val muted = if (day) T.gunduz_yaziIkincil else T.gece_yaziIkincil
@@ -84,7 +102,13 @@ internal fun TabOverview(
     val selected = if (day) T.gunduz_vurgu else T.gece_vurgu
     val selectedText = if (day) T.gunduz_vurguUstu else T.gece_vurguUstu
     val outline = if (day) T.gunduz_cizgi else T.gece_cizgi
-    val visible = tabs.filter { it.privateMode == (section == TabSection.PRIVATE) }
+    val visible = tabs.filter { tab ->
+        tab.privateMode == (section == TabSection.PRIVATE) &&
+            (section != TabSection.NORMAL ||
+                selectedGroupId == null || tab.groupId == selectedGroupId)
+    }
+    val activeIndex = visible.indexOfFirst { it.selected }.coerceAtLeast(0)
+    val selectedGroup = groups.firstOrNull { it.id == selectedGroupId }
 
     // MainActivity reserves statusBars/displayCutout for the ENTIRE
     // FrameLayout root. Do not add statusBarsPadding() here again: doubling
@@ -134,22 +158,125 @@ internal fun TabOverview(
         Spacer(Modifier.height(16.dp))
 
         if (section == TabSection.NORMAL) {
+            // Real, editable groups of the currently open normal GeckoSessions.
+            // The pre-existing "groups coming later" placeholder is removed.
             Row(
-                Modifier.padding(horizontal = 16.dp),
+                Modifier.fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    Modifier.height(44.dp)
-                        .background(selected, RoundedCornerShape(22.dp))
-                        .padding(horizontal = 16.dp),
+                    Modifier.height(37.dp)
+                        .background(
+                            if (selectedGroupId == null) selected else surface,
+                            RoundedCornerShape(19.dp)
+                        )
+                        .clickable { selectedGroupId = null }
+                        .padding(horizontal = 15.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    TabLabel(stringResource(R.string.tab_all), 14, selectedText, true)
+                    TabLabel(stringResource(R.string.tab_all), 13,
+                        if (selectedGroupId == null) selectedText else text,
+                        selectedGroupId == null)
                 }
-                Spacer(Modifier.width(8.dp))
-                TabLabel(stringResource(R.string.tab_groups_pending), 13, muted)
+                groups.forEach { group ->
+                    val checked = selectedGroupId == group.id
+                    Box(
+                        Modifier.height(37.dp)
+                            .background(
+                                if (checked) selected else surface,
+                                RoundedCornerShape(19.dp)
+                            )
+                            .clickable { selectedGroupId = group.id }
+                            .padding(horizontal = 13.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TabLabel(group.title.take(32), 13,
+                            if (checked) selectedText else text, checked)
+                    }
+                }
+                Box(
+                    Modifier.height(37.dp)
+                        .background(surface, RoundedCornerShape(19.dp))
+                        .border(1.dp, outline, RoundedCornerShape(19.dp))
+                        .clickable(onClick = onNewGroup)
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TabLabel("+ " + stringResource(R.string.tab_group_new),
+                        13, text, true)
+                }
             }
-            Spacer(Modifier.height(16.dp))
+            if (selectedGroup != null) {
+                Row(
+                    Modifier.fillMaxWidth().padding(
+                        start = 18.dp, end = 18.dp, top = 7.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TabLabel(
+                        stringResource(R.string.tab_group_rename), 12, muted,
+                        modifier = Modifier.clickable {
+                            onRenameGroup(selectedGroup.id)
+                        }
+                    )
+                    TabLabel(
+                        stringResource(R.string.tab_group_remove), 12, muted,
+                        modifier = Modifier.clickable {
+                            onRemoveGroup(selectedGroup.id)
+                        }
+                    )
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+
+        if (section != TabSection.DEVICES) {
+            // Quick switching changes the actual active GeckoSession.
+            Row(
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TabLabel(
+                    stringResource(R.string.tab_quick_switch) +
+                        " ${if (visible.isEmpty()) 0 else activeIndex + 1}/${visible.size}",
+                    12, muted
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    TabLabel(
+                        "‹ " + stringResource(R.string.tab_prev),
+                        13, if (visible.size > 1) text else muted,
+                        modifier = Modifier.clickable(enabled = visible.size > 1) {
+                            onOpen(visible[(activeIndex - 1 + visible.size) % visible.size].id)
+                        }
+                    )
+                    TabLabel(
+                        stringResource(R.string.tab_next) + " ›",
+                        13, if (visible.size > 1) text else muted,
+                        modifier = Modifier.clickable(enabled = visible.size > 1) {
+                            onOpen(visible[(activeIndex + 1) % visible.size].id)
+                        }
+                    )
+                }
+            }
+            if (section == TabSection.NORMAL && undoAvailable) {
+                Box(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+                        .heightIn(min = 38.dp)
+                        .background(surface, RoundedCornerShape(12.dp))
+                        .clickable(onClick = onUndoClose)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    TabLabel("↶ " + stringResource(R.string.tab_closed_undo),
+                        13, selected, true)
+                }
+            }
         }
 
         if (section == TabSection.DEVICES) {
@@ -233,6 +360,24 @@ internal fun TabOverview(
                                             TabLabel("×", 20, muted)
                                         }
                                     }
+                                    if (!tab.privateMode) {
+                                        Row(
+                                            Modifier.fillMaxWidth().heightIn(min = 30.dp)
+                                                .clickable { onAssignGroup(tab.id) }
+                                                .padding(horizontal = 5.dp, vertical = 3.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            val groupLabel = groups.firstOrNull {
+                                                it.id == tab.groupId
+                                            }?.title
+                                            TabLabel(
+                                                "▦ " + (groupLabel ?:
+                                                    stringResource(R.string.tab_group_assign)),
+                                                11, selected, true,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                    }
                                     Column(
                                         Modifier.fillMaxSize()
                                             .background(
@@ -279,19 +424,22 @@ internal fun TabOverview(
         ) {
             Box(
                 Modifier.height(48.dp).clickable {
-                    if (section != TabSection.DEVICES) onCloseAll(section == TabSection.PRIVATE)
+                    if (section != TabSection.DEVICES && selectedGroupId == null)
+                        onCloseAll(section == TabSection.PRIVATE)
                 }.padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 TabLabel(
                     stringResource(R.string.close_all_tabs), 15,
-                    if (section == TabSection.DEVICES) muted else text
+                    if (section == TabSection.DEVICES || selectedGroupId != null) muted else text
                 )
             }
             Box(
                 Modifier.height(48.dp)
                     .background(selected, RoundedCornerShape(24.dp))
-                    .clickable { onNew(section == TabSection.PRIVATE) }
+                    .clickable(enabled = section != TabSection.DEVICES) {
+                        onNew(section == TabSection.PRIVATE)
+                    }
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
