@@ -40,6 +40,8 @@ jobs:
           python tools/check_cosmetic_extension.py
           node --check android/app-telefon/src/main/assets/eymen-cosmetic/cosmetic.js
           node tools/test_cosmetic_extension.mjs
+      - name: Android WireGuard izin/şifreleme/yönlendirme ve dürüst VPN durum kontratı
+        run: python tools/check_vpn_contract.py
       - name: Android imzali surum ve guncelleme guvenlik kontrati
         run: python tools/check_update_contract.py
       - uses: actions/upload-artifact@v4
