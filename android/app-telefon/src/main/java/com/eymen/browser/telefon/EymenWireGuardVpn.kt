@@ -15,6 +15,13 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 
+/** Safe, non-identifying diagnostics from WireGuard's real peer counters. */
+internal data class EymenVpnPeerStats(
+    val receivedBytes: Long,
+    val sentBytes: Long,
+    val lastHandshakeAgeSeconds: Long?
+)
+
 internal enum class EymenVpnStatus {
     NO_CONFIGURATION, READY, CONNECTING, TUNNEL_UNVERIFIED,
     HANDSHAKE_CONFIRMED, DISCONNECTING, DISCONNECTED, ERROR
@@ -82,6 +89,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
                     status = if (configStore.exists())
                         EymenVpnStatus.DISCONNECTED else EymenVpnStatus.NO_CONFIGURATION
                     message = "Android VPN tüneli kapandı. Koruma artık doğrulanmıyor."
+                    peerStats = null
                 }
             }
         }
@@ -96,6 +104,8 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         private set
     var importing by mutableStateOf(false)
         private set
+    var peerStats by mutableStateOf<EymenVpnPeerStats?>(null)
+        private set
 
     /** No secret text is stored in state, included in errors or printed. */
     var message by mutableStateOf("")
@@ -104,7 +114,8 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
     private fun show(
         state: EymenVpnStatus,
         description: String = "",
-        expectedEpoch: Long = operationEpoch.get()
+        expectedEpoch: Long = operationEpoch.get(),
+        diagnostics: EymenVpnPeerStats? = null
     ) {
         main.post {
             // Prevent stale statistics or a late UP callback from undoing
@@ -112,6 +123,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
             if (operationEpoch.get() != expectedEpoch) return@post
             status = state
             message = description
+            peerStats = diagnostics
             configPresent = configStore.exists()
         }
     }
@@ -186,6 +198,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         val epoch = operationEpoch.incrementAndGet()
         status = EymenVpnStatus.CONNECTING
         message = ""
+        peerStats = null
         worker.execute {
             try {
                 check(VpnService.prepare(app) == null) {
@@ -231,17 +244,26 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
                 }
                 val config = configStore.load()
                 val peerKey = config.peers.single().publicKey
-                val handshake = activeBackend.getStatistics(tunnel)
-                    .peer(peerKey)?.latestHandshakeEpochMillis() ?: 0L
+                val statistics = activeBackend.getStatistics(tunnel).peer(peerKey)
+                val handshake = statistics?.latestHandshakeEpochMillis() ?: 0L
                 // A clock-skewed handshake in the future must NOT count.
                 val ageMillis = System.currentTimeMillis() - handshake
                 val recent = handshake > 0L && ageMillis in 0L..179_999L
+                val diagnostics = EymenVpnPeerStats(
+                    receivedBytes = (statistics?.rxBytes() ?: 0L).coerceAtLeast(0L),
+                    sentBytes = (statistics?.txBytes() ?: 0L).coerceAtLeast(0L),
+                    lastHandshakeAgeSeconds = ageMillis.takeIf {
+                        handshake > 0L && it >= 0L
+                    }?.div(1000L)
+                )
                 if (recent) {
                     show(EymenVpnStatus.HANDSHAKE_CONFIRMED,
-                        "WireGuard sunucusundan yakın zamanda gerçek yanıt alındı.", epoch)
+                        "WireGuard sunucusundan yakın zamanda gerçek yanıt alındı.",
+                        epoch, diagnostics)
                 } else {
                     show(EymenVpnStatus.TUNNEL_UNVERIFIED,
-                        "Tünel açık; güncel sunucu el sıkışması doğrulanmadı.", epoch)
+                        "Tünel açık; güncel sunucu el sıkışması doğrulanmadı.",
+                        epoch, diagnostics)
                 }
             } catch (_: Exception) {
                 show(EymenVpnStatus.ERROR, "VPN durumu doğrulanamıyor.", epoch)
@@ -254,6 +276,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         val epoch = operationEpoch.incrementAndGet()
         status = EymenVpnStatus.DISCONNECTING
         message = ""
+        peerStats = null
         worker.execute {
             try {
                 backend?.setState(tunnel, Tunnel.State.DOWN, null)
@@ -274,6 +297,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         val epoch = operationEpoch.incrementAndGet()
         status = EymenVpnStatus.DISCONNECTING
         message = ""
+        peerStats = null
         worker.execute {
             try {
                 backend?.setState(tunnel, Tunnel.State.DOWN, null)
