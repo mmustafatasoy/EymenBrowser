@@ -83,6 +83,22 @@ assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
 assert 'updater.onResumed()' in main
 assert 'updater.dispose()' in main
 
+# 06 Nov approved light reference: compact top-right three-dot popup
+# (not the previously oversized menu), native vector icons and two-tone title.
+light_ui = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt").read_text()
+assert "internal fun LightBrowserMenu(" in light_ui
+assert ".width(154.dp)" in light_ui
+assert ".padding(top = 57.dp, end = 6.dp)" in light_ui
+assert "ReferenceMenuIcon(symbol, enabled)" in light_ui
+assert 'LightMenuRow("Geri", "←", highlighted = true)' in light_ui
+assert 'LightMenuRow("İleri", "→", highlighted = true)' in light_ui
+assert "buildAnnotatedString" in light_ui
+assert 'append("Eymen ")' in light_ui and 'append("Browser")' in light_ui
+assert "quadraticBezierTo(" in light_ui
+assert "LightBrowserToolbar(" in light_ui and "onVoiceSearch" in light_ui
+visual_check = (root / "tools/capture_android_visual.sh").read_text()
+assert "Approved narrow/no-scrim three-dot menu" in visual_check
+
 for label in ('T05-Kalkan','T08-Indirmeler','T10-Ayarlar'):
     assert (root / f'design/ekranlar/{label}.png').exists()
 
