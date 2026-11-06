@@ -26,7 +26,7 @@ import com.eymen.browser.tema.EymenTokens as T
 internal enum class MenuAction {
     BOOKMARKS, HISTORY, DOWNLOADS, PRIVATE, TRANSLATE, FIND,
     READER, DESKTOP, PDF, SHARE, SEND_TO_DEVICE, QR,
-    EXTENSIONS, OPEN_EXTERNAL, THEME, SETTINGS
+    EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS
 }
 
 private data class MenuTile(
@@ -170,6 +170,11 @@ internal fun BrowserMenu(
                     stringResource(R.string.menu_open_official_app_hint),
                     enabled = hasPage
                 ) { onAction(MenuAction.OPEN_EXTERNAL) }
+                MenuBottomRow(
+                    R.string.menu_open_other_browser, EymenPaths.cevir,
+                    stringResource(R.string.menu_open_other_browser_hint),
+                    enabled = hasPage
+                ) { onAction(MenuAction.OPEN_BROWSER) }
                 MenuBottomRow(
                     R.string.menu_theme, EymenPaths.ay,
                     if (dayMode) stringResource(R.string.theme_day)
