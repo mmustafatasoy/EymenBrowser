@@ -84,8 +84,22 @@ assert 'check(VpnService.prepare(app) == null)' in backend
 assert 'EymenVpnStatus.TUNNEL_UNVERIFIED' in backend
 assert 'EymenVpnStatus.HANDSHAKE_CONFIRMED' in backend
 assert 'latestHandshakeEpochMillis()' in backend
-assert 'val ageMillis = System.currentTimeMillis() - handshake' in backend
-assert 'ageMillis in 0L..179_999L' in backend
+policy = (base / "src/main/java/com/eymen/browser/telefon/EymenHandshakePolicy.kt").read_text()
+policy_test = (base / "src/test/java/com/eymen/browser/telefon/EymenHandshakePolicyTest.kt").read_text()
+assert 'EymenHandshakePolicy.isRecent(handshake, currentTime)' in backend
+assert 'EymenHandshakePolicy.ageSeconds(' in backend
+assert 'const val MAX_HANDSHAKE_AGE_MS = 180_000L' in policy
+assert 'nowEpochMillis < handshakeEpochMillis' in policy
+assert 'fun isRecent(' in policy
+assert 'fun ageSeconds(' in policy
+assert 'futureHandshakeIsNeverVerified' in policy_test
+assert 'expirationIsStrictAtThreeMinutes' in policy_test
+assert 'noHandshakeIsNeverVerified' in policy_test
+assert 'testImplementation("junit:junit:4.13.2")' in gradle
+assert 'val diagnostics = EymenVpnPeerStats(' in backend
+assert 'statistics?.rxBytes()' in backend
+assert 'statistics?.txBytes()' in backend
+assert 'peerStats by mutableStateOf<EymenVpnPeerStats?>(null)' in backend
 assert 'private val operationEpoch = AtomicLong(0)' in backend
 assert 'if (operationEpoch.get() != expectedEpoch) return@post' in backend
 assert 'main.postDelayed(this, 15_000L)' in backend
@@ -105,6 +119,11 @@ assert 'vpn_dual_stack' in ui
 assert 'vpn_privacy_note' in ui
 assert 'vpn_always_on_unavailable' in ui
 assert 'vpn_monitoring' in ui
+assert 'vpn_received' in ui
+assert 'vpn_sent' in ui
+assert 'vpn_last_handshake' in ui
+assert 'peerStats: EymenVpnPeerStats?' in ui
+assert 'peerStats = vpn.peerStats' in activity
 assert 'vpn_importing' in ui
 assert 'val busy = importing ||' in ui
 assert 'onImport: () -> Unit' in ui
@@ -117,7 +136,9 @@ for k in (
     "vpn_title", "vpn_import", "vpn_connect", "vpn_disconnect", "vpn_refresh",
     "vpn_remove", "vpn_status_unverified", "vpn_status_verified",
     "vpn_no_fake", "vpn_dual_stack", "vpn_saved_crypt", "vpn_privacy_note",
-    "vpn_monitoring", "vpn_always_on_unavailable", "vpn_importing"
+    "vpn_monitoring", "vpn_always_on_unavailable", "vpn_importing",
+    "vpn_received", "vpn_sent", "vpn_last_handshake",
+    "vpn_seconds_ago", "vpn_never", "vpn_stats_note"
 ):
     assert k in tr and tr[k] and k in en and en[k], k
 
