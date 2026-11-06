@@ -127,17 +127,20 @@ object GeckoMotorDenemesi {
         onTitle: (String?) -> Unit = {},
         trackingProtection: Boolean = false,
         onBlocked: (Int) -> Unit = { _ -> Unit },
-        onExternalAppLink: (String, String?, Boolean) -> Boolean = { _, _, _ -> false }
+        onExternalAppLink: (String, String?, Boolean) -> Boolean = { _, _, _ -> false },
+        onUserOpenedWindow: (String) -> GeckoSession? = { _ -> null }
     ): GeckoSession {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
             .useTrackingProtection(trackingProtection)
             .build()
         val session = GeckoSession(settings)
-        // Bank and other mobile apps often publish intent:// or custom app
-        // links. GeckoView cannot launch them without the host application's
-        // explicit NavigationDelegate. HTTPS navigation remains unchanged.
+        // Bank apps publish intent:// links, while federated login flows
+        // often use a user-clicked window.open(). The host must return a
+        // distinct GeckoSession for an allowed popup; without it the popup
+        // returns null and login can silently stop.
         session.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            private var userPopupUri: String? = null
             override fun onLoadRequest(
                 session: GeckoSession,
                 request: GeckoSession.NavigationDelegate.LoadRequest
@@ -146,6 +149,15 @@ object GeckoMotorDenemesi {
                 val scheme = try {
                     URI(uri).scheme?.lowercase(Locale.ROOT)
                 } catch (_: Exception) { null }
+                // A new window is authorized only when the user actually
+                // clicked. Script-opened, cross-origin background popups
+                // stay blocked. Gecko will call onNewSession separately.
+                if (request.target == GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW) {
+                    val allowedPopup = request.hasUserGesture &&
+                        (uri == "about:blank" || verifiedHttpsUrl(uri) == uri)
+                    userPopupUri = if (allowedPopup) uri else null
+                    if (!allowedPopup) return GeckoResult.fromValue(AllowOrDeny.DENY)
+                }
                 // Ordinary websites and internal Gecko URLs stay in Gecko.
                 if (scheme in setOf("https", "http", "about", "data", "blob", "javascript")) return null
                 // Treat unsupported external schemes as handled, even when
@@ -155,6 +167,20 @@ object GeckoMotorDenemesi {
                     return GeckoResult.fromValue(AllowOrDeny.DENY)
                 }
                 return null
+            }
+
+            override fun onNewSession(
+                session: GeckoSession,
+                uri: String
+            ): GeckoResult<GeckoSession>? {
+                // Consume exactly one user-approved popup request. Do not
+                // loadUri here: Gecko initializes the new document itself.
+                val authorized = userPopupUri == uri &&
+                    (uri == "about:blank" || verifiedHttpsUrl(uri) == uri)
+                userPopupUri = null
+                if (!authorized) return null
+                val child = onUserOpenedWindow(uri) ?: return null
+                return GeckoResult.fromValue(child)
             }
         }
         session.setContentBlockingDelegate(object : ContentBlocking.Delegate {
