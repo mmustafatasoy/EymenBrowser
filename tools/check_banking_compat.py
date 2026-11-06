@@ -62,6 +62,12 @@ assert "Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER" in activity
 assert "Intent.createChooser(" in activity
 assert "MenuAction.OPEN_EXTERNAL" in menu
 assert "R.string.menu_open_official_app" in menu
+assert "MenuAction.OPEN_BROWSER" in menu
+assert "R.string.menu_open_other_browser" in menu
+assert "MenuAction.OPEN_BROWSER -> openCurrentPageInAnotherBrowser()" in activity
+assert "private fun openCurrentPageInAnotherBrowser()" in activity
+assert "Intent.createChooser(intent," in activity
+assert "bank_browser_handoff_notice" in activity
 
 for callback in ("onAlertPrompt", "onButtonPrompt", "onTextPrompt"):
     assert f"override fun {callback}(" in activity
@@ -79,7 +85,9 @@ for lang in ("tr", "en"):
               "bank_external_title", "bank_external_prompt",
               "bank_external_missing", "bank_external_origin",
               "bank_external_target", "bank_external_confirm",
-              "bank_https_handoff_prompt", "bank_js_prompt_title"):
+              "bank_https_handoff_prompt", "bank_js_prompt_title",
+              "menu_open_other_browser", "menu_open_other_browser_hint",
+              "bank_browser_handoff_notice"):
         assert isinstance(strings.get(k), str) and strings[k], f"{lang}: {k}"
 
 print("Bank-app handoff, external-intent sanitization and Gecko dialog policy checks passed.")
