@@ -6,7 +6,7 @@ Son güncelleme: 2026-11-06
 
 - Kullanıcı banka mobil şubesinde EYMEN Browser’ın kapandığını bildirdi; banka adı/URL henüz verilmedi. Native banka uygulaması değil, tarayıcı kapanıyor.
 - Kodda somut hata: `onNewSession` için `createTab` zaten açılmış bir GeckoSession döndürüyordu. Gecko bu durumda `Must use an unopened GeckoSession instance` hatası verir. Popup sekmesi artık kapalı oluşturulur, Gecko’nun kendisi açtıktan sonra ekrana bağlanır. Parent/opener ve gizli mod korunur. Beklenmedik açık child güvenle reddedilir.
-- Çerez/gizlilik ve Ayarlar içindeki pasif işlevler gerçek motor/Android API’lerine bağlanıyor. Pasif etiketleri kaldırmak tek başına kabul değildir. Mevcut onaylı açık tasarım ve site A logosu korunur.
+- Çerez/gizlilik ve Ayarlar içindeki pasif işlevler gerçek motor/Android API’lerine bağlanıyor. Gizlilik/çerez politikası, gerçek site izinleri, Android güvenli otomatik doldurma, Türkçe/İngilizce, imzalı eklenti yönetimi ve PIN/HTTPS izin listeli çocuk modu kodu eklendi; tümü henüz kabul testinde doğrulanmadı. Çocuk sekmeleri gizlidir ve dış uygulamaya geçmez. Çerez temizleme açık Gecko oturumlarını kapatıp motorun gerçek depolama silme sonucunu bekler. Çerez reddi yalnız bilinen açık reddetme düğmelerini kullanır. Banka popup testi gerçek HTTPS sayfasında dokunarak açma, document.write/window.opener ve window.close dönüşünü sınamak üzere eklendi. Pasif etiketleri kaldırmak tek başına kabul değildir. Mevcut onaylı açık tasarım ve site A logosu korunur.
 - Bu düzeltme henüz derleme/gerçek popup etkileşim testinde sınanmadı. Son imzalı yayın v1.0.17; bankada kişisel giriş/para işlemi yapılmadı.
 
 ## Güncel çalışma — adres düzenleme ve özel ekranlar (v1.0.17)

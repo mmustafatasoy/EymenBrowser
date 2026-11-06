@@ -44,6 +44,7 @@ private fun ShieldText(
 /** T05 approved bottom sheet. Only Gecko-reported blocked events are counted. */
 @Composable
 internal fun ShieldPanel(
+    dayMode: Boolean,
     host: String?,
     enabled: Boolean,
     pageBlocked: Int,
@@ -55,13 +56,22 @@ internal fun ShieldPanel(
     globalEnabled: Boolean,
     cosmeticEnabled: Boolean,
     cosmeticAvailable: Boolean,
+    cookieReject: Boolean,
+    fingerprint: Boolean,
+    httpsOnly: Boolean,
+    autoplay: Boolean,
     canToggle: Boolean,
     onDismiss: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onModeChange: (Boolean) -> Unit,
     onGlobalToggle: (Boolean) -> Unit,
-    onCosmeticToggle: (Boolean) -> Unit
+    onCosmeticToggle: (Boolean) -> Unit,
+    onPrivacyToggle: (PrivacyOption, Boolean) -> Unit,
+    onManagePrivacy: () -> Unit,
+    onSitePermissions: () -> Unit
 ) {
+    val p = browserScreenPalette(dayMode)
+    val warning = if (dayMode) T.gunduz_uyari else T.gece_uyari
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
         val close = stringResource(R.string.shield_close)
         val stateDescription = stringResource(if (enabled) R.string.shield_active else R.string.shield_inactive)
@@ -75,7 +85,7 @@ internal fun ShieldPanel(
                 .fillMaxWidth()
                 .height(624.dp)
                 .background(
-                    T.gece_yuzey1,
+                    p.surface,
                     RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                 )
                 .verticalScroll(rememberScrollState())
@@ -85,7 +95,7 @@ internal fun ShieldPanel(
             Box(
                 Modifier.width(40.dp).height(4.dp)
                     .align(Alignment.CenterHorizontally)
-                    .background(T.gece_cizgi, RoundedCornerShape(2.dp))
+                    .background(p.line, RoundedCornerShape(2.dp))
             )
             Row(
                 Modifier.fillMaxWidth(),
@@ -93,12 +103,12 @@ internal fun ShieldPanel(
             ) {
                 Box(
                     Modifier.size(52.dp)
-                        .background(T.gece_yuzey2, RoundedCornerShape(16.dp)),
+                        .background(p.soft, RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     EymenVector(
                         EymenPaths.kalkan,
-                        color = if (enabled) T.gece_koruma else T.gece_uyari,
+                        color = if (enabled) p.protection else warning,
                         iconSize = 30.dp
                     )
                 }
@@ -107,17 +117,17 @@ internal fun ShieldPanel(
                     ShieldText(
                         stringResource(
                             if (enabled) R.string.shield_active else R.string.shield_inactive
-                        ), 20, T.gece_yazi, strong = true
+                        ), 20, p.text, strong = true
                     )
                     ShieldText(
                         host ?: stringResource(R.string.shield_no_site),
-                        14, T.gece_yaziIkincil
+                        14, p.muted
                     )
                 }
                 Box(
                     Modifier.width(52.dp).height(32.dp)
                         .background(
-                            if (enabled) T.gece_vurgu else T.gece_cizgi,
+                            if (enabled) p.accent else p.line,
                             RoundedCornerShape(16.dp)
                         )
                         .clickable(enabled = canToggle) { onToggle(!enabled) }
@@ -130,7 +140,7 @@ internal fun ShieldPanel(
                 ) {
                     Box(
                         Modifier.size(24.dp).background(
-                            if (enabled) T.gece_vurguUstu else T.gece_yazi,
+                            if (enabled) p.onAccent else p.text,
                             RoundedCornerShape(12.dp)
                         )
                     )
@@ -147,43 +157,43 @@ internal fun ShieldPanel(
                 ).forEach { (number, label, available) ->
                     Column(
                         Modifier.weight(1f)
-                            .background(T.gece_yuzey2, RoundedCornerShape(14.dp))
+                            .background(p.soft, RoundedCornerShape(14.dp))
                             .padding(12.dp)
                     ) {
                         ShieldText(
                             number, 26,
-                            if (available) T.gece_yazi else T.gece_yaziPasif,
+                            if (available) p.text else p.disabled,
                             strong = true
                         )
                         Spacer(Modifier.height(2.dp))
                         ShieldText(
-                            stringResource(label), 13, T.gece_yaziIkincil
+                            stringResource(label), 13, p.muted
                         )
                     }
                 }
             }
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 44.dp)
-                    .background(T.gece_yuzey2, RoundedCornerShape(14.dp))
+                    .background(p.soft, RoundedCornerShape(14.dp))
                     .clickable { onGlobalToggle(!globalEnabled) }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ShieldText(
-                    stringResource(R.string.settings_shield), 15, T.gece_yazi,
+                    stringResource(R.string.settings_shield), 15, p.text,
                     modifier = Modifier.weight(1f), strong = true
                 )
                 ShieldText(
                     stringResource(
                         if (globalEnabled) R.string.settings_enabled
                         else R.string.settings_disabled
-                    ), 14, if (globalEnabled) T.gece_koruma else T.gece_uyari
+                    ), 14, if (globalEnabled) p.protection else warning
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 ShieldText(
                     stringResource(R.string.shield_profile_title),
-                    16, T.gece_yazi, strong = true
+                    16, p.text, strong = true
                 )
                 Row(
                     Modifier.fillMaxWidth(),
@@ -196,8 +206,8 @@ internal fun ShieldPanel(
                         Box(
                             Modifier.weight(1f).heightIn(min = 44.dp)
                                 .background(
-                                    if (strictMode == isStrict) T.gece_vurgu
-                                    else T.gece_yuzey2,
+                                    if (strictMode == isStrict) p.accent
+                                    else p.soft,
                                     RoundedCornerShape(14.dp)
                                 )
                                 .clickable { onModeChange(isStrict) }
@@ -206,8 +216,8 @@ internal fun ShieldPanel(
                         ) {
                             ShieldText(
                                 stringResource(label), 14,
-                                if (strictMode == isStrict) T.gece_vurguUstu
-                                else T.gece_yazi,
+                                if (strictMode == isStrict) p.onAccent
+                                else p.text,
                                 strong = strictMode == isStrict
                             )
                         }
@@ -217,7 +227,7 @@ internal fun ShieldPanel(
                     stringResource(
                         if (strictMode) R.string.shield_profile_strict_desc
                         else R.string.shield_profile_standard_desc
-                    ), 12, T.gece_yaziIkincil
+                    ), 12, p.muted
                 )
             }
             Row(
@@ -230,20 +240,20 @@ internal fun ShieldPanel(
                 ).forEach { (count, label) ->
                     Column(
                         Modifier.weight(1f)
-                            .background(T.gece_yuzey2, RoundedCornerShape(12.dp))
+                            .background(p.soft, RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
-                        ShieldText(count.toString(), 22, T.gece_yazi, strong = true)
-                        ShieldText(stringResource(label), 12, T.gece_yaziIkincil)
+                        ShieldText(count.toString(), 22, p.text, strong = true)
+                        ShieldText(stringResource(label), 12, p.muted)
                     }
                 }
             }
             ShieldText(
-                stringResource(R.string.shield_count_scope), 12, T.gece_yaziIkincil
+                stringResource(R.string.shield_count_scope), 12, p.muted
             )
             Column(
                 Modifier.fillMaxWidth().background(
-                    T.gece_yuzey2, RoundedCornerShape(14.dp)
+                    p.soft, RoundedCornerShape(14.dp)
                 ).padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -258,14 +268,14 @@ internal fun ShieldPanel(
                     Column(Modifier.weight(1f)) {
                         ShieldText(
                             stringResource(R.string.shield_cosmetic_title),
-                            15, T.gece_yazi, strong = true
+                            15, p.text, strong = true
                         )
                         ShieldText(
                             stringResource(
                                 if (cosmeticAvailable) R.string.shield_cosmetic_beta
                                 else R.string.shield_cosmetic_unavailable
                             ),
-                            12, T.gece_yaziIkincil
+                            12, p.muted
                         )
                     }
                     ShieldText(
@@ -276,45 +286,36 @@ internal fun ShieldPanel(
                         ),
                         14,
                         if (cosmeticAvailable && cosmeticEnabled)
-                            T.gece_koruma else T.gece_yaziPasif,
+                            p.protection else p.disabled,
                         strong = true
                     )
                 }
                 ShieldText(
                     stringResource(R.string.shield_cosmetic_scope),
-                    12, T.gece_yaziIkincil
+                    12, p.muted
                 )
             }
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
                 listOf(
-                    R.string.shield_cookie_dialog to R.string.shield_cookie_dialog_desc,
-                    R.string.shield_fingerprint to R.string.shield_fingerprint_desc,
-                    R.string.shield_https to R.string.shield_https_desc,
-                    R.string.shield_autoplay to R.string.shield_autoplay_desc
-                ).forEach { (title, subtitle) ->
-                    Row(
-                        Modifier.fillMaxWidth().heightIn(min = 64.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            ShieldText(
-                                stringResource(title), 15, T.gece_yazi,
-                                strong = true
-                            )
-                            ShieldText(
-                                stringResource(subtitle), 13, T.gece_yaziIkincil
-                            )
-                        }
-                        ShieldText(
-                            stringResource(R.string.menu_not_available), 12,
-                            T.gece_yaziPasif
-                        )
+                    Triple(PrivacyOption.COOKIE_REJECT, R.string.shield_cookie_dialog, R.string.shield_cookie_dialog_desc),
+                    Triple(PrivacyOption.FINGERPRINT, R.string.shield_fingerprint, R.string.shield_fingerprint_desc),
+                    Triple(PrivacyOption.HTTPS, R.string.shield_https, R.string.shield_https_desc),
+                    Triple(PrivacyOption.AUTOPLAY, R.string.shield_autoplay, R.string.shield_autoplay_desc)
+                ).forEach { (option, title, subtitle) ->
+                    val chosen = when (option) {
+                        PrivacyOption.COOKIE_REJECT -> cookieReject
+                        PrivacyOption.FINGERPRINT -> fingerprint
+                        PrivacyOption.HTTPS -> httpsOnly
+                        else -> autoplay
                     }
+                    SettingsToggle(stringResource(title), stringResource(subtitle), chosen, p) { onPrivacyToggle(option, it) }
                 }
+                ScreenButton(stringResource(R.string.cookie_policy_title), p, onManagePrivacy)
+                ScreenButton(stringResource(R.string.settings_site_permissions), p, onSitePermissions)
             }
             ShieldText(
                 stringResource(R.string.shield_scope_explanation),
-                13, T.gece_yaziIkincil
+                13, p.muted
             )
         }
     }

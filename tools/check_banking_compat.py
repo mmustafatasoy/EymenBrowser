@@ -23,11 +23,11 @@ assert "AllowOrDeny.DENY" in motor
 assert "override fun onNewSession(" in motor
 assert "onUserOpenedWindow: (String) -> GeckoSession?" in motor
 assert "request.target == GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW" in motor
-assert "request.hasUserGesture &&" in motor
-assert 'uri == "about:blank" || verifiedHttpsUrl(uri) == uri' in motor
+assert "(request.hasUserGesture || allowPopups()) &&" in motor
+assert 'target == "about:blank" || verifiedHttpsUrl(target) == target' in motor
 assert "userPopupUri = null" in motor
-assert "onUserOpenedWindow(uri) ?: return null" in motor
-assert "val child = onUserOpenedWindow(uri)" in motor
+assert "onUserOpenedWindow(target) ?: return null" in motor
+assert "val child = onUserOpenedWindow(target)" in motor
 assert "return GeckoResult.fromValue(child)" in motor
 assert "onUserOpenedWindow = { popupUri ->" in activity
 assert "activeId.value != id" in activity

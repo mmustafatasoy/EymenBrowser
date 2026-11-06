@@ -22,7 +22,7 @@ object GeckoMotorDenemesi {
     @Volatile private var strictTrackingMode: Boolean = false
 
     @Synchronized
-    private fun getRuntime(context: Context): GeckoRuntime =
+    fun getRuntime(context: Context): GeckoRuntime =
         runtime ?: GeckoRuntime.create(context.applicationContext).also { runtime = it }
 
     /**
@@ -125,6 +125,11 @@ object GeckoMotorDenemesi {
         privateMode: Boolean = false,
         initialLoad: Boolean = true,
         openSession: Boolean = true,
+        sitePermissions: GeckoSession.PermissionDelegate? = null,
+        allowNavigation: (String) -> Boolean = { true },
+        allowPopups: () -> Boolean = { false },
+        onPopupBlocked: () -> Unit = {},
+        onClose: () -> Unit = {},
         onTitle: (String?) -> Unit = {},
         trackingProtection: Boolean = false,
         onBlocked: (Int) -> Unit = { _ -> Unit },
@@ -147,6 +152,7 @@ object GeckoMotorDenemesi {
                 request: GeckoSession.NavigationDelegate.LoadRequest
             ): GeckoResult<AllowOrDeny>? {
                 val uri = request.uri
+                if (!allowNavigation(uri)) return GeckoResult.fromValue(AllowOrDeny.DENY)
                 val scheme = try {
                     URI(uri).scheme?.lowercase(Locale.ROOT)
                 } catch (_: Exception) { null }
@@ -154,13 +160,17 @@ object GeckoMotorDenemesi {
                 // clicked. Script-opened, cross-origin background popups
                 // stay blocked. Gecko will call onNewSession separately.
                 if (request.target == GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW) {
-                    val allowedPopup = request.hasUserGesture &&
-                        (uri == "about:blank" || verifiedHttpsUrl(uri) == uri)
-                    userPopupUri = if (allowedPopup) uri else null
-                    if (!allowedPopup) return GeckoResult.fromValue(AllowOrDeny.DENY)
+                    val target = uri.ifBlank { "about:blank" }
+                    val allowedPopup = (request.hasUserGesture || allowPopups()) &&
+                        (target == "about:blank" || verifiedHttpsUrl(target) == target)
+                    userPopupUri = if (allowedPopup) target else null
+                    if (!allowedPopup) {
+                        onPopupBlocked()
+                        return GeckoResult.fromValue(AllowOrDeny.DENY)
+                    }
                 }
                 // Ordinary websites and internal Gecko URLs stay in Gecko.
-                if (scheme in setOf("https", "http", "about", "data", "blob", "javascript")) return null
+                if (scheme in setOf("https", "http", "about", "data", "blob", "javascript", "moz-extension")) return null
                 // Treat unsupported external schemes as handled, even when
                 // denied by policy, so no untrusted handler is auto-launched.
                 if (scheme != null) {
@@ -176,11 +186,12 @@ object GeckoMotorDenemesi {
             ): GeckoResult<GeckoSession>? {
                 // Consume exactly one user-approved popup request. Do not
                 // loadUri here: Gecko initializes the new document itself.
-                val authorized = userPopupUri == uri &&
-                    (uri == "about:blank" || verifiedHttpsUrl(uri) == uri)
+                val target = uri.ifBlank { "about:blank" }
+                val authorized = userPopupUri == target &&
+                    (target == "about:blank" || verifiedHttpsUrl(target) == target)
                 userPopupUri = null
                 if (!authorized) return null
-                val child = onUserOpenedWindow(uri) ?: return null
+                val child = onUserOpenedWindow(target) ?: return null
                 // Gecko itself opens the returned window. Returning an open
                 // session throws an AssertionError inside GeckoSession.
                 if (child.isOpen) return null
@@ -194,6 +205,7 @@ object GeckoMotorDenemesi {
             }
         })
         session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onCloseRequest(session: GeckoSession) { onClose() }
             override fun onTitleChange(session: GeckoSession, title: String?) {
                 onTitle(title)
             }
@@ -212,13 +224,26 @@ object GeckoMotorDenemesi {
         // Only the Widevine/DRM key-system site permission is handled here.
         // All other permissions keep GeckoView's normal default behavior.
         session.permissionDelegate = object : GeckoSession.PermissionDelegate {
+            override fun onAndroidPermissionsRequest(session: GeckoSession,
+                permissions: Array<String>?, callback: GeckoSession.PermissionDelegate.Callback) {
+                if (sitePermissions != null) sitePermissions.onAndroidPermissionsRequest(session, permissions, callback)
+                else callback.reject()
+            }
+
+            override fun onMediaPermissionRequest(session: GeckoSession, uri: String,
+                video: Array<GeckoSession.PermissionDelegate.MediaSource>?,
+                audio: Array<GeckoSession.PermissionDelegate.MediaSource>?,
+                callback: GeckoSession.PermissionDelegate.MediaCallback) {
+                if (sitePermissions != null) sitePermissions.onMediaPermissionRequest(session, uri, video, audio, callback)
+                else callback.reject()
+            }
             override fun onContentPermissionRequest(
                 session: GeckoSession,
                 perm: GeckoSession.PermissionDelegate.ContentPermission
             ): GeckoResult<Int>? {
                 if (perm.permission !=
                     GeckoSession.PermissionDelegate.PERMISSION_MEDIA_KEY_SYSTEM_ACCESS
-                ) return null
+                ) return sitePermissions?.onContentPermissionRequest(session, perm)
 
                 // Reject non-HTTPS origins instead of silently granting DRM access.
                 val origin = try {

@@ -27,7 +27,7 @@ assert 'url.equals("about:blank", ignoreCase = true)' in main
 assert 'return@runOnUiThread' in main
 assert main.index('if ((tab.home || tab.pendingRestoreUrl != null)') < main.index('tab.home = false')
 assert 'tab.blockedTab += 1' in main
-assert 'if (enabled) T.gece_koruma else T.gece_uyari' in shield
+assert 'if (enabled) p.protection else warning' in shield
 assert 'canToggle = tab != null' in main
 assert 'getSharedPreferences("eymen_browser_shield_sites"' in main
 assert 'private val privateShieldOverrides = mutableMapOf<String, Boolean>()' in main

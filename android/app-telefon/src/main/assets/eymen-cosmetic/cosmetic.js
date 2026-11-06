@@ -33,12 +33,45 @@
     }
   }
 
+  // Click only explicit reject controls from known consent managers.
+  // Never accept consent, hide a dialog without a choice, or inspect forms.
+  function rejectKnownCookieDialog() {
+    const rejectSelectors = [
+      "button#onetrust-reject-all-handler",
+      "button#CybotCookiebotDialogBodyButtonDecline",
+      "button#didomi-notice-disagree-button",
+      "button#cookiescript_reject",
+      "button#uc-deny-all-button"
+    ];
+    let observer = null;
+    let scheduled = false;
+    function attempt() {
+      scheduled = false;
+      for (const selector of rejectSelectors) {
+        const button = document.querySelector(selector);
+        if (button && !button.disabled && button.getClientRects().length) {
+          button.click();
+          if (observer) observer.disconnect();
+          return true;
+        }
+      }
+      return false;
+    }
+    if (attempt() || typeof MutationObserver !== "function") return;
+    observer = new MutationObserver(() => {
+      if (!scheduled) { scheduled = true; setTimeout(attempt, 80); }
+    });
+    if (document.documentElement) observer.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(() => observer.disconnect(), 15000);
+  }
+
   // Never trust page-controlled globals or a user-provided URL as policy.
   // GeckoView MessageSender.session identifies the real owning GeckoSession.
   try {
     browser.runtime.sendNativeMessage("eymen_cosmetic", { type: "cosmetic-policy-v1" })
       .then(reply => {
         if (reply && reply.enabled === true) installCosmeticStyle();
+        if (reply && reply.rejectCookies === true) rejectKnownCookieDialog();
       })
       .catch(() => {}); // fail closed when extension is unavailable
   } catch (_error) {

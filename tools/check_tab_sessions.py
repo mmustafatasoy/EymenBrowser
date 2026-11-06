@@ -24,7 +24,7 @@ must_exist = {
         main, "if (activeTab?.privateMode == true) createTab(false, url)"
     ),
     "tab close frees gecko session": (main, "tab.gecko.close()"),
-    "all tabs closed on activity destroy": (main, "tabs.forEach { it.gecko.close() }"),
+    "all tabs closed on activity destroy": (main, "tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }"),
     "real tab cards used in overview": (main, "TabPreview("),
     "no fabricated tab page previews": (tabs, "neutral placeholders"),
     "no tracking numbers fabricated": (

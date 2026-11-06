@@ -33,14 +33,14 @@ private data class SettingRow(val title: Int, val icon: String, val action: Sett
 private val settingsRows = listOf(
     SettingRow(R.string.settings_shield, EymenPaths.kalkan, SettingsAction.SHIELD, R.string.settings_group_privacy, true),
     SettingRow(R.string.vpn_title, EymenPaths.kalkan, SettingsAction.VPN, R.string.settings_group_privacy, true),
-    SettingRow(R.string.settings_passwords, EymenPaths.kilit, SettingsAction.PASSWORDS, R.string.settings_group_privacy),
-    SettingRow(R.string.settings_site_permissions, EymenPaths.site, SettingsAction.SITE_PERMISSIONS, R.string.settings_group_privacy),
+    SettingRow(R.string.settings_passwords, EymenPaths.kilit, SettingsAction.PASSWORDS, R.string.settings_group_privacy, true),
+    SettingRow(R.string.settings_site_permissions, EymenPaths.site, SettingsAction.SITE_PERMISSIONS, R.string.settings_group_privacy, true),
     SettingRow(R.string.menu_settings_search, EymenPaths.ara, SettingsAction.SEARCH_ENGINE, R.string.settings_group_browsing, true),
     SettingRow(R.string.settings_appearance, EymenPaths.ay, SettingsAction.APPEARANCE, R.string.settings_group_browsing, true),
-    SettingRow(R.string.settings_language, EymenPaths.cevir, SettingsAction.LANGUAGE, R.string.settings_group_browsing),
+    SettingRow(R.string.settings_language, EymenPaths.cevir, SettingsAction.LANGUAGE, R.string.settings_group_browsing, true),
     SettingRow(R.string.downloads, EymenPaths.indir, SettingsAction.DOWNLOADS, R.string.settings_group_tools, true),
-    SettingRow(R.string.menu_extensions, EymenPaths.eklenti, SettingsAction.EXTENSIONS, R.string.settings_group_tools),
-    SettingRow(R.string.settings_child_mode, EymenPaths.cocuk, SettingsAction.CHILD_MODE, R.string.settings_group_tools),
+    SettingRow(R.string.menu_extensions, EymenPaths.eklenti, SettingsAction.EXTENSIONS, R.string.settings_group_tools, true),
+    SettingRow(R.string.settings_child_mode, EymenPaths.cocuk, SettingsAction.CHILD_MODE, R.string.settings_group_tools, true),
     SettingRow(R.string.settings_about_update, EymenPaths.bilgi, SettingsAction.ABOUT, R.string.settings_group_app, true)
 )
 

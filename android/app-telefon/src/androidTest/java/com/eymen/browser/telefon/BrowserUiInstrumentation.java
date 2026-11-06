@@ -44,6 +44,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             getUiAutomation().setServiceInfo(info);
             activity = startActivitySync(new Intent(Intent.ACTION_VIEW, Uri.parse(OLD_URL), app, MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            popupRoundTrip();
             String address = label(R.string.address_edit_label);
             await(() -> field(address) != null && !text(field(address)).isEmpty(), "existing address field");
             tap(field(address));
@@ -115,7 +116,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             click("Yeni sekme");
             await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,confirm_clear_keeps_file,back_navigation,home_new_tab_reset,light_dark_captures");
+            result.putString("checks", "real_popup_open_write_opener_close,tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,confirm_clear_keeps_file,back_navigation,home_new_tab_reset,light_dark_captures");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -130,6 +131,54 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private android.content.SharedPreferences prefs() {
         return getTargetContext().getSharedPreferences("eymen_browser_setup", Context.MODE_PRIVATE);
+    }
+    private org.mozilla.geckoview.GeckoView browserView() throws Exception {
+        java.lang.reflect.Field value = MainActivity.class.getDeclaredField("view");
+        value.setAccessible(true);
+        return (org.mozilla.geckoview.GeckoView) value.get(activity);
+    }
+    private org.mozilla.geckoview.GeckoSession currentSession() {
+        java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession> result = new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(() -> { try { result.set(browserView().getSession()); } catch (Exception e) { throw new RuntimeException(e); } });
+        return result.get();
+    }
+    private void popupRoundTrip() throws Exception {
+        org.mozilla.geckoview.GeckoSession parent = currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> title = new java.util.concurrent.atomic.AtomicReference<>("");
+        java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession.ContentDelegate> delegate = new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(() -> delegate.set(parent.getContentDelegate()));
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original = delegate.get();
+        runOnMainSync(() -> {
+            parent.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session, String text) {
+                    title.set(text); original.onTitleChange(session, text);
+                }
+            });
+            parent.loadUri("https://example.com/");
+        });
+        await(() -> title.get() != null && title.get().contains("Example Domain"), "real HTTPS fixture page loaded");
+        String child = "<html><head><title>Eymen sign-in window</title></head><body style='margin:0'><button style='position:fixed;inset:0;width:100%;height:100%' onclick='window.close()'>Close sign-in test</button></body></html>";
+        String open = "var w=window.open('about:blank','_blank');if(w){w.document.open();w.document.write(" + org.json.JSONObject.quote(child) + ");w.document.close();w.opener.document.title='Eymen opener verified';}";
+        String page = "var b=document.createElement('button');b.textContent='Open sign-in test';b.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:99999';b.onclick=function(){" + open + "};document.body.replaceChildren(b);document.title='Eymen popup fixture';";
+        String script = "javascript:void(function(){if(document.body){" + page + "}else{document.addEventListener('DOMContentLoaded',function(){" + page + "},{once:true});}}())";
+        runOnMainSync(() -> parent.loadUri(script));
+        await(() -> "Eymen popup fixture".equals(title.get()), "in-page popup fixture ready");
+        tapBrowserCenter();
+        await(() -> currentSession() != parent, "user-clicked sign-in popup attached without app crash");
+        require(currentSession().isOpen(), "Gecko opened the popup session before the view attached");
+        await(() -> "Eymen opener verified".equals(title.get()), "popup can write and reach its live parent");
+        waitForIdleSync(); SystemClock.sleep(350);
+        tapBrowserCenter();
+        await(() -> currentSession() == parent, "window.close returns to the original sign-in tab");
+        runOnMainSync(() -> { parent.setContentDelegate(original); parent.loadUri(OLD_URL); });
+    }
+    private void tapBrowserCenter() {
+        int[] point = new int[2];
+        runOnMainSync(() -> { try {
+            org.mozilla.geckoview.GeckoView view = browserView();
+            view.getLocationOnScreen(point); point[0] += view.getWidth() / 2; point[1] += view.getHeight() / 2;
+        } catch (Exception e) { throw new RuntimeException(e); } });
+        tapAt(point[0], point[1]);
     }
     private String label(int resource) { return activity.getString(resource); }
     private static String text(AccessibilityNodeInfo node) {
@@ -294,12 +343,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private void tap(AccessibilityNodeInfo node) {
         Rect rect = new Rect(); node.getBoundsInScreen(rect);
+        tapAt(rect.centerX(), rect.centerY());
+    }
+    private void tapAt(int x, int y) {
         long time = SystemClock.uptimeMillis();
-        MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, rect.centerX(), rect.centerY(), 0);
+        MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0);
         down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         require(getUiAutomation().injectInputEvent(down, true), "touch down");
         down.recycle(); SystemClock.sleep(40);
-        MotionEvent up = MotionEvent.obtain(time, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, rect.centerX(), rect.centerY(), 0);
+        MotionEvent up = MotionEvent.obtain(time, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x, y, 0);
         up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         require(getUiAutomation().injectInputEvent(up, true), "touch up"); up.recycle();
     }

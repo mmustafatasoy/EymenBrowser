@@ -5,6 +5,7 @@ import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.speech.RecognizerIntent
 import android.content.Intent
+import android.content.Context
 import android.net.Uri
 import android.net.VpnService
 import android.content.SharedPreferences
@@ -42,6 +43,8 @@ import org.mozilla.geckoview.WebExtension
 import org.json.JSONObject
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.StorageController
+import org.mozilla.geckoview.TranslationsController
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale
@@ -51,7 +54,8 @@ private class BrowserTab(
     val id: Long,
     val gecko: GeckoSession,
     val privateMode: Boolean,
-    initialUrl: String?
+    initialUrl: String?,
+    val openerId: Long? = null
 ) {
     var url by mutableStateOf(initialUrl.orEmpty())
     var title by mutableStateOf("")
@@ -90,6 +94,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var downloadsLayer: ComposeView
     private lateinit var settingsLayer: ComposeView
     private lateinit var prefs: SharedPreferences
+    private lateinit var settingsServices: BrowserSettingsServices
+    private lateinit var childMode: BrowserChildMode
+    private lateinit var addons: BrowserAddons
+    private var functionalSettingsPage by mutableStateOf<FunctionalSettingsPage?>(null)
 
     private val tabs = mutableStateListOf<BrowserTab>()
     private val tabGroups = mutableStateListOf<TabGroupPreview>()
@@ -179,6 +187,16 @@ class MainActivity : ComponentActivity() {
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
 
+    override fun attachBaseContext(base: Context) {
+        val language = base.getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
+            .getString("app_language", "system")
+        if (Build.VERSION.SDK_INT < 33 && language in setOf("tr", "en")) {
+            val config = Configuration(base.resources.configuration)
+            config.setLocale(Locale.forLanguageTag(language!!))
+            super.attachBaseContext(base.createConfigurationContext(config))
+        } else super.attachBaseContext(base)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Make the inset contract deterministic on Android 8–16.
@@ -187,6 +205,15 @@ class MainActivity : ComponentActivity() {
         // is never applied on top of a decor-fitted window.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
+        childMode = BrowserChildMode(this, ::resetTabsForChildMode)
+        settingsServices = BrowserSettingsServices(this,
+            active = { session -> activeTab?.gecko === session && !isFinishing && !isDestroyed },
+            reload = {
+                updateAutofill()
+                activeTab?.takeIf { !it.home && it.gecko.isOpen }?.gecko?.reload()
+            })
+        settingsServices.apply()
+        addons = BrowserAddons(this)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         // v1.0.4 changed the default to light but old installs retain the legacy
@@ -436,6 +463,7 @@ class MainActivity : ComponentActivity() {
         shieldLayer.setContent {
             val tab = activeTab
             ShieldPanel(
+                dayMode = dayMode.value,
                 host = verifiedHost(tab?.url),
                 enabled = tab?.shieldEnabled ?: globalShieldWanted.value,
                 pageBlocked = tab?.blockedPage ?: 0,
@@ -447,12 +475,23 @@ class MainActivity : ComponentActivity() {
                 globalEnabled = globalShieldWanted.value,
                 cosmeticEnabled = cosmeticFilterWanted.value,
                 cosmeticAvailable = cosmeticFilterReady.value,
+                cookieReject = settingsServices.cookieReject,
+                fingerprint = settingsServices.fingerprint,
+                httpsOnly = settingsServices.httpsOnly,
+                autoplay = settingsServices.autoplay,
                 canToggle = tab != null && !tab.home && verifiedHost(tab.url) != null,
                 onDismiss = ::hideShield,
                 onToggle = ::setShieldForCurrentSite,
                 onModeChange = ::setShieldMode,
                 onGlobalToggle = ::setGlobalShield,
-                onCosmeticToggle = ::setCosmeticFilterEnabled
+                onCosmeticToggle = ::setCosmeticFilterEnabled,
+                onPrivacyToggle = settingsServices::set,
+                onManagePrivacy = {
+                    hideShield(); showSettings(); functionalSettingsPage = FunctionalSettingsPage.PRIVACY
+                },
+                onSitePermissions = {
+                    hideShield(); showSettings(); functionalSettingsPage = FunctionalSettingsPage.PERMISSIONS
+                }
             )
         }
         shieldLayer.visibility = View.GONE
@@ -504,6 +543,23 @@ class MainActivity : ComponentActivity() {
                     onRefresh = vpn::refreshState,
                     onDelete = ::confirmDeleteVpnConfiguration
                 )
+            } else if (functionalSettingsPage != null) {
+                val back = { functionalSettingsPage = null }
+                when (functionalSettingsPage) {
+                    FunctionalSettingsPage.PRIVACY -> PrivacySettingsScreen(settingsServices, dayMode.value, back, ::clearBrowsingData)
+                    FunctionalSettingsPage.PERMISSIONS -> PermissionsSettingsScreen(settingsServices, dayMode.value, back,
+                        currentUrl.value, activeTab?.privateMode == true) {
+                        try { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+                        catch (_: Exception) { notice(R.string.settings_system_unavailable) }
+                    }
+                    FunctionalSettingsPage.PASSWORDS -> PasswordSettingsScreen(settingsServices, dayMode.value, back)
+                    FunctionalSettingsPage.EXTENSIONS -> AddonsSettingsScreen(addons, dayMode.value, back,
+                        onBrowse = { hideSettings(); createTab(false, "https://addons.mozilla.org/android/") },
+                        onOptions = ::openAddonOptions)
+                    FunctionalSettingsPage.LANGUAGE -> LanguageSettingsScreen(settingsServices, dayMode.value, back, ::translateCurrentPage)
+                    FunctionalSettingsPage.CHILD -> ChildSettingsScreen(childMode, dayMode.value, back)
+                    null -> Unit
+                }
             } else {
                 SettingsScreen(
                     globalShield = globalShieldWanted.value,
@@ -527,6 +583,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    settingsShowing && functionalSettingsPage != null -> functionalSettingsPage = null
                     settingsShowing && vpnScreenVisible -> {
                         vpn.stopUiMonitoring()
                         vpnScreenVisible = false
@@ -591,7 +648,15 @@ class MainActivity : ComponentActivity() {
         deferRestoreLoad: Boolean = false,
         popupRequest: Boolean = false
     ): GeckoSession? {
+        if (childMode.enabled && !privateMode)
+            return createTab(true, initialUrl, deferRestoreLoad, popupRequest)
+        if (initialUrl != null && !childMode.allows(initialUrl)) {
+            notice(R.string.child_blocked); return null
+        }
         if (::root.isInitialized) hideBrowserKeyboard()
+        if (tabs.size >= TabWorkspaceStore.MAX_TABS) {
+            notice(R.string.tab_capacity); return null
+        }
         if (!privateMode && tabs.count { !it.privateMode } >= TabWorkspaceStore.MAX_TABS) {
             Toast.makeText(this, "En fazla 32 normal sekme açılabilir.", Toast.LENGTH_SHORT).show()
             return null
@@ -613,6 +678,19 @@ class MainActivity : ComponentActivity() {
             privateMode = privateMode,
             initialLoad = initialUrl != null && !deferRestoreLoad,
             openSession = !popupRequest,
+            sitePermissions = settingsServices,
+            allowNavigation = { url ->
+                val allowed = childMode.allows(url)
+                if (!allowed) notice(R.string.child_blocked)
+                allowed
+            },
+            allowPopups = { tabs.firstOrNull { it.id == id }?.let {
+                settingsServices.popupAllowed(it.url, it.privateMode)
+            } ?: false },
+            onPopupBlocked = { if (activeId.value == id) notice(R.string.popup_blocked) },
+            onClose = {
+                tabs.firstOrNull { it.id == id }?.takeIf { it.openerId != null }?.let { closeTab(id) }
+            },
             trackingProtection = protectionFor(initialUrl, privateMode),
             onBlocked = { category ->
                 runOnUiThread {
@@ -654,7 +732,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         )
-        val tab = BrowserTab(id, session, privateMode, initialUrl)
+        val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null)
         installStandardWebPrompts(tab)
         tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
@@ -670,6 +748,7 @@ class MainActivity : ComponentActivity() {
                     }
                     tab.url = url
                     tab.home = false
+                    if (activeId.value == id) updateAutofill()
                     // Never show an obsolete screenshot after a new navigation.
                     tab.thumbnail = null
                     tab.blockedPage = 0
@@ -701,6 +780,7 @@ class MainActivity : ComponentActivity() {
         activeId.value = id
         currentUrl.value = initialUrl.orEmpty()
         atHome.value = initialUrl == null
+        updateAutofill()
         if (::tabsLayer.isInitialized) hideTabs()
         updateHomeVisibility()
         if (!privateMode) saveNormalWorkspace()
@@ -741,6 +821,7 @@ class MainActivity : ComponentActivity() {
             tab.gecko.loadUri(delayed)
         }
         setVideoFullScreen(tab.fullScreen)
+        updateAutofill()
         updateHomeVisibility()
         hideTabs()
         if (!tab.privateMode) saveNormalWorkspace()
@@ -767,17 +848,18 @@ class MainActivity : ComponentActivity() {
             )
             while (recentlyClosedNormal.size > 10) recentlyClosedNormal.removeAt(0)
         }
-        tab.gecko.close()
+        if (tab.gecko.isOpen) tab.gecko.close()
         tab.thumbnail = null
         tabs.remove(tab)
         if (tab.privateMode && tabs.none { it.privateMode }) privateShieldOverrides.clear()
+        if (tab.privateMode && tabs.none { it.privateMode }) settingsServices.clearPrivatePermissions()
         if (active) {
             if (tabs.isEmpty()) {
                 // Always leave a usable normal tab rather than a blank GeckoView.
                 createTab(privateMode = false)
             } else {
                 activeId.value = -1L
-                activateTab(tabs.last().id)
+                activateTab(tab.openerId?.takeIf { parent -> tabs.any { it.id == parent } } ?: tabs.last().id)
             }
         }
         // activateTab/createTab normally dismiss the overview. When closing
@@ -1037,6 +1119,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openUrl(url: String) {
+        if (!childMode.allows(url)) { notice(R.string.child_blocked); return }
         if (::root.isInitialized) hideBrowserKeyboard()
         val verified = GeckoMotorDenemesi.verifiedHttpsUrl(url)
         if (verified == null) {
@@ -1156,6 +1239,7 @@ class MainActivity : ComponentActivity() {
     private fun showSecureExternalAppPrompt(
         tabId: Long, link: String, trigger: String?, hasGesture: Boolean
     ): Boolean {
+        if (childMode.enabled) return false
         val sourceTab = tabs.firstOrNull { it.id == tabId } ?: return false
         if (activeId.value != tabId) return false
         val origin = trigger ?: sourceTab.url
@@ -1184,6 +1268,7 @@ class MainActivity : ComponentActivity() {
 
     /** Explicit user command, never a background website redirect. */
     private fun openCurrentPageInOfficialApp() {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
         val page = activeTab?.url
         val verified = GeckoMotorDenemesi.verifiedHttpsUrl(page)
             ?.takeIf { it == page && !atHome.value }
@@ -1223,6 +1308,7 @@ class MainActivity : ComponentActivity() {
      * headers or session tokens are copied into the external browser.
      */
     private fun openCurrentPageInAnotherBrowser() {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
         val page = activeTab?.url
         val verified = GeckoMotorDenemesi.verifiedHttpsUrl(page)
             ?.takeIf { it == page && !atHome.value }
@@ -1382,6 +1468,7 @@ class MainActivity : ComponentActivity() {
 
     private fun hideSettings() {
         hideBrowserKeyboard()
+        functionalSettingsPage = null
         vpn.stopUiMonitoring()
         vpnScreenVisible = false
         settingsShowing = false
@@ -1389,15 +1476,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleSettingsAction(action: SettingsAction) {
+        if (childMode.enabled && action != SettingsAction.CHILD_MODE) {
+            childMode.parent { performSettingsAction(action) }
+        } else performSettingsAction(action)
+    }
+
+    private fun performSettingsAction(action: SettingsAction) {
         when (action) {
             SettingsAction.VPN -> {
                 vpnScreenVisible = true
                 vpn.startUiMonitoring()
             }
             SettingsAction.SHIELD -> {
-                hideSettings()
-                showShield()
+                functionalSettingsPage = FunctionalSettingsPage.PRIVACY
             }
+            SettingsAction.PASSWORDS -> functionalSettingsPage = FunctionalSettingsPage.PASSWORDS
+            SettingsAction.SITE_PERMISSIONS -> functionalSettingsPage = FunctionalSettingsPage.PERMISSIONS
+            SettingsAction.LANGUAGE -> functionalSettingsPage = FunctionalSettingsPage.LANGUAGE
+            SettingsAction.EXTENSIONS -> functionalSettingsPage = FunctionalSettingsPage.EXTENSIONS
+            SettingsAction.CHILD_MODE -> functionalSettingsPage = FunctionalSettingsPage.CHILD
             SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()
             SettingsAction.APPEARANCE -> showAppearanceOptions()
             SettingsAction.DOWNLOADS -> {
@@ -1405,8 +1502,75 @@ class MainActivity : ComponentActivity() {
                 showDownloads()
             }
             SettingsAction.ABOUT -> updater.check(manual = true)
-            else -> Unit
         }
+    }
+
+    private fun updateAutofill() {
+        if (::view.isInitialized && ::settingsServices.isInitialized) {
+            view.setAutofillEnabled(settingsServices.autofill && activeTab?.privateMode == false &&
+                verifiedHost(activeTab?.url.orEmpty()) != null)
+        }
+    }
+
+    private fun resetTabsForChildMode() {
+        if (!::view.isInitialized) return
+        view.releaseSession()
+        tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
+        tabs.clear(); recentlyClosedNormal.clear(); privateShieldOverrides.clear()
+        activeId.value = -1L
+        createTab(childMode.enabled)
+        saveNormalWorkspace(durable = true)
+    }
+
+    private fun clearBrowsingData(cacheOnly: Boolean) {
+        val title = if (cacheOnly) R.string.cache_clear else R.string.cookie_clear
+        AlertDialog.Builder(this).setTitle(title)
+            .setMessage(if (cacheOnly) R.string.cache_clear_confirm else R.string.cookie_clear_confirm)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                view.releaseSession()
+                tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
+                tabs.clear(); activeId.value = -1L; privateShieldOverrides.clear()
+                val flags = if (cacheOnly) StorageController.ClearFlags.ALL_CACHES else
+                    StorageController.ClearFlags.COOKIES or StorageController.ClearFlags.DOM_STORAGES or StorageController.ClearFlags.AUTH_SESSIONS
+                GeckoMotorDenemesi.getRuntime(this).storageController.clearData(flags).accept({ _ ->
+                    if (!isFinishing && !isDestroyed) {
+                        createTab(false); notice(if (cacheOnly) R.string.cache_clear_success else R.string.cookie_clear_success)
+                    }
+                }, { _ ->
+                    if (!isFinishing && !isDestroyed) { createTab(false); notice(R.string.settings_operation_failed) }
+                })
+            }.show()
+    }
+
+    private fun openAddonOptions(url: String) {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
+        if (try { URI(url).scheme != "moz-extension" } catch (_: Exception) { true }) return
+        hideSettings()
+        val session = createTab(false) ?: return
+        activeTab?.let { tab -> tab.url = url; tab.home = false }
+        atHome.value = false; currentUrl.value = url; updateHomeVisibility()
+        session.loadUri(url)
+    }
+
+    private fun translateCurrentPage() {
+        val tab = activeTab?.takeIf { !it.home && verifiedHost(it.url) != null }
+        if (tab == null) { notice(R.string.invalid_address); return }
+        AlertDialog.Builder(this).setTitle(R.string.translation_title)
+            .setItems(arrayOf(getString(R.string.translation_en_tr), getString(R.string.translation_tr_en), getString(R.string.translation_original))) { _, which ->
+                if (which == 2) {
+                    tab.gecko.sessionTranslation.restoreOriginalPage().accept({ _ -> Unit }, { _ -> notice(R.string.translation_failed) })
+                } else {
+                    AlertDialog.Builder(this).setTitle(R.string.translation_pair).setMessage(R.string.translation_download)
+                        .setNegativeButton(android.R.string.cancel, null).setPositiveButton(android.R.string.ok) { _, _ ->
+                            val from = if (which == 0) "en" else "tr"
+                            val to = if (which == 0) "tr" else "en"
+                            val options = TranslationsController.SessionTranslation.TranslationOptions.Builder().downloadModel(true).build()
+                            tab.gecko.sessionTranslation.translate(from, to, options).accept(
+                                { _ -> notice(R.string.translation_started) }, { _ -> notice(R.string.translation_failed) })
+                        }.show()
+                }
+            }.show()
     }
 
     private fun requestVpnConsent() {
@@ -1474,14 +1638,14 @@ class MainActivity : ComponentActivity() {
                         sender.webExtension.id == extension.id &&
                         tabs.any { it.id == tab.id && it.gecko === tab.gecko } &&
                         verifiedHost(sender.url) != null &&
-                        cosmeticFilterWanted.value &&
                         // Gecko supplies the real top-level frame URL. Using
                         // tab.url here races the first onPageStart callback.
                         // Native per-site policy uses this trusted frame URL
                         // and the owning GeckoSession's privacy mode.
                         protectionFor(sender.url, tab.privateMode)
                     return GeckoResult.fromValue(
-                        JSONObject().put("enabled", allowed) as Any
+                        JSONObject().put("enabled", allowed && cosmeticFilterWanted.value)
+                            .put("rejectCookies", allowed && settingsServices.cookieReject) as Any
                     )
                 }
             },
@@ -1914,6 +2078,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        if (::settingsServices.isInitialized) settingsServices.stop()
+        if (::addons.isInitialized) addons.stop()
+        if (::childMode.isInitialized) childMode.stop()
         // UI status polling does not run while the Activity is hidden.
         vpn.stopUiMonitoring()
         downloads.pauseObserving()
@@ -1924,6 +2091,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        updateAutofill()
         downloads.observe()
         savedFiles.clear()
         savedFiles.addAll(downloadRegistry.items())
@@ -1937,7 +2105,7 @@ class MainActivity : ComponentActivity() {
         updater.dispose()
         downloads.dispose()
         if (::view.isInitialized) view.releaseSession()
-        tabs.forEach { it.gecko.close() }
+        tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
         tabs.clear()
         tabGroups.clear()
         recentlyClosedNormal.clear()

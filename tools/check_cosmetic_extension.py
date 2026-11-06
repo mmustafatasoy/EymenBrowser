@@ -56,7 +56,7 @@ assert 'sender.isTopLevel' in main
 assert 'sender.session === tab.gecko' in main
 assert 'verifiedHost(sender.url) != null' in main
 assert 'protectionFor(sender.url, tab.privateMode)' in main
-assert 'cosmeticFilterWanted.value &&' in main
+assert 'allowed && cosmeticFilterWanted.value' in main
 assert 'tabs.any { it.id == tab.id && it.gecko === tab.gecko }' in main
 assert 'onCosmeticToggle = ::setCosmeticFilterEnabled' in main
 assert 'cosmeticExtension?.let { installCosmeticPolicy(tab, it) }' in main
