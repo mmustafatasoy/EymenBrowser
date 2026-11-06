@@ -246,5 +246,10 @@
   "bank_external_security_warning": "Warning: EYMEN Browser has NOT verified that the target app belongs to this bank. Do not proceed unless it is the official app.",
   "menu_open_other_browser": "Open in another browser",
   "menu_open_other_browser_hint": "Web banking",
-  "bank_browser_handoff_notice": "Open the bank's official HTTPS website in your chosen browser. Enter credentials only on the bank's real website."
+  "bank_browser_handoff_notice": "Open the bank's official HTTPS website in your chosen browser. Enter credentials only on the bank's real website.",
+  "download_active": "Active download",
+  "download_size_unknown": "Total size unknown",
+  "download_cancel_active": "Cancel download",
+  "download_cancelling": "Cancelling download…",
+  "download_incomplete_saf": "Download cancelled. On Android 8–9, an incomplete file may remain in the selected location."
 }
