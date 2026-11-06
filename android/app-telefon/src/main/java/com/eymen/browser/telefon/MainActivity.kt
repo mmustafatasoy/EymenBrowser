@@ -55,6 +55,8 @@ private class BrowserTab(
     var blockedTab by mutableStateOf(0)
     // Normal-only grouping; private tabs are always excluded.
     var groupId by mutableStateOf<Long?>(null)
+    // Restored background tabs open their saved HTTPS URL only when selected.
+    var pendingRestoreUrl: String? = null
 }
 
 private data class ClosedNormalTab(val safeUrl: String?, val groupId: Long?)
@@ -79,6 +81,8 @@ class MainActivity : ComponentActivity() {
     private val tabs = mutableStateListOf<BrowserTab>()
     private val tabGroups = mutableStateListOf<TabGroupPreview>()
     private var nextTabGroupId = 1L
+    private val workspaceStore by lazy { TabWorkspaceStore(applicationContext) }
+    private var restoringWorkspace = false
     // A single ephemeral undo slot; no private URLs or private tabs are stored.
     private var lastClosedNormalTab by mutableStateOf<ClosedNormalTab?>(null)
     private val activeId = mutableStateOf(-1L)
@@ -207,9 +211,9 @@ class MainActivity : ComponentActivity() {
         ))
         setContentView(root)
 
-        // Create the first normal tab; keep the verified DRM, download and
-        // rotation callbacks for every new or reopened GeckoSession.
-        createTab(privateMode = false, initialUrl = incomingUrl)
+        // Restore only normal tab/group URLs. Private sessions never enter
+        // TabWorkspaceStore; incoming external links always open a fresh normal tab.
+        restoreNormalWorkspace(incomingUrl)
 
         homeLayer = ComposeView(this)
         root.addView(
@@ -323,6 +327,7 @@ class MainActivity : ComponentActivity() {
                         activeTab?.groupId = groupId?.takeIf { id ->
                             tabGroups.any { it.id == id }
                         }
+                        saveNormalWorkspace()
                     }
                 },
                 onNewGroup = ::promptNewTabGroup,
@@ -469,13 +474,21 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Existing attached sessions are released, never closed on tab switches. */
-    private fun createTab(privateMode: Boolean, initialUrl: String? = null) {
+    private fun createTab(
+        privateMode: Boolean,
+        initialUrl: String? = null,
+        deferRestoreLoad: Boolean = false
+    ) {
+        if (!privateMode && tabs.count { !it.privateMode } >= TabWorkspaceStore.MAX_TABS) {
+            Toast.makeText(this, "En fazla 32 normal sekme açılabilir.", Toast.LENGTH_SHORT).show()
+            return
+        }
         if (tabs.isNotEmpty()) {
             view.releaseSession()
         }
         val id = nextId++
         val session = GeckoMotorDenemesi.attach(
-            this, view, initialUrl,
+            this, view, if (deferRestoreLoad) null else initialUrl,
             onFullScreen = { enabled ->
                 tabs.firstOrNull { it.id == id }?.let { tab ->
                     tab.fullScreen = enabled
@@ -485,7 +498,7 @@ class MainActivity : ComponentActivity() {
             askDrmPermission = ::showDrmAccessPrompt,
             onDownload = downloads::handleResponse,
             privateMode = privateMode,
-            initialLoad = initialUrl != null,
+            initialLoad = initialUrl != null && !deferRestoreLoad,
             trackingProtection = protectionFor(initialUrl, privateMode),
             onBlocked = {
                 runOnUiThread {
@@ -500,6 +513,7 @@ class MainActivity : ComponentActivity() {
             }
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl)
+        tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
@@ -526,6 +540,7 @@ class MainActivity : ComponentActivity() {
                         recent.add(0, url)
                         while (recent.size > 2) recent.removeAt(recent.lastIndex)
                     }
+                    if (!privateMode) saveNormalWorkspace()
                 }
             }
         }
@@ -535,6 +550,7 @@ class MainActivity : ComponentActivity() {
         atHome.value = initialUrl == null
         if (::tabsLayer.isInitialized) hideTabs()
         updateHomeVisibility()
+        if (!privateMode) saveNormalWorkspace()
     }
 
     private fun activateTab(id: Long) {
@@ -547,9 +563,15 @@ class MainActivity : ComponentActivity() {
         }
         currentUrl.value = tab.url
         atHome.value = tab.home
+        val delayed = tab.pendingRestoreUrl
+        if (delayed != null) {
+            tab.pendingRestoreUrl = null
+            tab.gecko.loadUri(delayed)
+        }
         setVideoFullScreen(tab.fullScreen)
         updateHomeVisibility()
         hideTabs()
+        if (!tab.privateMode) saveNormalWorkspace()
     }
 
     private fun closeTab(id: Long) {
@@ -587,6 +609,7 @@ class MainActivity : ComponentActivity() {
         if (wasOverviewOpen && ::tabsLayer.isInitialized) {
             openTabOverview(false)
         }
+        if (!tab.privateMode) saveNormalWorkspace()
     }
 
     private fun closeAllOfType(privateMode: Boolean) {
@@ -602,6 +625,7 @@ class MainActivity : ComponentActivity() {
         activeTab?.groupId = closed.groupId?.takeIf { id ->
             tabGroups.any { it.id == id }
         }
+        saveNormalWorkspace()
     }
 
     private fun promptNewTabGroup() {
@@ -622,6 +646,7 @@ class MainActivity : ComponentActivity() {
                 val title = input.text.toString().trim().take(32)
                 if (title.isNotEmpty()) {
                     tabGroups.add(TabGroupPreview(nextTabGroupId++, title))
+                    saveNormalWorkspace()
                 }
             }
             .show()
@@ -643,6 +668,7 @@ class MainActivity : ComponentActivity() {
                 val title = input.text.toString().trim().take(32)
                 if (index >= 0 && title.isNotEmpty()) {
                     tabGroups[index] = group.copy(title = title)
+                    saveNormalWorkspace()
                 }
             }
             .show()
@@ -657,6 +683,7 @@ class MainActivity : ComponentActivity() {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 tabGroups.removeAll { it.id == groupId }
                 tabs.forEach { if (!it.privateMode && it.groupId == groupId) it.groupId = null }
+                saveNormalWorkspace()
             }
             .show()
     }
@@ -674,6 +701,7 @@ class MainActivity : ComponentActivity() {
                     which in 1..tabGroups.size -> tab.groupId = tabGroups[which - 1].id
                     which == options.lastIndex -> promptNewTabGroupForTab(tabId)
                 }
+                saveNormalWorkspace()
             }
             .show()
     }
@@ -698,6 +726,7 @@ class MainActivity : ComponentActivity() {
                     val id = nextTabGroupId++
                     tabGroups.add(TabGroupPreview(id, title))
                     tabs.firstOrNull { it.id == tabId && !it.privateMode }?.groupId = id
+                    saveNormalWorkspace()
                 }
             }
             .show()
@@ -776,6 +805,7 @@ class MainActivity : ComponentActivity() {
             atHome.value = false
             updateHomeVisibility()
             tab.gecko.loadUri(verified)
+            if (!tab.privateMode) saveNormalWorkspace()
         }
     }
 
@@ -783,6 +813,7 @@ class MainActivity : ComponentActivity() {
         activeTab?.home = enabled
         atHome.value = enabled
         updateHomeVisibility()
+        if (activeTab?.privateMode == false) saveNormalWorkspace()
     }
 
     private fun updateHomeVisibility() {
@@ -1299,6 +1330,69 @@ class MainActivity : ComponentActivity() {
             if (activeTab?.privateMode == true) createTab(false, url)
             else openUrl(url)
         }
+    }
+
+    /**
+     * Private tabs are never passed to the persistence store. Saved pages
+     * use fresh GeckoSessions, with inactive pages loaded only on selection.
+     */
+    private fun restoreNormalWorkspace(incomingUrl: String?) {
+        restoringWorkspace = true
+        try {
+            val saved = workspaceStore.read()
+            if (saved != null && saved.tabs.isNotEmpty()) {
+                tabGroups.addAll(saved.groups)
+                nextTabGroupId = (saved.groups.maxOfOrNull { it.id } ?: 0L) + 1L
+                saved.tabs.forEach { item ->
+                    val safeUrl = workspaceStore.safeHttpsUrl(item.url)
+                    createTab(false, safeUrl, deferRestoreLoad = safeUrl != null)
+                    activeTab?.groupId = item.groupId
+                }
+                val selectedPosition = saved.tabs.indexOfFirst { it.selected }
+                    .takeIf { it >= 0 } ?: saved.tabs.lastIndex
+                activateTab(tabs[selectedPosition].id)
+                if (incomingUrl != null) createTab(false, incomingUrl)
+            } else {
+                if (saved != null) {
+                    tabGroups.addAll(saved.groups)
+                    nextTabGroupId = (saved.groups.maxOfOrNull { it.id } ?: 0L) + 1L
+                }
+                createTab(false, incomingUrl)
+            }
+        } finally {
+            restoringWorkspace = false
+            saveNormalWorkspace(durable = true)
+        }
+    }
+
+    private fun saveNormalWorkspace(durable: Boolean = false) {
+        if (restoringWorkspace) return
+        val normal = tabs.filter { !it.privateMode }
+        // When private browsing is active, keep a normal tab selected in the
+        // persisted snapshot; never persist the private session or its URL.
+        val selectedNormal = activeId.value.takeIf { active ->
+            normal.any { it.id == active }
+        } ?: normal.lastOrNull()?.id
+        workspaceStore.write(
+            StoredWorkspace(
+                groups = tabGroups.toList(),
+                tabs = normal.map { tab ->
+                    StoredNormalTab(
+                        url = if (tab.home) null
+                            else workspaceStore.safeHttpsUrl(tab.url),
+                        groupId = tab.groupId,
+                        selected = tab.id == selectedNormal
+                    )
+                }
+            ),
+            durable = durable
+        )
+    }
+
+    override fun onStop() {
+        // Synchronous write at the lifecycle boundary for process/phone death.
+        if (::view.isInitialized) saveNormalWorkspace(durable = true)
+        super.onStop()
     }
 
     override fun onResume() {
