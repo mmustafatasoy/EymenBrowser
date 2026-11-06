@@ -485,6 +485,7 @@ class MainActivity : ComponentActivity() {
             if (vpnScreenVisible) {
                 VpnSettingsScreen(
                     status = vpn.status,
+                    dayMode = dayMode.value,
                     configPresent = vpn.configPresent,
                     importing = vpn.importing,
                     peerStats = vpn.peerStats,
@@ -1353,6 +1354,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hideSettings() {
+        hideBrowserKeyboard()
         vpn.stopUiMonitoring()
         vpnScreenVisible = false
         settingsShowing = false
@@ -1546,6 +1548,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hideDownloads() {
+        hideBrowserKeyboard()
         downloadsShowing = false
         if (::downloadsLayer.isInitialized) downloadsLayer.visibility = View.GONE
     }

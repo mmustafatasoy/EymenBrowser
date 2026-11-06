@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,10 +21,12 @@ import androidx.compose.ui.unit.sp
 import com.eymen.browser.tema.EymenPaths
 import com.eymen.browser.tema.EymenTokens as T
 
+private val LocalVpnColors = staticCompositionLocalOf { browserScreenPalette(false) }
+
 @Composable
 private fun VpnText(
     content: String, size: Int = 14, bold: Boolean = false,
-    color: Color = T.gece_yazi, modifier: Modifier = Modifier
+    color: Color = LocalVpnColors.current.text, modifier: Modifier = Modifier
 ) {
     BasicText(
         content,
@@ -42,9 +46,10 @@ private fun VpnAction(
     prominent: Boolean,
     onClick: () -> Unit
 ) {
-    val fill = if (prominent && enabled) T.gece_vurgu else T.gece_yuzey2
-    val foreground = if (prominent && enabled) T.gece_vurguUstu
-        else if (enabled) T.gece_yazi else T.gece_yaziPasif
+    val p = LocalVpnColors.current
+    val fill = if (prominent && enabled) p.accent else p.soft
+    val foreground = if (prominent && enabled) p.onAccent
+        else if (enabled) p.text else p.disabled
     Box(
         Modifier.fillMaxWidth().heightIn(min = 50.dp)
             .background(fill, RoundedCornerShape(15.dp))
@@ -68,7 +73,7 @@ private fun vpnBytesLabel(value: Long): String = when {
 
 /** A real VPN profile screen, separate from cosmetic/tracker blocking. */
 @Composable
-internal fun VpnSettingsScreen(
+private fun VpnSettingsContent(
     status: EymenVpnStatus,
     configPresent: Boolean,
     importing: Boolean,
@@ -81,6 +86,7 @@ internal fun VpnSettingsScreen(
     onRefresh: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val p = LocalVpnColors.current
     val title = if (importing) R.string.vpn_importing else when (status) {
         EymenVpnStatus.NO_CONFIGURATION -> R.string.vpn_status_none
         EymenVpnStatus.READY -> R.string.vpn_status_ready
@@ -102,7 +108,7 @@ internal fun VpnSettingsScreen(
         status == EymenVpnStatus.ERROR
 
     Column(
-        Modifier.fillMaxSize().background(T.gece_zemin)
+        Modifier.fillMaxSize().background(p.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -112,27 +118,27 @@ internal fun VpnSettingsScreen(
                 Modifier.size(48.dp).clickable(onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
-                EymenVector(EymenPaths.geri, color = T.gece_yazi)
+                EymenVector(EymenPaths.geri, color = p.text)
             }
             VpnText(stringResource(R.string.vpn_title), 21, true)
         }
-        VpnText(stringResource(R.string.vpn_subtitle), 14, color = T.gece_yaziIkincil)
+        VpnText(stringResource(R.string.vpn_subtitle), 14, color = p.muted)
         Column(
             Modifier.fillMaxWidth()
-                .background(T.gece_yuzey1, RoundedCornerShape(20.dp))
+                .background(p.surface, RoundedCornerShape(20.dp))
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(52.dp)
-                        .background(T.gece_yuzey3, RoundedCornerShape(16.dp)),
+                        .background(p.soft, RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     EymenVector(
                         EymenPaths.kalkan,
                         color = if (status == EymenVpnStatus.HANDSHAKE_CONFIRMED)
-                            T.gece_koruma else T.gece_yaziIkincil,
+                            p.protection else p.muted,
                         iconSize = 30.dp
                     )
                 }
@@ -142,18 +148,18 @@ internal fun VpnSettingsScreen(
                     VpnText(
                         if (configPresent) stringResource(R.string.vpn_saved_crypt)
                         else stringResource(R.string.vpn_status_none),
-                        12, color = T.gece_yaziIkincil
+                        12, color = p.muted
                     )
                 }
             }
             if (message.isNotBlank()) {
-                VpnText(message, 13, color = T.gece_yaziIkincil)
+                VpnText(message, 13, color = p.muted)
             }
         }
         if (tunnelActive && peerStats != null) {
             Column(
                 Modifier.fillMaxWidth()
-                    .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
+                    .background(p.surface, RoundedCornerShape(16.dp))
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -163,12 +169,12 @@ internal fun VpnSettingsScreen(
                 ) {
                     Column(Modifier.weight(1f)) {
                         VpnText(stringResource(R.string.vpn_received), 12,
-                            color = T.gece_yaziIkincil)
+                            color = p.muted)
                         VpnText(vpnBytesLabel(peerStats.receivedBytes), 17, true)
                     }
                     Column(Modifier.weight(1f)) {
                         VpnText(stringResource(R.string.vpn_sent), 12,
-                            color = T.gece_yaziIkincil)
+                            color = p.muted)
                         VpnText(vpnBytesLabel(peerStats.sentBytes), 17, true)
                     }
                 }
@@ -177,10 +183,10 @@ internal fun VpnSettingsScreen(
                 } ?: stringResource(R.string.vpn_never)
                 VpnText(
                     stringResource(R.string.vpn_last_handshake) + ": " + handshakeLabel,
-                    13, color = T.gece_yaziIkincil
+                    13, color = p.muted
                 )
                 VpnText(stringResource(R.string.vpn_stats_note), 12,
-                    color = T.gece_yaziIkincil)
+                    color = p.muted)
             }
         }
         VpnAction(
@@ -214,15 +220,28 @@ internal fun VpnSettingsScreen(
         )
         Column(
             Modifier.fillMaxWidth()
-                .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
+                .background(p.surface, RoundedCornerShape(16.dp))
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            VpnText(stringResource(R.string.vpn_no_fake), 13, color = T.gece_yaziIkincil)
-            VpnText(stringResource(R.string.vpn_monitoring), 13, color = T.gece_yaziIkincil)
-            VpnText(stringResource(R.string.vpn_always_on_unavailable), 13, color = T.gece_yaziIkincil)
-            VpnText(stringResource(R.string.vpn_dual_stack), 13, color = T.gece_yaziIkincil)
-            VpnText(stringResource(R.string.vpn_privacy_note), 13, color = T.gece_yaziIkincil)
+            VpnText(stringResource(R.string.vpn_no_fake), 13, color = p.muted)
+            VpnText(stringResource(R.string.vpn_monitoring), 13, color = p.muted)
+            VpnText(stringResource(R.string.vpn_always_on_unavailable), 13, color = p.muted)
+            VpnText(stringResource(R.string.vpn_dual_stack), 13, color = p.muted)
+            VpnText(stringResource(R.string.vpn_privacy_note), 13, color = p.muted)
         }
+    }
+}
+
+@Composable
+internal fun VpnSettingsScreen(
+    status: EymenVpnStatus, configPresent: Boolean, importing: Boolean,
+    peerStats: EymenVpnPeerStats?, message: String, dayMode: Boolean = false,
+    onBack: () -> Unit, onImport: () -> Unit, onConnect: () -> Unit,
+    onDisconnect: () -> Unit, onRefresh: () -> Unit, onDelete: () -> Unit
+) {
+    CompositionLocalProvider(LocalVpnColors provides browserScreenPalette(dayMode)) {
+        VpnSettingsContent(status, configPresent, importing, peerStats, message,
+            onBack, onImport, onConnect, onDisconnect, onRefresh, onDelete)
     }
 }

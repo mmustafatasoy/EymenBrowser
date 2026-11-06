@@ -1,0 +1,63 @@
+name: EymenBrowser address and custom screens acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-browser-ui-audit.yml'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/**'
+      - 'android/app-telefon/src/androidTest/**'
+      - 'android/app-telefon/build.gradle.kts'
+      - 'design/tokens.json'
+      - 'shared/i18n/**'
+      - 'tools/audit_android_browser_ui.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eymen-browser-custom-ui-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  address-custom-screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.3.1'}
+      - name: Generate resources and install pinned SDK
+        run: |
+          python tools/generate.py
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Build target and separate test APK
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:assembleDebug :app-telefon:assembleDebugAndroidTest
+      - name: Enable KVM
+        run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Test actual touch and typing plus themed custom screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: default
+          arch: x86_64
+          profile: Nexus 5X
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash tools/audit_android_browser_ui.sh
+      - name: Preserve real screens and device evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-custom-screens-API${{ matrix.api }}
+          path: browser-ui-audit/*
+          if-no-files-found: warn
