@@ -111,7 +111,7 @@ internal class BrowserSettingsServices(
     }
     fun clearPrivatePermissions() { privatePopups.clear(); popupRevision++ }
 
-    fun setLanguage(code: String) {
+    fun updateLanguage(code: String) {
         if (code !in setOf("tr", "en", "system")) return
         language = code; prefs.edit().putString("app_language", code).commit()
         runtime.settings.setLocales(if (code == "system") null else arrayOf(code))

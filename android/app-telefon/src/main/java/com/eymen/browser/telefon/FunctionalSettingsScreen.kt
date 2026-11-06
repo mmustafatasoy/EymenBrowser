@@ -128,7 +128,7 @@ internal fun PasswordSettingsScreen(services: BrowserSettingsServices, dayMode: 
 internal fun LanguageSettingsScreen(services: BrowserSettingsServices, dayMode: Boolean,
     onBack: () -> Unit, onTranslate: () -> Unit) = SettingsPage(R.string.settings_language, dayMode, onBack) { p ->
     listOf("system" to R.string.language_system, "tr" to R.string.language_turkish, "en" to R.string.language_english).forEach { (code, label) ->
-        ScreenButton(stringResource(label), p, { services.setLanguage(code) }, primary = services.language == code)
+        ScreenButton(stringResource(label), p, { services.updateLanguage(code) }, primary = services.language == code)
     }
     ScreenText(stringResource(R.string.translation_local_note), p.muted, maxLines = 6)
     ScreenButton(stringResource(R.string.menu_translate), p, onTranslate)

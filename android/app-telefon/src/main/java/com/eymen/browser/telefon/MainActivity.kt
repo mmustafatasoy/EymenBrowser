@@ -423,6 +423,7 @@ class MainActivity : ComponentActivity() {
                 onAssignGroup = ::promptTabGroupSelection,
                 onUndoClose = ::restoreLastClosedNormalTab,
                 onMoveTab = ::moveTabWithinSection,
+                onShareTab = ::shareNormalTab,
                 onDismiss = ::hideTabs
             )
         }
@@ -2048,13 +2049,28 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showDrmAccessPrompt(host: String, answer: (Boolean) -> Unit) {
-        AlertDialog.Builder(this)
+        val done = AtomicBoolean(false)
+        val tabId = activeId.value
+        fun finish(allowed: Boolean) {
+            if (done.compareAndSet(false, true)) answer(allowed && activeId.value == tabId)
+        }
+        val builder = AlertDialog.Builder(this)
             .setTitle(getString(R.string.drm_permission_title))
             .setMessage(getString(R.string.drm_permission_message, host))
-            .setPositiveButton(getString(R.string.drm_permission_allow)) { _, _ -> answer(true) }
-            .setNegativeButton(getString(R.string.drm_permission_deny)) { _, _ -> answer(false) }
-            .setOnCancelListener { answer(false) }
-            .show()
+            .setPositiveButton(getString(R.string.drm_permission_allow)) { _, _ -> finish(true) }
+            .setNegativeButton(getString(R.string.drm_permission_deny)) { _, _ -> finish(false) }
+            .setOnCancelListener { finish(false) }
+        presentWebPrompt(builder) { finish(false) }
+    }
+
+    private fun shareNormalTab(id: Long) {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
+        val tab = tabs.firstOrNull { it.id == id && !it.privateMode && !it.home } ?: return
+        val url = GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf { it == tab.url } ?: return
+        try { startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"; putExtra(Intent.EXTRA_TEXT, url)
+        }, getString(R.string.menu_send_device))) }
+        catch (_: Exception) { notice(R.string.settings_operation_failed) }
     }
 
     override fun onNewIntent(intent: Intent) {

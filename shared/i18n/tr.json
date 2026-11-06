@@ -385,5 +385,7 @@
   "home_apps": "Uygulamalar",
   "home_recent": "Son ziyaret edilenler",
   "about_licenses": "Açık kaynak lisansları",
-  "menu_reload": "Yenile"
+  "menu_reload": "Yenile",
+  "device_private_note": "Gizli ve çocuk sekmeleri bu gönderim listesinde görünmez.",
+  "device_empty": "Göndermek için normal bir sekmede HTTPS sayfası aç."
 }

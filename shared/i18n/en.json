@@ -385,5 +385,7 @@
   "home_apps": "Apps",
   "home_recent": "Recently visited",
   "about_licenses": "Open-source licenses",
-  "menu_reload": "Reload"
+  "menu_reload": "Reload",
+  "device_private_note": "Private and child tabs never appear in this send list.",
+  "device_empty": "Open an HTTPS page in a normal tab to send it."
 }

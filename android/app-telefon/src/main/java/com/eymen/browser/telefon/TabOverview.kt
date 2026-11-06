@@ -83,6 +83,7 @@ internal fun TabOverview(
     onAssignGroup: (Long) -> Unit,
     onUndoClose: () -> Unit,
     onMoveTab: (Long, Int, Long?) -> Unit,
+    onShareTab: (Long) -> Unit,
     onDismiss: () -> Unit
 ) {
     var section by remember { mutableStateOf(
@@ -290,14 +291,18 @@ internal fun TabOverview(
         }
 
         if (section == TabSection.DEVICES) {
-            Box(
-                Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                TabLabel(
-                    stringResource(R.string.devices_not_ready), 15, muted,
-                    modifier = Modifier.padding(24.dp)
-                )
+            val palette = browserScreenPalette(day)
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+                .padding(T.telefon_ekran_kenar.dp),
+                verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+                ScreenText(stringResource(R.string.menu_devices_share_note), muted, maxLines = 6)
+                ScreenText(stringResource(R.string.device_private_note), muted, maxLines = 3)
+                val shareable = tabs.filter { !it.privateMode &&
+                    com.eymen.browser.motor.GeckoMotorDenemesi.verifiedHttpsUrl(it.url) == it.url && it.url.isNotBlank() }
+                if (shareable.isEmpty()) ScreenText(stringResource(R.string.device_empty), text)
+                shareable.forEach { tab ->
+                    ScreenButton(tab.title, palette, { onShareTab(tab.id) })
+                }
             }
         } else {
             Column(
