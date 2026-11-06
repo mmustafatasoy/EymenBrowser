@@ -56,12 +56,23 @@ private fun VpnAction(
     }
 }
 
+private fun vpnBytesLabel(value: Long): String = when {
+    value >= 1_048_576 -> String.format(
+        java.util.Locale.ROOT, "%.1f MiB", value / 1_048_576.0
+    )
+    value >= 1024 -> String.format(
+        java.util.Locale.ROOT, "%.1f KiB", value / 1024.0
+    )
+    else -> "$value B"
+}
+
 /** A real VPN profile screen, separate from cosmetic/tracker blocking. */
 @Composable
 internal fun VpnSettingsScreen(
     status: EymenVpnStatus,
     configPresent: Boolean,
     importing: Boolean,
+    peerStats: EymenVpnPeerStats?,
     message: String,
     onBack: () -> Unit,
     onImport: () -> Unit,
@@ -137,6 +148,39 @@ internal fun VpnSettingsScreen(
             }
             if (message.isNotBlank()) {
                 VpnText(message, 13, color = T.gece_yaziIkincil)
+            }
+        }
+        if (tunnelActive && peerStats != null) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        VpnText(stringResource(R.string.vpn_received), 12,
+                            color = T.gece_yaziIkincil)
+                        VpnText(vpnBytesLabel(peerStats.receivedBytes), 17, true)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        VpnText(stringResource(R.string.vpn_sent), 12,
+                            color = T.gece_yaziIkincil)
+                        VpnText(vpnBytesLabel(peerStats.sentBytes), 17, true)
+                    }
+                }
+                val handshakeLabel = peerStats.lastHandshakeAgeSeconds?.let { age ->
+                    "$age " + stringResource(R.string.vpn_seconds_ago)
+                } ?: stringResource(R.string.vpn_never)
+                VpnText(
+                    stringResource(R.string.vpn_last_handshake) + ": " + handshakeLabel,
+                    13, color = T.gece_yaziIkincil
+                )
+                VpnText(stringResource(R.string.vpn_stats_note), 12,
+                    color = T.gece_yaziIkincil)
             }
         }
         VpnAction(
