@@ -199,5 +199,9 @@
   "shield_ads_trackers": "Reklam takipçileri",
   "shield_analytics_trackers": "Analiz takipçileri",
   "shield_other_trackers": "Diğer engellenenler",
-  "shield_count_scope": "Sayılar GeckoView tarafından gerçekten engellenen isteklerden gelir. Tüm reklamların kaldırıldığı anlamına gelmez."
+  "shield_count_scope": "Sayılar GeckoView tarafından gerçekten engellenen isteklerden gelir. Tüm reklamların kaldırıldığı anlamına gelmez.",
+  "shield_cosmetic_title": "Reklam alanlarını temizle (Beta)",
+  "shield_cosmetic_beta": "İsteğe bağlı görsel filtre etkinleştirilebilir",
+  "shield_cosmetic_unavailable": "Görsel filtre modülü kullanılamıyor",
+  "shield_cosmetic_scope": "Yalnızca bilinen reklam kutularını gizler; reklam isteklerini engellemez. Bazı siteler yanlış görünebilir. Site korumasını kapatarak o sitede devre dışı bırakabilirsin."
 }
