@@ -22,7 +22,15 @@
     const style = document.createElement("style");
     style.id = "eymen-cosmetic-v1";
     style.textContent = SELECTORS.join(",\n") + "{display:none!important;}";
-    (document.head || document.documentElement).appendChild(style);
+    const container = document.head || document.documentElement;
+    if (container) {
+      container.appendChild(style);
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        const target = document.head || document.documentElement;
+        if (target && !document.getElementById(style.id)) target.appendChild(style);
+      }, { once: true });
+    }
   }
 
   // Never trust page-controlled globals or a user-provided URL as policy.
