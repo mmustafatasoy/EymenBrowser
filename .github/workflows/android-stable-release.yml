@@ -113,6 +113,9 @@ jobs:
           if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
             sdkmanager --channel=3 --install "platforms;android-37.0"
           fi
+      - name: Execute JVM handshake freshness boundary tests
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:testDebugUnitTest --stacktrace
       - name: Build 3 ABI-specific APKs signed with the original release identity
         working-directory: android
         run: |
