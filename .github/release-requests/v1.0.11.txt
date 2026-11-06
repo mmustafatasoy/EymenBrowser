@@ -1,0 +1,8 @@
+v1.0.11
+Real WireGuard userspace GoBackend and Android system VpnService; user-supplied dual-stack full-tunnel .conf only. No VPN server or keys embedded.
+SAF import encrypted with non-exportable AndroidKeyStore AES-GCM, stored outside backups. GoBackend Interface includes ONLY com.eymen.browser.telefon and full IPv4/IPv6 routing with VPN DNS.
+No false positive: Android VPN approval is required, local TUN status shown separately from real WireGuard peer handshake. Disconnect, handshake refresh, recovery and encrypted profile removal included.
+Source/build: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42204945140 (success) and https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42205409133 (latest CI).
+Android 15/16 visual check: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42205277181 (separate, not a peer connection test).
+Server live handshake, IPv4/IPv6/DNS/WebRTC leaks, Android background service and physical-device tests are not automatically proven. No OS kill-switch/automatic reconnect guarantee. Detailed limits in docs/ANDROID_VPN_V111.md.
+Release requires original production cert, package/versionCode upgrade from v1.0.10, three signed ABIs, SHA256 and all code-security checks.
