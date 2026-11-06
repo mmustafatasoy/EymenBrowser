@@ -603,6 +603,27 @@ class MainActivity : ComponentActivity() {
             },
             onExternalAppLink = { link, trigger, gesture ->
                 showSecureExternalAppPrompt(id, link, trigger, gesture)
+            },
+            onUserOpenedWindow = { popupUri ->
+                // Only an active HTTPS parent can request a new auth tab.
+                // Never mix private popups into the normal workspace.
+                val parent = tabs.firstOrNull { it.id == id }
+                if (parent == null || activeId.value != id ||
+                    parent.home ||
+                    GeckoMotorDenemesi.verifiedHttpsUrl(parent.url) != parent.url ||
+                    (popupUri != "about:blank" &&
+                        GeckoMotorDenemesi.verifiedHttpsUrl(popupUri) != popupUri)
+                ) {
+                    null
+                } else {
+                    val oldId = activeId.value
+                    createTab(privateMode = privateMode)
+                    // createTab enforces the normal-tab capacity bound.
+                    // No child session is returned if that limit was reached.
+                    tabs.firstOrNull {
+                        it.id == activeId.value && it.id != oldId
+                    }?.gecko
+                }
             }
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl)
