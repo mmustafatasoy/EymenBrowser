@@ -329,10 +329,10 @@ class MainActivity : ComponentActivity() {
                     privateMode = activeTab?.privateMode == true,
                     tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
                     onGo = ::openAddress,
-                    onBack = { activeTab?.gecko?.goBack() },
-                    onForward = { activeTab?.gecko?.goForward() },
+                    onBack = { hideBrowserKeyboard(); activeTab?.gecko?.goBack() },
+                    onForward = { hideBrowserKeyboard(); activeTab?.gecko?.goForward() },
                     onHome = { showHome(true) },
-                    onReload = { activeTab?.gecko?.reload() },
+                    onReload = { hideBrowserKeyboard(); activeTab?.gecko?.reload() },
                     onTabs = ::showTabs,
                     onMenu = ::showBrowserMenu,
                     onShield = ::showShield
@@ -411,9 +411,9 @@ class MainActivity : ComponentActivity() {
                     hasPage = !atHome.value &&
                         GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
                     onDismiss = ::hideBrowserMenu,
-                    onBack = { activeTab?.gecko?.goBack() },
-                    onForward = { activeTab?.gecko?.goForward() },
-                    onReload = { activeTab?.gecko?.reload() },
+                    onBack = { hideBrowserKeyboard(); activeTab?.gecko?.goBack() },
+                    onForward = { hideBrowserKeyboard(); activeTab?.gecko?.goForward() },
+                    onReload = { hideBrowserKeyboard(); activeTab?.gecko?.reload() },
                     onAction = ::handleMenuAction
                 )
             } else {
@@ -1332,6 +1332,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showShield() {
+        hideBrowserKeyboard()
         if (!::shieldLayer.isInitialized || videoFullScreen) return
         if (overviewShowing) hideTabs()
         if (menuShowing) hideBrowserMenu()
@@ -1577,6 +1578,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showBrowserMenu() {
+        hideBrowserKeyboard()
         if (!::menuLayer.isInitialized || videoFullScreen) return
         menuShowing = true
         menuLayer.visibility = View.VISIBLE
