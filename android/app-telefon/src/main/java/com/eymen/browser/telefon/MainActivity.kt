@@ -53,7 +53,11 @@ private class BrowserTab(
     var shieldEnabled by mutableStateOf(false)
     var blockedPage by mutableStateOf(0)
     var blockedTab by mutableStateOf(0)
+    // Normal-only grouping; private tabs are always excluded.
+    var groupId by mutableStateOf<Long?>(null)
 }
+
+private data class ClosedNormalTab(val safeUrl: String?, val groupId: Long?)
 
 /**
  * Android phone: T01-T04, T06, T09 and T11 implementation stages.
@@ -73,6 +77,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var prefs: SharedPreferences
 
     private val tabs = mutableStateListOf<BrowserTab>()
+    private val tabGroups = mutableStateListOf<TabGroupPreview>()
+    private var nextTabGroupId = 1L
+    // A single ephemeral undo slot; no private URLs or private tabs are stored.
+    private var lastClosedNormalTab by mutableStateOf<ClosedNormalTab?>(null)
     private val activeId = mutableStateOf(-1L)
     private val atHome = mutableStateOf(true)
     private val currentUrl = mutableStateOf("")
@@ -297,16 +305,24 @@ class MainActivity : ComponentActivity() {
                         },
                         url = tab.url,
                         privateMode = tab.privateMode,
-                        selected = tab.id == activeId.value
+                        selected = tab.id == activeId.value,
+                        groupId = if (tab.privateMode) null else tab.groupId
                     )
                 },
                 activePrivate = activeTab?.privateMode == true,
                 openDevices = devicesRequested.value,
+                groups = tabGroups.toList(),
+                undoAvailable = lastClosedNormalTab != null,
                 day = dayMode.value,
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
                 onCloseAll = ::closeAllOfType,
                 onNew = { privateMode -> createTab(privateMode) },
+                onNewGroup = ::promptNewTabGroup,
+                onRenameGroup = ::promptRenameTabGroup,
+                onRemoveGroup = ::confirmRemoveTabGroup,
+                onAssignGroup = ::promptTabGroupSelection,
+                onUndoClose = ::restoreLastClosedNormalTab,
                 onDismiss = ::hideTabs
             )
         }
@@ -536,6 +552,16 @@ class MainActivity : ComponentActivity() {
             if (videoFullScreen) setVideoFullScreen(false)
             view.releaseSession()
         }
+        // Only public, verified HTTPS URLs may enter the normal undo slot.
+        // Restoring always creates a NEW session; closed GeckoSessions never
+        // get reattached, which protects resources and session isolation.
+        if (!tab.privateMode) {
+            lastClosedNormalTab = ClosedNormalTab(
+                safeUrl = if (tab.home) null
+                    else GeckoMotorDenemesi.verifiedHttpsUrl(tab.url),
+                groupId = tab.groupId
+            )
+        }
         tab.gecko.close()
         tabs.remove(tab)
         if (tab.privateMode && tabs.none { it.privateMode }) privateShieldOverrides.clear()
@@ -553,6 +579,115 @@ class MainActivity : ComponentActivity() {
     private fun closeAllOfType(privateMode: Boolean) {
         tabs.filter { it.privateMode == privateMode }.map { it.id }.forEach(::closeTab)
         if (tabs.isEmpty()) createTab(privateMode = false)
+    }
+
+    private fun restoreLastClosedNormalTab() {
+        val closed = lastClosedNormalTab ?: return
+        lastClosedNormalTab = null
+        createTab(privateMode = false, initialUrl = closed.safeUrl)
+        // Group may have been deleted while the tab was closed.
+        activeTab?.groupId = closed.groupId?.takeIf { id ->
+            tabGroups.any { it.id == id }
+        }
+    }
+
+    private fun promptNewTabGroup() {
+        if (tabGroups.size >= 20) {
+            notice(R.string.tab_group_limit)
+            return
+        }
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(getString(R.string.tab_group_name_default) + " " + nextTabGroupId)
+            selectAll()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tab_group_new)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val title = input.text.toString().trim().take(32)
+                if (title.isNotEmpty()) {
+                    tabGroups.add(TabGroupPreview(nextTabGroupId++, title))
+                }
+            }
+            .show()
+    }
+
+    private fun promptRenameTabGroup(groupId: Long) {
+        val group = tabGroups.firstOrNull { it.id == groupId } ?: return
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(group.title)
+            selectAll()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tab_group_rename)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val index = tabGroups.indexOfFirst { it.id == groupId }
+                val title = input.text.toString().trim().take(32)
+                if (index >= 0 && title.isNotEmpty()) {
+                    tabGroups[index] = group.copy(title = title)
+                }
+            }
+            .show()
+    }
+
+    private fun confirmRemoveTabGroup(groupId: Long) {
+        if (tabGroups.none { it.id == groupId }) return
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tab_group_remove)
+            .setMessage(R.string.tab_group_remove_note)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                tabGroups.removeAll { it.id == groupId }
+                tabs.forEach { if (!it.privateMode && it.groupId == groupId) it.groupId = null }
+            }
+            .show()
+    }
+
+    private fun promptTabGroupSelection(tabId: Long) {
+        val tab = tabs.firstOrNull { it.id == tabId && !it.privateMode } ?: return
+        val options = listOf(getString(R.string.tab_group_ungrouped)) +
+            tabGroups.map { it.title } +
+            getString(R.string.tab_group_new)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tab_group_assign)
+            .setItems(options.toTypedArray()) { _, which ->
+                when {
+                    which == 0 -> tab.groupId = null
+                    which in 1..tabGroups.size -> tab.groupId = tabGroups[which - 1].id
+                    which == options.lastIndex -> promptNewTabGroupForTab(tabId)
+                }
+            }
+            .show()
+    }
+
+    private fun promptNewTabGroupForTab(tabId: Long) {
+        if (tabGroups.size >= 20) {
+            notice(R.string.tab_group_limit)
+            return
+        }
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(getString(R.string.tab_group_name_default) + " " + nextTabGroupId)
+            selectAll()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tab_group_new)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val title = input.text.toString().trim().take(32)
+                if (title.isNotEmpty()) {
+                    val id = nextTabGroupId++
+                    tabGroups.add(TabGroupPreview(id, title))
+                    tabs.firstOrNull { it.id == tabId && !it.privateMode }?.groupId = id
+                }
+            }
+            .show()
     }
 
     private fun showTabs() = openTabOverview(false)
@@ -1164,6 +1299,8 @@ class MainActivity : ComponentActivity() {
         if (::view.isInitialized) view.releaseSession()
         tabs.forEach { it.gecko.close() }
         tabs.clear()
+        tabGroups.clear()
+        lastClosedNormalTab = null
         privateShieldOverrides.clear()
         super.onDestroy()
     }
