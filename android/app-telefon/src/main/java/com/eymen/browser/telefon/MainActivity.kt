@@ -97,7 +97,8 @@ class MainActivity : ComponentActivity() {
     private var addressBottom by mutableStateOf(true)
     private var searchEngine by mutableStateOf("Google")
     private var overviewShowing = false
-    private var menuShowing = false
+    // Compose observes this so only the home logo/search reflow when popup opens.
+    private var menuShowing by mutableStateOf(false)
     private var shieldShowing = false
     private var downloadsShowing = false
     private var settingsShowing = false
@@ -215,6 +216,7 @@ class MainActivity : ComponentActivity() {
                 PrivateHome()
             } else if (dayMode.value) {
                 LightBrowserHome(
+                    menuOpen = menuShowing,
                     recentUrls = recent,
                     onSearch = ::openAddress,
                     onOpen = ::openUrl,
