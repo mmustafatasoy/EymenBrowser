@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.8"
+  # Dedicated one-shot approval request; CI and signed upgrade checks
+  # still gate the production GitHub Release.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.8.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +47,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.8' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -257,15 +263,20 @@ jobs:
           - Sag ust uc nokta menusunun boyutlari onaylanan tasarima gore kucultuldu;
             menudeki simgeler yazitipindan bagimsiz vektor haline getirildi.
           - Eymen Browser basliginda lacivert/mavi iki ton ve kavisli alt cizgi eklendi.
-          - v1.0.7: Acik normal Gecko sekmeleri icin gercek grup olusturma, ad degistirme,
-            gruba tasima, gruptan cikarma ve grup silme; grup silinince sekmeler acik kalir.
-          - Sekme ekraninda onceki/sonraki canli oturuma hizli gecis.
-          - Normal sekmeler icin son kapatilan guvenli HTTPS sayfasini yeni bir
-            GeckoSession icinde geri acma; gizli sekmeler geri alma listesine alinmaz.
-          - Grup bilgileri bu asamada acik uygulama oturumuna ozeldir; cihazda kalici
-            sekme/grup geri yuklemesi henuz sunulmaz.
-          - Sekme kartlarindaki goruntuler gercek sayfa ekran goruntusu degil,
-            eski surumden gelen notr yer tutuculardir.
+          - Normal Gecko sekmelerinde gercek grup olusturma, ad degistirme,
+            gruba tasima ve grup silme; grup silinince sekmeler acik kalir.
+          - v1.0.8: En fazla 32 normal sekmenin dogrulanmis HTTPS adresi, grup
+            uyelikleri, secili sekme ve sirasi uygulama kapanip acilinca geri yuklenir.
+          - Arka plan normal sekmeleri ilk secildiklerinde yuklenir; baslangicta
+            tum sitelerin ayni anda acilmasi onlenir.
+          - Sekme kartlarinda dogrudan GeckoView ekranindan alinmis, bellek-ici
+            gercek kucuk resimler; hazir olmayan sayfalar icin notr yer tutucu.
+          - Son kapatilan on normal sekmeyi art arda yeniden acma ve
+            sekme kartlarindan siralama degisikligi.
+          - Gizli sekmelerin URL ve kucuk resimleri kalici depoya, normal
+            gruplara veya geri alma listesine aktarilmaz.
+          - Kalici kayit yalnizca normal HTTPS adresleri ve gruplar icindir:
+            formlar, video pozisyonlari ve Gecko geri/ileri agaci saklanmaz.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
