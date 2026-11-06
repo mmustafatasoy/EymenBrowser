@@ -73,6 +73,9 @@ jobs:
           if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
             sdkmanager --channel=3 --install "platforms;android-37.0"
           fi
+      - name: Gercek WireGuard el sikisma zaman damgasi JVM birim testleri
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:testDebugUnitTest --stacktrace
       - name: GeckoView Android telefon APK'larini derle
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
