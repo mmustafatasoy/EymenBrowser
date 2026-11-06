@@ -133,11 +133,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private String label(int resource) { return activity.getString(resource); }
     private static String text(AccessibilityNodeInfo node) {
-        return node == null || node.getText() == null ? "" : node.getText().toString();
+        return node == null || !node.refresh() || node.getText() == null ? "" : node.getText().toString();
     }
     private AccessibilityNodeInfo field(String label) { return find(label, true); }
     private static boolean editorNode(AccessibilityNodeInfo node) {
-        if (node.isEditable() || "android.widget.EditText".contentEquals(node.getClassName())) return true;
+        if (node.isEditable() || "android.widget.EditText".equals(String.valueOf(node.getClassName()))) return true;
         for (AccessibilityNodeInfo.AccessibilityAction action : node.getActionList())
             if (action.getId() == AccessibilityNodeInfo.ACTION_SET_TEXT) return true;
         return false;
@@ -153,6 +153,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         java.util.List<Rect> markers = new java.util.ArrayList<>();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
+            if (!node.refresh()) continue;
             if (node.isVisibleToUser()) {
                 if (matches(node, label)) {
                     if (!editable) return node;
@@ -183,7 +184,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
             if (window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) continue;
             AccessibilityNodeInfo root = window.getRoot();
-            if (root != null) queue.add(root);
+            if (root != null && root.refresh()) queue.add(root);
         }
         return queue;
     }
@@ -202,6 +203,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         int count = 0;
         while (!queue.isEmpty() && count++ < 1500) {
             AccessibilityNodeInfo node = queue.removeFirst();
+            if (!node.refresh()) continue;
             Rect rect = new Rect(); node.getBoundsInScreen(rect);
             tree.append(node.getClassName()).append(" visible=").append(node.isVisibleToUser())
                 .append(" editable=").append(node.isEditable()).append(" focused=").append(node.isFocused())
@@ -222,6 +224,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         descendants.add(node);
         while (!descendants.isEmpty()) {
             AccessibilityNodeInfo child = descendants.removeFirst();
+            if (!child.refresh()) continue;
             if (child.isVisibleToUser() && child.isEnabled() && child.isClickable()) return child;
             for (int i = 0; i < child.getChildCount(); i++) {
                 AccessibilityNodeInfo value = child.getChild(i);
@@ -237,6 +240,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         ArrayDeque<AccessibilityNodeInfo> queue = roots();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
+            if (!node.refresh()) continue;
             if (node.isVisibleToUser() && matches(node, label)) {
                 AccessibilityNodeInfo action = actionTarget(node);
                 if (action != null) return action;
