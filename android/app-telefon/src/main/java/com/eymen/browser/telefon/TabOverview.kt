@@ -2,6 +2,7 @@ package com.eymen.browser.telefon
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -29,7 +33,8 @@ internal data class TabPreview(
     val url: String,
     val privateMode: Boolean,
     val selected: Boolean,
-    val groupId: Long? = null
+    val groupId: Long? = null,
+    val thumbnail: ImageBitmap? = null
 )
 
 internal data class TabGroupPreview(val id: Long, val title: String)
@@ -67,6 +72,7 @@ internal fun TabOverview(
     day: Boolean,
     groups: List<TabGroupPreview>,
     undoAvailable: Boolean,
+    undoCount: Int,
     onOpen: (Long) -> Unit,
     onClose: (Long) -> Unit,
     onCloseAll: (Boolean) -> Unit,
@@ -76,6 +82,7 @@ internal fun TabOverview(
     onRemoveGroup: (Long) -> Unit,
     onAssignGroup: (Long) -> Unit,
     onUndoClose: () -> Unit,
+    onMoveTab: (Long, Int, Long?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var section by remember { mutableStateOf(
@@ -273,8 +280,11 @@ internal fun TabOverview(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    TabLabel("↶ " + stringResource(R.string.tab_closed_undo),
-                        13, selected, true)
+                    TabLabel(
+                        "↶ " + stringResource(R.string.tab_closed_undo) +
+                            " (" + undoCount + ")",
+                        13, selected, true
+                    )
                 }
             }
         }
@@ -360,49 +370,90 @@ internal fun TabOverview(
                                             TabLabel("×", 20, muted)
                                         }
                                     }
-                                    if (!tab.privateMode) {
-                                        Row(
-                                            Modifier.fillMaxWidth().heightIn(min = 30.dp)
-                                                .clickable { onAssignGroup(tab.id) }
-                                                .padding(horizontal = 5.dp, vertical = 3.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                    Row(
+                                        Modifier.fillMaxWidth().heightIn(min = 30.dp)
+                                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val groupLabel = groups.firstOrNull {
+                                            it.id == tab.groupId
+                                        }?.title
+                                        Box(
+                                            Modifier.weight(1f)
+                                                .clickable(enabled = !tab.privateMode) {
+                                                    onAssignGroup(tab.id)
+                                                },
+                                            contentAlignment = Alignment.CenterStart
                                         ) {
-                                            val groupLabel = groups.firstOrNull {
-                                                it.id == tab.groupId
-                                            }?.title
                                             TabLabel(
-                                                "▦ " + (groupLabel ?:
+                                                if (tab.privateMode)
+                                                    stringResource(R.string.private_tab)
+                                                else "▦ " + (groupLabel ?:
                                                     stringResource(R.string.tab_group_assign)),
-                                                11, selected, true,
-                                                modifier = Modifier.weight(1f)
+                                                10, selected, true
                                             )
                                         }
+                                        Box(
+                                            Modifier.size(24.dp).clickable {
+                                                onMoveTab(tab.id, -1,
+                                                    if (section == TabSection.NORMAL)
+                                                        selectedGroupId else null)
+                                            }, contentAlignment = Alignment.Center
+                                        ) {
+                                            TabLabel("‹", 18, muted)
+                                        }
+                                        Box(
+                                            Modifier.size(24.dp).clickable {
+                                                onMoveTab(tab.id, +1,
+                                                    if (section == TabSection.NORMAL)
+                                                        selectedGroupId else null)
+                                            }, contentAlignment = Alignment.Center
+                                        ) {
+                                            TabLabel("›", 18, muted)
+                                        }
                                     }
-                                    Column(
+                                    Box(
                                         Modifier.fillMaxSize()
                                             .background(
                                                 if (day) T.gunduz_yuzey2 else T.gece_yuzey2,
                                                 RoundedCornerShape(10.dp)
                                             )
-                                            .padding(10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            .clip(RoundedCornerShape(10.dp))
                                     ) {
-                                        Box(
-                                            Modifier.fillMaxWidth().height(34.dp)
-                                                .background(
-                                                    if (day) T.gunduz_yuzey3 else T.gece_yuzey3,
-                                                    RoundedCornerShape(4.dp)
-                                                )
-                                        )
-                                        listOf(0.86f, 1f, 0.64f).forEach { width ->
-                                            Box(
-                                                Modifier.fillMaxWidth(width).height(6.dp)
-                                                    .background(
-                                                        outline, RoundedCornerShape(3.dp)
-                                                    )
+                                        if (!tab.privateMode && tab.thumbnail != null) {
+                                            // Genuine Gecko pixels, held in memory only.
+                                            // Never capture or persist a private thumbnail.
+                                            Image(
+                                                bitmap = tab.thumbnail,
+                                                contentDescription = tab.title,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
                                             )
+                                        } else {
+                                            // Neutral placeholders until a page is rendered.
+                                            Column(
+                                                Modifier.fillMaxSize().padding(10.dp),
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Box(
+                                                    Modifier.fillMaxWidth().height(34.dp)
+                                                        .background(
+                                                            if (day) T.gunduz_yuzey3
+                                                            else T.gece_yuzey3,
+                                                            RoundedCornerShape(4.dp)
+                                                        )
+                                                )
+                                                listOf(0.86f, 1f, 0.64f).forEach { width ->
+                                                    Box(
+                                                        Modifier.fillMaxWidth(width).height(6.dp)
+                                                            .background(
+                                                                outline, RoundedCornerShape(3.dp)
+                                                            )
+                                                    )
+                                                }
+                                                TabLabel(tab.url, 11, muted)
+                                            }
                                         }
-                                        TabLabel(tab.url, 11, muted)
                                     }
                                 }
                             }
