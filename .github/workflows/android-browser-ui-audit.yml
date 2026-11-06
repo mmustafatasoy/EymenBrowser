@@ -41,7 +41,7 @@ jobs:
           fi
       - name: Build target and separate test APK
         working-directory: android
-        run: gradle --no-daemon :app-telefon:assembleDebug :app-telefon:assembleDebugAndroidTest
+        run: gradle --no-daemon :app-telefon:assembleDebug :app-telefon:assembleDebugAndroidTest -PeymenTestRunner=com.eymen.browser.telefon.BrowserUiInstrumentation
       - name: Enable KVM
         run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
       - name: Test actual touch and typing plus themed custom screens

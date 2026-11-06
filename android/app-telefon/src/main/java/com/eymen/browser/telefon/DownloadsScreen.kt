@@ -62,19 +62,6 @@ internal fun DownloadsScreen(
         verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
         ScreenHeader(stringResource(R.string.downloads), stringResource(R.string.download_library_subtitle), p, onBack)
         ScreenSearch(query, stringResource(R.string.download_search_hint), p) { query = it }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
-            listOf(
-                (if (active == null) 0 else 1) to stringResource(R.string.download_summary_active),
-                queued.size to stringResource(R.string.download_summary_queue),
-                files.size to stringResource(R.string.download_summary_saved)
-            ).forEach { (count, label) ->
-                Column(Modifier.weight(1f).background(p.surface, RoundedCornerShape(T.telefon_kose_kart.dp))
-                    .padding(T.telefon_ekran_bosluk.dp)) {
-                    ScreenText(count.toString(), p.accent, T.telefon_yazi_sayfaBasligi, strong = true)
-                    ScreenText(label, p.muted, T.telefon_yazi_ikincil)
-                }
-            }
-        }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
             filters.forEach { (type, label) ->
@@ -91,6 +78,19 @@ internal fun DownloadsScreen(
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
+                listOf(
+                    (if (active == null) 0 else 1) to stringResource(R.string.download_summary_active),
+                    queued.size to stringResource(R.string.download_summary_queue),
+                    files.size to stringResource(R.string.download_summary_saved)
+                ).forEach { (count, label) ->
+                    Column(Modifier.weight(1f).background(p.surface, RoundedCornerShape(T.telefon_kose_kart.dp))
+                        .padding(T.telefon_ekran_bosluk.dp)) {
+                        ScreenText(count.toString(), p.accent, T.telefon_yazi_sayfaBasligi, strong = true)
+                        ScreenText(label, p.muted, T.telefon_yazi_ikincil)
+                    }
+                }
+            }
             if (active != null) {
                 val percent = DownloadProgressMath.percent(active.bytesWritten, active.totalBytes)
                 Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))

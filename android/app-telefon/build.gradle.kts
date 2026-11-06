@@ -22,7 +22,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.0.1"
-        testInstrumentationRunner = "com.eymen.browser.telefon.DownloadServiceInstrumentation"
+        testInstrumentationRunner = providers.gradleProperty("eymenTestRunner")
+            .getOrElse("com.eymen.browser.telefon.DownloadServiceInstrumentation")
         if (releaseVersion != null) versionName = releaseVersion
         if (releaseCode != null) versionCode = releaseCode
     }

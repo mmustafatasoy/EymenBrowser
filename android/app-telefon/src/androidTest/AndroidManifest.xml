@@ -1,4 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <instrumentation android:name="com.eymen.browser.telefon.BrowserUiInstrumentation"
-        android:targetPackage="com.eymen.browser.telefon" />
-</manifest>

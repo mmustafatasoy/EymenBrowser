@@ -4,6 +4,11 @@ mkdir -p browser-ui-audit
 trap 'adb logcat -d -v threadtime > browser-ui-audit/logcat.txt || true' EXIT
 adb install -r android/app-telefon/build/outputs/apk/debug/app-telefon-x86_64-debug.apk
 adb install -r android/app-telefon/build/outputs/apk/androidTest/debug/app-telefon-debug-androidTest.apk
+adb shell pm list instrumentation > browser-ui-audit/registered-runners.txt
+python3 - <<'PY'
+from pathlib import Path
+assert 'com.eymen.browser.telefon.test/com.eymen.browser.telefon.BrowserUiInstrumentation' in Path('browser-ui-audit/registered-runners.txt').read_text()
+PY
 adb shell cmd locale set-app-locales com.eymen.browser.telefon --locales tr-TR
 set +e
 timeout 180 adb shell am instrument -w -r \
