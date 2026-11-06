@@ -67,6 +67,7 @@ public final class DownloadServiceInstrumentation extends Instrumentation {
             enqueue("cancel.bin", cancelled, 4096);
             await(() -> snapshot().getActive() != null, "active foreground transfer");
             require(isForegroundServiceRunning(), "dataSync service must be in foreground");
+            require(cancelled.entered.await(10, TimeUnit.SECONDS), "real output opened before cancellation");
             runOnMainSync(() -> downloads.cancelActive());
             await(cancelled.closed::get, "active input stream close");
             await(() -> !hasWork(), "cancelled job settlement");
@@ -179,9 +180,11 @@ public final class DownloadServiceInstrumentation extends Instrumentation {
     private static void require(boolean value, String name) { if (!value) throw new AssertionError(name); }
     private static final class GateStream extends ByteArrayInputStream {
         final CountDownLatch release = new CountDownLatch(1);
+        final CountDownLatch entered = new CountDownLatch(1);
         final AtomicBoolean closed = new AtomicBoolean();
         GateStream(byte[] bytes) { super(bytes); }
         @Override public synchronized int read(byte[] buffer, int offset, int length) {
+            entered.countDown();
             try {
                 if (!release.await(20, TimeUnit.SECONDS)) throw new IllegalStateException("gate timeout");
             } catch (InterruptedException error) { throw new IllegalStateException(error); }
