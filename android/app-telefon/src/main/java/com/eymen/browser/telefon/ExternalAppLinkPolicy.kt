@@ -38,6 +38,12 @@ internal object ExternalAppLinkPolicy {
         if (!hasUserGesture || rawLink.length !in 3..2048 ||
             rawLink.any { it.isWhitespace() || it.code < 32 || it.code == 127 }
         ) return null
+        // Ordinary HTTPS links stay inside GeckoView. This helper is for
+        // explicit native app schemes, not an unrestricted browser escape.
+        if (!rawLink.startsWith("intent:", ignoreCase = true) &&
+            (rawLink.startsWith("https:", ignoreCase = true) ||
+                rawLink.startsWith("http:", ignoreCase = true))
+        ) return null
         val source = GeckoMotorDenemesi.verifiedHttpsUrl(sourceUrl)
         if (source == null || source != sourceUrl) return null
         val host = try { URI(source).host?.lowercase(Locale.ROOT) } catch (_: Exception) { null }
