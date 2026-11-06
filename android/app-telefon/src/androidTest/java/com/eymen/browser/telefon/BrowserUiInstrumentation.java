@@ -47,7 +47,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             String address = label(R.string.address_edit_label);
             await(() -> field(address) != null && !text(field(address)).isEmpty(), "existing address field");
             tap(field(address));
-            await(() -> field(address).isFocused(), "address receives focus after touch");
+            await(() -> field(address) != null && field(address).isFocused(), "address receives focus after touch");
             waitForIdleSync();
             SystemClock.sleep(100);
             sendStringSync("eymen yeni arama");
@@ -61,7 +61,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             sendStringSync("x");
             await(() -> "eymenx yeni arama".equals(text(field(address))), "typing at a chosen caret");
             click(label(R.string.address_clear));
-            await(() -> "".equals(text(field(address))), "clear address button");
+            await(() -> field(address) != null && "".equals(text(field(address))), "clear address button");
             sendStringSync("tekrar");
             await(() -> "tekrar".equals(text(field(address))), "field remains writable after clear");
 
@@ -111,9 +111,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             click(label(R.string.back));
             await(() -> field(address) != null, "downloads back restores the browser");
             click("Ana sayfa");
-            await(() -> "".equals(text(field(address))), "home resets the address editor");
+            await(() -> field(address) != null && "".equals(text(field(address))), "home resets the address editor");
             click("Yeni sekme");
-            await(() -> "".equals(text(field(address))), "new tab has an empty address editor");
+            await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
             result.putString("eymen_browser_ui_audit", "passed");
             result.putString("checks", "tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,confirm_clear_keeps_file,back_navigation,home_new_tab_reset,light_dark_captures");
             code = Activity.RESULT_OK;
@@ -149,22 +149,32 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private AccessibilityNodeInfo find(String label, boolean editable) {
         ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        java.util.List<AccessibilityNodeInfo> editors = new java.util.ArrayList<>();
+        java.util.List<Rect> markers = new java.util.ArrayList<>();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
-            if (node.isVisibleToUser() && (!editable || editorNode(node))) {
-                if (matches(node, label)) return node;
-                if (editable) {
-                    // Compose can expose the content description on a wrapper
-                    // and editable text on its child accessibility node.
-                    AccessibilityNodeInfo parent = node.getParent();
-                    for (int depth = 0; parent != null && depth < 8; depth++, parent = parent.getParent())
-                        if (matches(parent, label)) return node;
+            if (node.isVisibleToUser()) {
+                if (matches(node, label)) {
+                    if (!editable) return node;
+                    Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+                    markers.add(bounds);
                 }
+                if (editable && editorNode(node)) editors.add(node);
             }
             for (int i = 0; i < node.getChildCount(); i++) {
                 AccessibilityNodeInfo child = node.getChild(i);
                 if (child != null) queue.add(child);
             }
+        }
+        // With value-based BasicTextField, Compose may put the description
+        // inside the EditText virtual node after focus. Link the labelled
+        // control to its visible editor by bounds instead of parent direction.
+        editors.sort((left, right) -> Integer.compare(left.isEditable() ? 0 : 1,
+            right.isEditable() ? 0 : 1));
+        for (AccessibilityNodeInfo node : editors) {
+            Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+            for (Rect marker : markers)
+                if (bounds.contains(marker.centerX(), marker.centerY())) return node;
         }
         return null;
     }
