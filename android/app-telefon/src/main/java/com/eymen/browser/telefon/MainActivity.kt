@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
+import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
@@ -55,6 +56,9 @@ private class BrowserTab(
     var shieldEnabled by mutableStateOf(false)
     var blockedPage by mutableStateOf(0)
     var blockedTab by mutableStateOf(0)
+    var adTrackerBlockedTab by mutableStateOf(0)
+    var analyticsBlockedTab by mutableStateOf(0)
+    var otherTrackerBlockedTab by mutableStateOf(0)
     // Normal-only grouping; private tabs are always excluded.
     var groupId by mutableStateOf<Long?>(null)
     // Restored background tabs open their saved HTTPS URL only when selected.
@@ -121,6 +125,7 @@ class MainActivity : ComponentActivity() {
     private var downloadsShowing = false
     private var settingsShowing = false
     private val globalShieldWanted = mutableStateOf(true)
+    private val strictShieldWanted = mutableStateOf(false)
     private val devicesRequested = mutableStateOf(false)
     // Never persist site names visited in private browsing mode.
     private val privateShieldOverrides = mutableMapOf<String, Boolean>()
@@ -159,6 +164,8 @@ class MainActivity : ComponentActivity() {
         }
         dayMode.value = prefs.getBoolean("day_theme", true)
         globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
+        strictShieldWanted.value = prefs.getBoolean("shield_strict_mode", false)
+        GeckoMotorDenemesi.configureTrackerProtection(this, strictShieldWanted.value)
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
@@ -395,9 +402,14 @@ class MainActivity : ComponentActivity() {
                 enabled = tab?.shieldEnabled ?: globalShieldWanted.value,
                 pageBlocked = tab?.blockedPage ?: 0,
                 tabBlocked = tab?.blockedTab ?: 0,
+                adTrackerBlocked = tab?.adTrackerBlockedTab ?: 0,
+                analyticsBlocked = tab?.analyticsBlockedTab ?: 0,
+                otherTrackerBlocked = tab?.otherTrackerBlockedTab ?: 0,
+                strictMode = strictShieldWanted.value,
                 canToggle = tab != null && !tab.home && verifiedHost(tab.url) != null,
                 onDismiss = ::hideShield,
-                onToggle = ::setShieldForCurrentSite
+                onToggle = ::setShieldForCurrentSite,
+                onModeChange = ::setShieldMode
             )
         }
         shieldLayer.visibility = View.GONE
@@ -513,11 +525,18 @@ class MainActivity : ComponentActivity() {
             privateMode = privateMode,
             initialLoad = initialUrl != null && !deferRestoreLoad,
             trackingProtection = protectionFor(initialUrl, privateMode),
-            onBlocked = {
+            onBlocked = { category ->
                 runOnUiThread {
                     tabs.firstOrNull { it.id == id }?.let { tab ->
                         tab.blockedPage += 1
                         tab.blockedTab += 1
+                        when {
+                            category and ContentBlocking.AntiTracking.AD != 0 ->
+                                tab.adTrackerBlockedTab += 1
+                            category and ContentBlocking.AntiTracking.ANALYTIC != 0 ->
+                                tab.analyticsBlockedTab += 1
+                            else -> tab.otherTrackerBlockedTab += 1
+                        }
                     }
                 }
             },
@@ -1054,6 +1073,16 @@ class MainActivity : ComponentActivity() {
             SettingsAction.ABOUT -> updater.check(manual = true)
             else -> Unit
         }
+    }
+
+    private fun setShieldMode(strict: Boolean) {
+        if (strictShieldWanted.value == strict) return
+        strictShieldWanted.value = strict
+        prefs.edit().putBoolean("shield_strict_mode", strict).apply()
+        GeckoMotorDenemesi.configureTrackerProtection(this, strict)
+        // Gecko runtime list policy is global, while host exceptions remain
+        // per-session; reload only the active enabled page after changing lists.
+        activeTab?.takeIf { it.shieldEnabled && !it.home }?.gecko?.reload()
     }
 
     private fun setGlobalShield(enabled: Boolean) {
