@@ -34,7 +34,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.ContentBlocking
+import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.WebExtension
+import org.json.JSONObject
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
 import java.net.URI
@@ -126,6 +129,9 @@ class MainActivity : ComponentActivity() {
     private var settingsShowing = false
     private val globalShieldWanted = mutableStateOf(true)
     private val strictShieldWanted = mutableStateOf(false)
+    private val cosmeticFilterWanted = mutableStateOf(false)
+    private val cosmeticFilterReady = mutableStateOf(false)
+    private var cosmeticExtension: WebExtension? = null
     private val devicesRequested = mutableStateOf(false)
     // Never persist site names visited in private browsing mode.
     private val privateShieldOverrides = mutableMapOf<String, Boolean>()
@@ -165,7 +171,9 @@ class MainActivity : ComponentActivity() {
         dayMode.value = prefs.getBoolean("day_theme", true)
         globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
         strictShieldWanted.value = prefs.getBoolean("shield_strict_mode", false)
+        cosmeticFilterWanted.value = prefs.getBoolean("cosmetic_filter_wanted", false)
         GeckoMotorDenemesi.configureTrackerProtection(this, strictShieldWanted.value)
+        initializeCosmeticExtension()
         val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
 
         root = FrameLayout(this)
@@ -407,11 +415,14 @@ class MainActivity : ComponentActivity() {
                 otherTrackerBlocked = tab?.otherTrackerBlockedTab ?: 0,
                 strictMode = strictShieldWanted.value,
                 globalEnabled = globalShieldWanted.value,
+                cosmeticEnabled = cosmeticFilterWanted.value,
+                cosmeticAvailable = cosmeticFilterReady.value,
                 canToggle = tab != null && !tab.home && verifiedHost(tab.url) != null,
                 onDismiss = ::hideShield,
                 onToggle = ::setShieldForCurrentSite,
                 onModeChange = ::setShieldMode,
-                onGlobalToggle = ::setGlobalShield
+                onGlobalToggle = ::setGlobalShield,
+                onCosmeticToggle = ::setCosmeticFilterEnabled
             )
         }
         shieldLayer.visibility = View.GONE
@@ -583,6 +594,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         tabs.add(tab)
+        cosmeticExtension?.let { installCosmeticPolicy(tab, it) }
         activeId.value = id
         currentUrl.value = initialUrl.orEmpty()
         atHome.value = initialUrl == null
@@ -1067,6 +1079,63 @@ class MainActivity : ComponentActivity() {
             SettingsAction.ABOUT -> updater.check(manual = true)
             else -> Unit
         }
+    }
+
+    private fun initializeCosmeticExtension() {
+        GeckoMotorDenemesi.ensureCosmeticExtension(this) { installed ->
+            runOnUiThread {
+                cosmeticExtension = installed
+                cosmeticFilterReady.value = installed != null
+                if (installed != null) {
+                    tabs.forEach { installCosmeticPolicy(it, installed) }
+                }
+            }
+        }
+    }
+
+    /**
+     * Every extension message is untrusted. Native policy is based exclusively
+     * on the owning live GeckoSession and its native site protection setting.
+     * Neither a page URL nor a private browsing record is sent to the add-on.
+     */
+    private fun installCosmeticPolicy(tab: BrowserTab, extension: WebExtension) {
+        tab.gecko.webExtensionController.setMessageDelegate(
+            extension,
+            object : WebExtension.MessageDelegate {
+                override fun onMessage(
+                    nativeApp: String,
+                    message: Any,
+                    sender: WebExtension.MessageSender
+                ): GeckoResult<Any>? {
+                    val request = message as? JSONObject
+                    val allowed = nativeApp == "eymen_cosmetic" &&
+                        request?.optString("type") == "cosmetic-policy-v1" &&
+                        sender.environmentType ==
+                            WebExtension.MessageSender.ENV_TYPE_CONTENT_SCRIPT &&
+                        sender.isTopLevel &&
+                        sender.session === tab.gecko &&
+                        sender.webExtension.id == extension.id &&
+                        tabs.any { it.id == tab.id && it.gecko === tab.gecko } &&
+                        !tab.home &&
+                        verifiedHost(sender.url) != null &&
+                        verifiedHost(sender.url) == verifiedHost(tab.url) &&
+                        cosmeticFilterWanted.value && tab.shieldEnabled
+                    return GeckoResult.fromValue(
+                        JSONObject().put("enabled", allowed) as Any
+                    )
+                }
+            },
+            "eymen_cosmetic"
+        )
+    }
+
+    private fun setCosmeticFilterEnabled(enabled: Boolean) {
+        // No UI success state unless Gecko installed the bundled extension.
+        if (!cosmeticFilterReady.value) return
+        if (cosmeticFilterWanted.value == enabled) return
+        cosmeticFilterWanted.value = enabled
+        prefs.edit().putBoolean("cosmetic_filter_wanted", enabled).apply()
+        activeTab?.takeIf { !it.home }?.gecko?.reload()
     }
 
     private fun setShieldMode(strict: Boolean) {
