@@ -406,10 +406,12 @@ class MainActivity : ComponentActivity() {
                 analyticsBlocked = tab?.analyticsBlockedTab ?: 0,
                 otherTrackerBlocked = tab?.otherTrackerBlockedTab ?: 0,
                 strictMode = strictShieldWanted.value,
+                globalEnabled = globalShieldWanted.value,
                 canToggle = tab != null && !tab.home && verifiedHost(tab.url) != null,
                 onDismiss = ::hideShield,
                 onToggle = ::setShieldForCurrentSite,
-                onModeChange = ::setShieldMode
+                onModeChange = ::setShieldMode,
+                onGlobalToggle = ::setGlobalShield
             )
         }
         shieldLayer.visibility = View.GONE
@@ -1053,16 +1055,8 @@ class MainActivity : ComponentActivity() {
     private fun handleSettingsAction(action: SettingsAction) {
         when (action) {
             SettingsAction.SHIELD -> {
-                val currentlyOn = globalShieldWanted.value
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.settings_shield)
-                    .setMessage(R.string.settings_shield_global_msg)
-                    .setPositiveButton(
-                        if (currentlyOn) R.string.settings_shield_global_off
-                        else R.string.settings_shield_global_on
-                    ) { _, _ -> setGlobalShield(!currentlyOn) }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+                hideSettings()
+                showShield()
             }
             SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()
             SettingsAction.APPEARANCE -> showAppearanceOptions()
