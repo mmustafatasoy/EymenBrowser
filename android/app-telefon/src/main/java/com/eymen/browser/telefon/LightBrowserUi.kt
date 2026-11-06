@@ -359,6 +359,7 @@ private val browseChips = listOf(
 /** Real controls laid out to match the approved 5 November phone mockup. */
 @Composable
 internal fun LightBrowserHome(
+    menuOpen: Boolean,
     recentUrls: List<String>,
     onSearch: (String) -> Unit,
     onOpen: (String) -> Unit,
@@ -424,6 +425,10 @@ internal fun LightBrowserHome(
                 verticalArrangement = Arrangement.spacedBy(blockGap)
             ) {
                 Column(
+                    // In the approved menu-open reference, the logo/title
+                    // occupy the left ~70% of the screen, leaving clear
+                    // visual space for the top-right popup.
+                    Modifier.offset(x = if (menuOpen) maxWidth * -0.15f else 0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -478,7 +483,11 @@ internal fun LightBrowserHome(
 
                 // Search and microphone in a single airy pill.
                 Row(
-                    Modifier.fillMaxWidth().height(48.dp)
+                    // Keep the voice button visible to the LEFT of the popup.
+                    Modifier
+                        .fillMaxWidth(if (menuOpen) 0.59f else 1f)
+                        .align(Alignment.Start)
+                        .height(48.dp)
                         .shadow(4.dp, RoundedCornerShape(26.dp))
                         .border(1.dp, outline, RoundedCornerShape(26.dp))
                         .background(Color(0xFFFDFEFF), RoundedCornerShape(26.dp))
@@ -766,7 +775,7 @@ internal fun LightBrowserMenu(
         Column(
             Modifier.align(Alignment.TopEnd)
                 .padding(top = 57.dp, end = 6.dp)
-                .width(154.dp)
+                .width(148.dp)
                 .heightIn(max = 440.dp)
                 .shadow(10.dp, RoundedCornerShape(20.dp))
                 .border(1.dp, Color(0xFFBED7F9), RoundedCornerShape(20.dp))
