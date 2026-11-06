@@ -1,6 +1,0 @@
-v1.0.8
-Normal-only persistent tab and group restore, lazy background loading, real RAM-only Gecko screenshots, 10-step normal undo, reorder and privacy guards.
-Source and compilation check: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42181623399
-Android 15/16 visual audit: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42181623404
-Release must pass original production signing identity, ABI split, package/version and v1.0.7 signed upgrade validation.
-No private tabs/URLs/thumbnails saved. Full browser history/form/video state not restored.
