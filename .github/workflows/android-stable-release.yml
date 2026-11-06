@@ -6,12 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.6"
-  # Controlled one-shot automatic release trigger for the approved T03/T07 fix.
-  push:
-    branches: [main]
-    paths:
-      - '.github/release-requests/v1.0.6.txt'
+        default: "1.0.7"
 permissions:
   contents: write
 concurrency:
@@ -46,7 +41,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.6' }}
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -259,7 +254,7 @@ jobs:
           - Tek ust adres/arama cubugu, yeni sekme, sekme sayaci ve sagdaki uc nokta menusunde geri/ileri/yenile.
           - YouTube, Google, Facebook, X, Instagram, WhatsApp kisayollari ve arama/baglantiya giden kategori kartlari; promosyon/reklam paneli yok.
           - Eski kurulumda koyu tema ayari kaydedilmis olsa dahi onayli acik arayuz bir kez etkinlestirilir, sonraki kullanici secimleri korunur.
-          - v1.0.6: Sag ust uc nokta menusunun boyutlari onaylanan tasarima gore kucultuldu;
+          - Sag ust uc nokta menusunun boyutlari onaylanan tasarima gore kucultuldu;
             menudeki simgeler yazitipindan bagimsiz vektor haline getirildi.
           - Eymen Browser basliginda lacivert/mavi iki ton ve kavisli alt cizgi eklendi.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
