@@ -1,0 +1,57 @@
+name: EymenBrowser Android background download acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-download-audit.yml'
+      - 'android/app-telefon/src/androidTest/**'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/Download*.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/EymenDownloadService.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/MainActivity.kt'
+      - 'android/app-telefon/src/main/AndroidManifest.xml'
+      - 'android/app-telefon/build.gradle.kts'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  background-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.3.1'}
+      - name: Generate resources and install pinned SDK
+        run: |
+          python tools/generate.py
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Build target and separate test APK
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:assembleDebug :app-telefon:assembleDebugAndroidTest
+      - name: Enable KVM
+        run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Verify real background lifecycle, foreground service and saved file checksums
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: default
+          arch: x86_64
+          profile: Nexus 5X
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash tools/audit_android_downloads.sh
+      - name: Preserve instrumentation result and device log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EymenBrowser-background-download-audit-API35
+          path: download-audit/*.txt
+          if-no-files-found: warn
