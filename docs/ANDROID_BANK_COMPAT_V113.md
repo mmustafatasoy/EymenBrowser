@@ -33,6 +33,6 @@ Bankaların **web siteleri açılırken mobil bankacılık girişine** ilerlenem
 ## Kullanım
 
 1. EYMEN Browser'da bankanın resmî HTTPS sayfasını açın.
-2. Bankanın `Mobil Uygulamayı Aç` bağlantısına dokunun; doğrulanmış uygulama yönlendirmesi varsa ekranda kaynak site ve hedef uygulama bilgisi çıkacaktır.
+2. Bankanın `Mobil Uygulamayı Aç` bağlantısına dokunun; desteklenen bir uygulama bağlantısı varsa kaynak site ve **sayfanın talep ettiği** hedef uygulama bilgisi çıkacaktır. EYMEN Browser, bu uygulamanın gerçekten bankaya ait olduğunu doğrulayamaz; kurulu resmî uygulama olduğundan emin olmadan onay vermeyin.
 3. Sayfada yönlendirme yoksa **⋮ → Mobil uygulamada aç** seçeneğini kullanın. Android'de bankanın kurulu resmî uygulaması bağlantıyı desteklemiyorsa bilgilendirme görünür.
 4. Yine açılmıyorsa bankanın resmî uygulamasını doğrudan açarak giriş yapın. Bu, tarayıcının bankanın mobil uygulamasının yerini aldığı anlamına gelmez.
