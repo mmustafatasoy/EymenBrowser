@@ -64,7 +64,8 @@ assert 'shield_count_scope' in shield
 
 assert 'bytes = bytes' in download_engine
 assert 'savedAt = System.currentTimeMillis()' in download_engine
-assert 'registry.record(SavedDownload(' in download_engine
+assert 'val completed = SavedDownload(' in download_engine
+assert 'registry.record(completed)' in download_engine
 # Activity's ContextWrapper has no base Context during MainActivity property initialization.
 assert 'private val registry by lazy { DownloadRegistry(activity.applicationContext) }' in download_engine
 assert 'private val registry = DownloadRegistry(activity.applicationContext)' not in download_engine
