@@ -23,6 +23,7 @@ import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.Toast
 import android.widget.EditText
+import java.util.concurrent.atomic.AtomicBoolean
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -599,9 +600,13 @@ class MainActivity : ComponentActivity() {
             },
             onTitle = { title ->
                 tabs.firstOrNull { it.id == id }?.title = title.orEmpty()
+            },
+            onExternalAppLink = { link, trigger, gesture ->
+                showSecureExternalAppPrompt(id, link, trigger, gesture)
             }
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl)
+        installStandardWebPrompts(tab)
         tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
@@ -975,6 +980,73 @@ class MainActivity : ComponentActivity() {
             tab.gecko.loadUri(verified)
             if (!tab.privateMode) saveNormalWorkspace()
         }
+    }
+
+    /**
+     * Only opens a native-app deep link after a real HTTPS page user gesture
+     * and a SECOND explicit Android dialog. Never relays page-supplied Intent
+     * extras/components, JavaScript, files, implicit permissions or credentials.
+     */
+    private fun showSecureExternalAppPrompt(
+        tabId: Long, link: String, trigger: String?, hasGesture: Boolean
+    ): Boolean {
+        val sourceTab = tabs.firstOrNull { it.id == tabId } ?: return false
+        if (activeId.value != tabId) return false
+        val origin = trigger ?: sourceTab.url
+        val safe = ExternalAppLinkPolicy.fromWebsite(link, origin, hasGesture)
+            ?: return false
+        // No link or token-bearing query is printed to logs or a dialog.
+        val description = getString(R.string.bank_external_prompt) + "\n\n" +
+            getString(R.string.bank_external_origin) + ": " + safe.originHost + "\n" +
+            getString(R.string.bank_external_target) + ": " +
+            (safe.packageName ?: safe.destinationScheme)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.bank_external_title)
+            .setMessage(description)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.bank_external_confirm) { _, _ ->
+                try {
+                    startActivity(safe.intent)
+                } catch (_: Exception) {
+                    notice(R.string.bank_external_missing)
+                }
+            }
+            .show()
+        return true
+    }
+
+    /** Explicit user command, never a background website redirect. */
+    private fun openCurrentPageInOfficialApp() {
+        val page = activeTab?.url
+        val verified = GeckoMotorDenemesi.verifiedHttpsUrl(page)
+            ?.takeIf { it == page && !atHome.value }
+        if (verified == null) {
+            notice(R.string.invalid_address)
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_open_official_app)
+            .setMessage(R.string.bank_https_handoff_prompt)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.bank_external_confirm) { _, _ ->
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(verified)).apply {
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
+                    }
+                }
+                try {
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        startActivity(intent)
+                    } else {
+                        startActivity(Intent.createChooser(intent,
+                            getString(R.string.menu_open_official_app)))
+                    }
+                } catch (_: Exception) {
+                    notice(R.string.bank_external_missing)
+                }
+            }
+            .show()
     }
 
     private fun showHome(enabled: Boolean) {
@@ -1368,6 +1440,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.PDF -> saveCurrentPageAsPdf()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
+            MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
             MenuAction.THEME -> {
                 dayMode.value = !dayMode.value
                 prefs.edit().putBoolean("day_theme", dayMode.value).apply()
