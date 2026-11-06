@@ -58,8 +58,10 @@ private fun DownloadText(
 @Composable
 internal fun DownloadsScreen(
     files: List<SavedDownload>,
+    active: ActiveDownload?,
     onBack: () -> Unit,
     onOpen: (SavedDownload) -> Unit,
+    onCancelActive: () -> Unit,
     onClear: () -> Unit
 ) {
     var selected by remember { mutableStateOf(DownloadType.ALL) }
@@ -83,6 +85,54 @@ internal fun DownloadsScreen(
                 EymenVector(EymenPaths.geri, color = T.gece_yazi)
             }
             DownloadText(stringResource(R.string.downloads), 24, T.gece_yazi, strong = true)
+        }
+        if (active != null) {
+            val percent = DownloadProgressMath.percent(active.bytesWritten, active.totalBytes)
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                DownloadText(
+                    stringResource(R.string.download_active), 13,
+                    T.gece_yaziIkincil
+                )
+                DownloadText(active.name, 16, T.gece_yazi, strong = true)
+                DownloadText(
+                    bytesLabel(active.bytesWritten) + if (active.totalBytes != null)
+                        " / " + bytesLabel(active.totalBytes) +
+                            " (" + (percent?.toString() ?: "—") + "%)"
+                    else " · " + stringResource(R.string.download_size_unknown),
+                    13, T.gece_yaziIkincil
+                )
+                if (percent != null) {
+                    Box(
+                        Modifier.fillMaxWidth().height(7.dp)
+                            .background(T.gece_yuzey3, RoundedCornerShape(6.dp))
+                    ) {
+                        Box(
+                            Modifier.fillMaxWidth(percent / 100f).fillMaxHeight()
+                                .background(T.gece_vurgu, RoundedCornerShape(6.dp))
+                        )
+                    }
+                }
+                Box(
+                    Modifier.fillMaxWidth().heightIn(min = 44.dp)
+                        .border(1.dp, T.gece_cizgi, RoundedCornerShape(12.dp))
+                        .clickable(enabled = !active.cancelling) { onCancelActive() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    DownloadText(
+                        stringResource(
+                            if (active.cancelling) R.string.download_cancelling
+                            else R.string.download_cancel_active
+                        ), 14,
+                        if (active.cancelling) T.gece_yaziPasif else T.gece_yazi,
+                        strong = true
+                    )
+                }
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             filters.forEach { (type, label) ->
