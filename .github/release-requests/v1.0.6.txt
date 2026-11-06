@@ -1,5 +1,0 @@
-v1.0.6
-approved reference T03 and T07 layout refinements
-validated Android 15 visual emulator run: 42162088881
-validated source/APK build run: 42162088862
-same original production signing identity required
