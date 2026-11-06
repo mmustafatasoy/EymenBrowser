@@ -57,7 +57,9 @@ assert 'var groupId by mutableStateOf<Long?>(null)' in main
 assert 'private val tabGroups = mutableStateListOf<TabGroupPreview>()' in main
 assert 'tab.privateMode' in main
 assert 'if (!tab.privateMode) {' in main
-assert 'lastClosedNormalTab = ClosedNormalTab(' in main
+assert 'recentlyClosedNormal.add(' in main
+assert 'ClosedNormalTab(' in main
+assert 'while (recentlyClosedNormal.size > 10)' in main
 assert 'GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)' in main
 assert 'private fun restoreLastClosedNormalTab()' in main
 assert 'createTab(privateMode = false, initialUrl = closed.safeUrl)' in main
@@ -66,6 +68,10 @@ assert 'tabs.firstOrNull { it.id == tabId && !it.privateMode }' in main
 assert 'onNewGroup = ::promptNewTabGroup' in main
 assert 'onAssignGroup = ::promptTabGroupSelection' in main
 assert 'onUndoClose = ::restoreLastClosedNormalTab' in main
+assert 'onMoveTab = ::moveTabWithinSection' in main
+assert 'tabs.add(destinationPosition, tab)' in main
+assert 'undoCount = recentlyClosedNormal.size' in main
+assert 'onMoveTab(tab.id, -1' in tabs and 'onMoveTab(tab.id, +1' in tabs
 assert 'val wasOverviewOpen = overviewShowing' in main
 assert 'if (wasOverviewOpen && ::tabsLayer.isInitialized)' in main
 assert 'openTabOverview(false)' in main
@@ -78,6 +84,42 @@ assert 'onOpen(visible[(activeIndex - 1 + visible.size) % visible.size].id)' in 
 assert 'onOpen(visible[(activeIndex + 1) % visible.size].id)' in tabs
 assert 'selectedGroupId == null)' in tabs
 assert 'groups.none { it.id == selectedGroupId }' in tabs
+
+# v1.0.8: only normal tabs may enter the bounded persistent workspace,
+# with lazy-load restores, document navigation updates and lifecycle durability.
+store = (base / "app-telefon/src/main/java/com/eymen/browser/telefon/TabWorkspaceStore.kt").read_text()
+assert 'getSharedPreferences(' in store
+assert '"eymen_browser_normal_workspace_v108"' in store
+assert 'const val MAX_TABS = 32' in store
+assert 'const val MAX_GROUPS = 20' in store
+assert 'fun safeHttpsUrl(candidate: String?)' in store
+assert 'parsed.userInfo != null' in store
+assert 'val raw = preferences.getString(KEY, null) ?: return null' in store
+assert 'fun write(workspace: StoredWorkspace, durable: Boolean = false)' in store
+assert 'if (durable) editor.commit() else editor.apply()' in store
+assert 'if (restoringWorkspace) return' in main
+assert 'private fun restoreNormalWorkspace(incomingUrl: String?)' in main
+assert 'private fun saveNormalWorkspace(durable: Boolean = false)' in main
+assert 'val normal = tabs.filter { !it.privateMode }' in main
+assert 'url = if (tab.home) null' in main
+assert 'else workspaceStore.safeHttpsUrl(tab.url)' in main
+assert 'createTab(false, safeUrl, deferRestoreLoad = safeUrl != null)' in main
+assert 'tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null' in main
+assert 'val delayed = tab.pendingRestoreUrl' in main
+assert 'override fun onStop()' in main
+assert 'saveNormalWorkspace(durable = true)' in main
+assert 'restoreNormalWorkspace(incomingUrl)' in main
+assert 'if (!privateMode) saveNormalWorkspace()' in main
+assert 'if (!tab.privateMode) saveNormalWorkspace()' in main
+assert 'if (activeTab?.privateMode == false) saveNormalWorkspace()' in main
+assert 'private fun captureActiveTabThumbnail()' in main
+assert 'if (tab.privateMode || tab.home || tab.pendingRestoreUrl != null' in main
+assert 'view.capturePixels().accept(' in main
+assert 'tab.thumbnail?.asImageBitmap()' in main
+assert 'tab.thumbnail = null' in main
+assert 'tab.thumbnail: ImageBitmap? = null' in tabs
+assert 'if (!tab.privateMode && tab.thumbnail != null)' in tabs
+assert 'ContentScale.Crop' in tabs
 
 assert (ROOT / "design/ekranlar/T06-Sekmeler.png").exists(), "T06 approved asset missing"
 assert (ROOT / "design/ekranlar/T09-Gizli.png").exists(), "T09 approved asset missing"
