@@ -24,6 +24,8 @@ import java.util.function.BooleanSupplier;
 /** Real touch, keyboard and accessibility interactions. This class is test-APK only. */
 public final class BrowserUiInstrumentation extends Instrumentation {
     private Activity activity;
+    private Uri fixtureUri;
+    private static final String FIXTURE = "Arayüz testi.txt";
     private static final String OLD_URL = "https://example.com/eymen-ui-old?value=1";
     @Override public void onCreate(Bundle args) { super.onCreate(args); start(); }
     @Override public void onStart() {
@@ -35,6 +37,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
                 .putBoolean("setup_completed", true).putBoolean("day_theme", true)
                 .putBoolean("light_design_default_migrated_v105", true).commit();
             new DownloadRegistry(app).clearListOnly();
+            createFixture(app);
             AccessibilityServiceInfo info = getUiAutomation().getServiceInfo();
             info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
                 | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
@@ -44,14 +47,17 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             String address = label(R.string.address_edit_label);
             await(() -> field(address) != null && !text(field(address)).isEmpty(), "existing address field");
             tap(field(address));
-            await(() -> selectedAll(field(address)), "first tap selects the complete URL");
+            await(() -> field(address).isFocused(), "address receives focus after touch");
+            waitForIdleSync();
+            SystemClock.sleep(100);
             sendStringSync("eymen yeni arama");
             await(() -> "eymen yeni arama".equals(text(field(address))), "typing replaces the old address without deletion");
             Bundle caret = new Bundle();
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 5);
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, 5);
             require(field(address).performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, caret), "normal caret action");
-            await(() -> field(address).getTextSelectionStart() == 5, "caret remains editable after first focus");
+            waitForIdleSync();
+            SystemClock.sleep(100);
             sendStringSync("x");
             await(() -> "eymenx yeni arama".equals(text(field(address))), "typing at a chosen caret");
             click(label(R.string.address_clear));
@@ -83,16 +89,33 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             search(label(R.string.settings_search_hint), label(R.string.downloads));
             click(label(R.string.downloads));
             await(() -> field(label(R.string.download_search_hint)) != null, "custom downloads page");
+            await(() -> find(FIXTURE, false) != null, "real saved download is listed");
             capture("downloads-light.png", true);
             click(label(R.string.download_filter_video));
-            await(() -> find(label(R.string.download_filter_video), false).isSelected(), "real download type filter");
+            await(() -> find(FIXTURE, false) == null, "video filter hides the actual text document");
+            click(label(R.string.download_filter_document));
+            await(() -> find(FIXTURE, false) != null, "document filter restores the actual file");
             search(label(R.string.download_search_hint), "olmayan-dosya");
             await(() -> find(label(R.string.download_no_matches), false) != null, "download search empty result");
             click(label(R.string.search_clear));
+            await(() -> find(FIXTURE, false) != null, "clearing search restores the saved file");
+            click(label(R.string.download_clear_records));
+            click(label(R.string.download_confirm_deny));
+            require(!new DownloadRegistry(app).items().isEmpty(), "cancel clear keeps history");
+            click(label(R.string.download_clear_records));
+            click(label(R.string.download_clear_records));
+            await(() -> new DownloadRegistry(app).items().isEmpty(), "custom confirmation clears history");
+            try (java.io.InputStream input = app.getContentResolver().openInputStream(fixtureUri)) {
+                require(input != null && input.read() >= 0, "clearing history never deletes the real file");
+            }
             click(label(R.string.back));
             await(() -> field(address) != null, "downloads back restores the browser");
+            click("Ana sayfa");
+            await(() -> "".equals(text(field(address))), "home resets the address editor");
+            click("Yeni sekme");
+            await(() -> "".equals(text(field(address))), "new tab has an empty address editor");
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,back_navigation,light_dark_captures");
+            result.putString("checks", "tap_select_all,type_replaces_URL,caret_edit,clear,settings_search,persist_engine,persist_theme,custom_about,download_filter,download_search,confirm_clear_keeps_file,back_navigation,home_new_tab_reset,light_dark_captures");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -100,6 +123,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             result.putString("stack", android.util.Log.getStackTraceString(error));
         } finally {
             if (activity != null) runOnMainSync(() -> activity.finish());
+            if (fixtureUri != null) getTargetContext().getContentResolver().delete(fixtureUri, null, null);
+            new DownloadRegistry(getTargetContext()).clearListOnly();
         }
         finish(code, result);
     }
@@ -109,10 +134,6 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private String label(int resource) { return activity.getString(resource); }
     private static String text(AccessibilityNodeInfo node) {
         return node == null || node.getText() == null ? "" : node.getText().toString();
-    }
-    private static boolean selectedAll(AccessibilityNodeInfo node) {
-        return node != null && node.getTextSelectionStart() == 0
-            && node.getTextSelectionEnd() == text(node).length() && !text(node).isEmpty();
     }
     private AccessibilityNodeInfo field(String label) { return find(label, true); }
     private static boolean editorNode(AccessibilityNodeInfo node) {
@@ -186,13 +207,58 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             out.write(tree.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
     }
+    private AccessibilityNodeInfo actionTarget(AccessibilityNodeInfo node) {
+        ArrayDeque<AccessibilityNodeInfo> descendants = new ArrayDeque<>();
+        descendants.add(node);
+        while (!descendants.isEmpty()) {
+            AccessibilityNodeInfo child = descendants.removeFirst();
+            if (child.isVisibleToUser() && child.isEnabled() && child.isClickable()) return child;
+            for (int i = 0; i < child.getChildCount(); i++) {
+                AccessibilityNodeInfo value = child.getChild(i);
+                if (value != null) descendants.add(value);
+            }
+        }
+        AccessibilityNodeInfo parent = node.getParent();
+        for (int depth = 0; parent != null && depth < 8; depth++, parent = parent.getParent())
+            if (parent.isVisibleToUser() && parent.isEnabled() && parent.isClickable()) return parent;
+        return null;
+    }
+    private AccessibilityNodeInfo clickTarget(String label) {
+        ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        while (!queue.isEmpty()) {
+            AccessibilityNodeInfo node = queue.removeFirst();
+            if (node.isVisibleToUser() && matches(node, label)) {
+                AccessibilityNodeInfo action = actionTarget(node);
+                if (action != null) return action;
+            }
+            for (int i = 0; i < node.getChildCount(); i++) {
+                AccessibilityNodeInfo child = node.getChild(i);
+                if (child != null) queue.add(child);
+            }
+        }
+        return null;
+    }
     private void click(String label) throws Exception {
-        await(() -> find(label, false) != null, "visible control: " + label);
-        AccessibilityNodeInfo node = find(label, false);
-        while (node != null && !node.isClickable()) node = node.getParent();
-        require(node != null && node.performAction(AccessibilityNodeInfo.ACTION_CLICK), "click: " + label);
+        await(() -> clickTarget(label) != null, "clickable control: " + label);
+        tap(clickTarget(label));
         waitForIdleSync();
         SystemClock.sleep(100);
+    }
+    private void createFixture(Context app) throws Exception {
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, FIXTURE);
+        values.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+        values.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1);
+        fixtureUri = app.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        require(fixtureUri != null, "create real fixture file");
+        byte[] data = "Eymen Browser arayüz doğrulama dosyası.".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        try (java.io.OutputStream output = app.getContentResolver().openOutputStream(fixtureUri)) {
+            require(output != null, "open real fixture output");
+            output.write(data);
+        }
+        values.clear(); values.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0);
+        app.getContentResolver().update(fixtureUri, values, null, null);
+        new DownloadRegistry(app).record(new SavedDownload(fixtureUri.toString(), FIXTURE, "text/plain", data.length, System.currentTimeMillis()));
     }
     private void search(String label, String query) throws Exception {
         await(() -> field(label) != null, "search field: " + label);

@@ -1228,6 +1228,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showHome(enabled: Boolean) {
+        if (::root.isInitialized) hideBrowserKeyboard()
         activeTab?.home = enabled
         atHome.value = enabled
         updateHomeVisibility()
