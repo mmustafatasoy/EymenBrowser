@@ -1,5 +1,0 @@
-v1.0.7
-Android phone real normal-tab groups, quick session switching, one-slot safe undo
-source build: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42174796586
-visual T06 capture: https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42174373171
-original production certificate and v1.0.6 upgrade compatibility must pass before publish
