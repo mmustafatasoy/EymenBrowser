@@ -219,38 +219,49 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             out.write(tree.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
     }
-    private AccessibilityNodeInfo actionTarget(AccessibilityNodeInfo node) {
-        ArrayDeque<AccessibilityNodeInfo> descendants = new ArrayDeque<>();
-        descendants.add(node);
-        while (!descendants.isEmpty()) {
-            AccessibilityNodeInfo child = descendants.removeFirst();
-            if (!child.refresh()) continue;
-            if (child.isVisibleToUser() && child.isEnabled() && child.isClickable()) return child;
-            for (int i = 0; i < child.getChildCount(); i++) {
-                AccessibilityNodeInfo value = child.getChild(i);
-                if (value != null) descendants.add(value);
-            }
-        }
-        AccessibilityNodeInfo parent = node.getParent();
-        for (int depth = 0; parent != null && depth < 8; depth++, parent = parent.getParent())
-            if (parent.isVisibleToUser() && parent.isEnabled() && parent.isClickable()) return parent;
-        return null;
-    }
     private AccessibilityNodeInfo clickTarget(String label) {
         ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        java.util.List<AccessibilityNodeInfo> labels = new java.util.ArrayList<>();
+        java.util.List<Rect> buttons = new java.util.ArrayList<>();
+        java.util.List<Rect> editors = new java.util.ArrayList<>();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
             if (!node.refresh()) continue;
-            if (node.isVisibleToUser() && !editorNode(node) && matches(node, label)) {
-                AccessibilityNodeInfo action = actionTarget(node);
-                if (action != null && !editorNode(action)) return action;
+            if (node.isVisibleToUser()) {
+                Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+                boolean input = node.isEditable() || "android.widget.EditText".equals(String.valueOf(node.getClassName()));
+                if (input) editors.add(bounds);
+                else {
+                    if (matches(node, label)) labels.add(node);
+                    boolean clickable = node.isClickable();
+                    for (AccessibilityNodeInfo.AccessibilityAction action : node.getActionList())
+                        if (action.getId() == AccessibilityNodeInfo.ACTION_CLICK) clickable = true;
+                    if (clickable && node.isEnabled()) buttons.add(bounds);
+                }
             }
             for (int i = 0; i < node.getChildCount(); i++) {
                 AccessibilityNodeInfo child = node.getChild(i);
                 if (child != null) queue.add(child);
             }
         }
-        return null;
+        AccessibilityNodeInfo best = null;
+        long bestArea = Long.MAX_VALUE;
+        for (AccessibilityNodeInfo node : labels) {
+            Rect marker = new Rect(); node.getBoundsInScreen(marker);
+            boolean inEditor = false;
+            for (Rect input : editors) if (input.contains(marker.centerX(), marker.centerY())) inEditor = true;
+            if (inEditor) continue;
+            for (Rect button : buttons) {
+                long area = (long) button.width() * button.height();
+                if (area > 0 && area < bestArea && button.contains(marker.centerX(), marker.centerY())) {
+                    // Compose can expose text and the clickable virtual node
+                    // as siblings. Tap the actual label inside its hit area.
+                    bestArea = area;
+                    best = node;
+                }
+            }
+        }
+        return best;
     }
     private void click(String label) throws Exception {
         await(() -> clickTarget(label) != null, "clickable control: " + label);
