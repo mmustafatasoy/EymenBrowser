@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.9"
+  # One-shot signed v1.0.9 publish, still gated by source/build/signing
+  # and previous APK upgrade compatibility checks.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.9.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +47,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.9' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -271,6 +277,14 @@ jobs:
             gruplara veya geri alma listesine aktarilmaz.
           - Kalici kayit yalnizca normal HTTPS adresleri ve gruplar icindir:
             formlar, video pozisyonlari ve Gecko geri/ileri agaci saklanmaz.
+          - v1.0.9: GeckoView Standart/Siki takipci koruma listeleri ve
+            kullaniciya acik koruma profili ayari; secilen profil saklanir.
+          - Siteye ozel koruma istisnalari korunur; gizli oturumlardaki
+            istisnalar yalniz bellek icindedir.
+          - Yalnizca gercek GeckoView engelleme olaylarindan hesaplanan
+            reklam takipcisi, analiz takipcisi ve diger engelleme sayilari.
+          - Bu koruma bilinen takipciler icindir; tum reklamlarin veya
+            kozmetik reklam bosluklarinin kaldirildigi iddia edilmez.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
