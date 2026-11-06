@@ -251,5 +251,12 @@
   "download_size_unknown": "Total size unknown",
   "download_cancel_active": "Cancel download",
   "download_cancelling": "Cancelling download…",
-  "download_incomplete_saf": "Download cancelled. On Android 8–9, an incomplete file may remain in the selected location."
+  "download_incomplete_saf": "Download cancelled. On Android 8–9, an incomplete file may remain in the selected location.",
+  "download_queue_full": "The download queue is full. Try again after a file finishes.",
+  "download_queued": "Waiting in queue",
+  "download_queue_count": "%1$d files queued",
+  "download_notification_channel": "File downloads",
+  "download_preparing": "Preparing download",
+  "download_cancel_all": "Cancel all downloads",
+  "download_background_failed": "Background download could not start. Keep the app open and try again."
 }

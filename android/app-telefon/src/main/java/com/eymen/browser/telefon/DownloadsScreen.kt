@@ -59,9 +59,11 @@ private fun DownloadText(
 internal fun DownloadsScreen(
     files: List<SavedDownload>,
     active: ActiveDownload?,
+    queued: List<QueuedDownload>,
     onBack: () -> Unit,
     onOpen: (SavedDownload) -> Unit,
     onCancelActive: () -> Unit,
+    onCancelQueued: (Long) -> Unit,
     onClear: () -> Unit
 ) {
     var selected by remember { mutableStateOf(DownloadType.ALL) }
@@ -163,6 +165,27 @@ internal fun DownloadsScreen(
             Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            queued.forEach { item ->
+                Row(
+                    Modifier.fillMaxWidth()
+                        .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        DownloadText(item.name, 15, T.gece_yazi, strong = true)
+                        DownloadText(stringResource(R.string.download_queued), 13, T.gece_yaziIkincil)
+                    }
+                    Box(
+                        Modifier.heightIn(min = 44.dp)
+                            .clickable { onCancelQueued(item.id) }
+                            .padding(horizontal = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        DownloadText(stringResource(R.string.download_confirm_deny), 14, T.gece_yazi)
+                    }
+                }
+            }
             if (visible.isEmpty()) {
                 Spacer(Modifier.height(36.dp))
                 DownloadText(

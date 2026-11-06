@@ -251,5 +251,12 @@
   "download_size_unknown": "Toplam boyut bilinmiyor",
   "download_cancel_active": "İndirmeyi iptal et",
   "download_cancelling": "İndirme iptal ediliyor…",
-  "download_incomplete_saf": "İndirme iptal edildi. Android 8–9'da seçilen dosya konumunda eksik dosya kalmış olabilir."
+  "download_incomplete_saf": "İndirme iptal edildi. Android 8–9'da seçilen dosya konumunda eksik dosya kalmış olabilir.",
+  "download_queue_full": "İndirme kuyruğu dolu. Bir dosya tamamlanınca tekrar deneyin.",
+  "download_queued": "Sırada bekliyor",
+  "download_queue_count": "%1$d dosya sırada",
+  "download_notification_channel": "Dosya indirmeleri",
+  "download_preparing": "İndirme hazırlanıyor",
+  "download_cancel_all": "Tüm indirmeleri iptal et",
+  "download_background_failed": "Arka plan indirmesi başlatılamadı. Uygulamayı açık tutup tekrar deneyin."
 }

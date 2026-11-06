@@ -107,6 +107,7 @@ class MainActivity : ComponentActivity() {
     private val recent = mutableStateListOf<String>()
     private val savedFiles = mutableStateListOf<SavedDownload>()
     private var activeDownload by mutableStateOf<ActiveDownload?>(null)
+    private val queuedDownloads = mutableStateListOf<QueuedDownload>()
     private val downloadRegistry by lazy { DownloadRegistry(this) }
     private val downloads = AndroidDownloadDenemesi(
         this,
@@ -115,7 +116,8 @@ class MainActivity : ComponentActivity() {
             savedFiles.removeAll { it.uri == file.uri }
             savedFiles.add(0, file)
             while (savedFiles.size > 100) savedFiles.removeAt(savedFiles.lastIndex)
-        }
+        },
+        onQueue = { queue -> queuedDownloads.clear(); queuedDownloads.addAll(queue) }
     )
     // Safe to create only when onCreate/onResume has attached the Activity Context.
     private val updater by lazy { BrowserUpdateManager(this) }
@@ -462,9 +464,11 @@ class MainActivity : ComponentActivity() {
             DownloadsScreen(
                 files = savedFiles,
                 active = activeDownload,
+                queued = queuedDownloads,
                 onBack = ::hideDownloads,
                 onOpen = ::openDownloadedFile,
                 onCancelActive = downloads::cancelActive,
+                onCancelQueued = downloads::cancelQueued,
                 onClear = ::confirmClearDownloadedFiles
             )
         }
@@ -564,6 +568,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+        if (intent?.action == EymenDownloadService.OPEN_DOWNLOADS) {
+            root.post { showDownloads() }
         }
     }
 
@@ -1821,6 +1828,10 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.action == EymenDownloadService.OPEN_DOWNLOADS) {
+            showDownloads()
+            return
+        }
         GeckoMotorDenemesi.urlFromIntent(intent)?.let { url ->
             // Links from another app never silently enter an existing private tab.
             if (activeTab?.privateMode == true) createTab(false, url)
@@ -1888,6 +1899,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         // UI status polling does not run while the Activity is hidden.
         vpn.stopUiMonitoring()
+        downloads.pauseObserving()
         // Synchronous write at the lifecycle boundary for process/phone death.
         if (::view.isInitialized) saveNormalWorkspace(durable = true)
         super.onStop()
@@ -1895,6 +1907,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        downloads.observe()
+        savedFiles.clear()
+        savedFiles.addAll(downloadRegistry.items())
         if (::prefs.isInitialized) updater.onResumed()
         if (vpnScreenVisible) vpn.startUiMonitoring()
         else vpn.refreshState()

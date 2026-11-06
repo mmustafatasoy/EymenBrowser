@@ -1,6 +1,19 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-04
+Son güncelleme: 2026-11-06
+
+## Güncel devam noktası — Android indirme kuyruğu (2026-11-06)
+
+- GitHub'da doğrulanan son imzalı sürüm: **v1.0.15**. Önceki aşağıdaki günlük bölümleri tarihseldir; güncel durum için bu bölümü esas al.
+- Son kullanıcı talebi: VPN tarayıcı sohbetini profesyonelce devam ettir. Onaylı açık mavi/beyaz ana sayfa, siteyle aynı A logosu, kamera/sistem güvenli alanı ve üst üç nokta menüsü korunur.
+- **Bu değişiklik:** Android'de özellik 33/34 için uygulama kapsamlı, tek aktif + en çok üç bekleyen dosya kuyruğu. İndirme aktarımı Activity yerine `DownloadCoordinator` ve `dataSync` foreground service tarafından tutulur. Tüm işler kullanıcının indirme onayından sonra başlar.
+- İndirilenler ekranında aktif dosya ile sıradaki dosyalar ve iptal işlemleri; Android bildiriminde gerçek ilerleme, kuyruğun boyutu ve tümünü iptal. Bildirime dokununca İndirilenler açılır. Android 13+ bildirim izni ilk indirme sırasında bir kez istenir; reddetmek dosyanın kaydedilmesini engellemez.
+- Normal arka plana alma `downloads.dispose()` ile aktarımı durdurmaz. UI gözlemcisi `onStop`ta çıkar, `onResume`da gerçek durum ve tamamlanan dosyalarla yenilenir. Servis Activity referansı tutmaz.
+- Yalnız GeckoView'un orijinal yanıt akışı tüketilir. URL/çerez/oturum başka istemciye aktarılmaz. Kuyruk işlem belleğindedir; süreç öldürülünce veya cihaz yeniden başlayınca otomatik devam **yoktur**. Gizli indirmeler de kullanıcının açık kaydetme onayıyla normal dosya olarak kalır; sayfa URL'si kuyruğa/jurnale yazılmaz.
+- Android 8/9 SAF dosyaları sıraya alınmadan kullanıcı tarafından seçilir; iptal, sıra reddi ve hata durumunda eksik dosyayı silme en iyi çabadır. Android 10+ hatalı/iptal edilmiş MediaStore dosyası silinir.
+- Android 15/16 `dataSync` zaman sınırında `onTimeout` derhal servisi durdurur; ağ akışı kapatma ve dosya temizliği UI iş parçacığını engellemez. Kuyruk boşken servis kapanır; `START_NOT_STICKY` kullanılır. Bildirimler kilit ekranında dosya adını gizler.
+- **Doğrulama:** Yerel mevcut 11 kaynak/gizlilik/uyumluluk denetimi ve JS testleri geçti. Ek FIFO, kapasite, yarış/kapanış kimliği, iptal ve bozuk akış/disk hatası JVM testleri eklendi; gerçek Gradle test/derleme sonucu GitHub CI'da doğrulanacak.
+- **Sıradaki iş:** JVM + üç ABI derlemesini doğrula; Android 15/16 açılış/görsel regresyonunu kontrol et. Başarılı kapılardan sonra aynı üretim sertifikasıyla **v1.0.16** yayımla. Fiziksel telefon, ekran kapalı büyük dosya, SAF sağlayıcıları ve VPN altında aktarım kabulü denenmedi; tamamlanmış sayılmaz.
 
 ## Mevcut aşama
 - **Aşama 1 motor denemesi genel Kapı 1 açısından açık; S-001 kullanıcı onayıyla yalnız Android telefon Aşama 2 arayüz kodlaması BAŞLADI.**

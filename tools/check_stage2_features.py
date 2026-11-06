@@ -11,6 +11,7 @@ motor = (root / "android/core-motor/src/main/java/com/eymen/browser/motor/GeckoM
 shield = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/ShieldPanel.kt").read_text()
 downloads = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/DownloadsScreen.kt").read_text()
 download_engine = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt").read_text()
+download_coordinator = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/DownloadCoordinator.kt").read_text()
 registry = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/DownloadRegistry.kt").read_text()
 settings = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/SettingsScreen.kt").read_text()
 
@@ -62,12 +63,12 @@ assert 'onModeChange(isStrict)' in shield
 assert 'shield_count_scope' in shield
 
 
-assert 'bytes = bytes' in download_engine
-assert 'savedAt = System.currentTimeMillis()' in download_engine
-assert 'val completed = SavedDownload(' in download_engine
-assert 'registry.record(completed)' in download_engine
+assert 'bytes = bytes' in download_coordinator
+assert 'savedAt = System.currentTimeMillis()' in download_coordinator
+assert 'completed = SavedDownload(' in download_coordinator
+assert 'registry.record(candidate)' in download_coordinator
 # Activity's ContextWrapper has no base Context during MainActivity property initialization.
-assert 'private val registry by lazy { DownloadRegistry(activity.applicationContext) }' in download_engine
+assert 'private val coordinator by lazy { DownloadCoordinator.get(activity.applicationContext) }' in download_engine
 assert 'private val registry = DownloadRegistry(activity.applicationContext)' not in download_engine
 assert 'if (!file.uri.startsWith("content://")' in registry
 assert 'fun clearListOnly()' in registry
