@@ -246,5 +246,10 @@
   "bank_external_security_warning": "Uyarı: Uygulamanın gerçekten bu bankaya ait olduğunu EYMEN Browser doğrulamadı. Resmî uygulama olduğunu kontrol etmeden devam etme.",
   "menu_open_other_browser": "Başka tarayıcıda aç",
   "menu_open_other_browser_hint": "Web bankacılığı",
-  "bank_browser_handoff_notice": "Bankanın resmî HTTPS sitesini seçtiğin tarayıcıda açabilirsin. Hesap bilgilerini yalnızca bankanın gerçek sitesine gir."
+  "bank_browser_handoff_notice": "Bankanın resmî HTTPS sitesini seçtiğin tarayıcıda açabilirsin. Hesap bilgilerini yalnızca bankanın gerçek sitesine gir.",
+  "download_active": "Devam eden indirme",
+  "download_size_unknown": "Toplam boyut bilinmiyor",
+  "download_cancel_active": "İndirmeyi iptal et",
+  "download_cancelling": "İndirme iptal ediliyor…",
+  "download_incomplete_saf": "İndirme iptal edildi. Android 8–9'da seçilen dosya konumunda eksik dosya kalmış olabilir."
 }
