@@ -222,5 +222,8 @@
   "vpn_no_fake": "Android VPN simgesi veya yerel tünelin açılması, uzaktaki sunucunun çalıştığını kanıtlamaz. Yakın tarihli WireGuard el sıkışması ayrı denetlenir.",
   "vpn_dual_stack": "Güvenlik için IPv4 ve IPv6 tam tünel rotaları, iki IP adresi ve VPN DNS zorunludur. Başka uygulamaların trafiği yönlendirilmez.",
   "vpn_saved_crypt": "Sunucu anahtarı Android Keystore ile şifrelenir; APK veya GitHub'a eklenmez.",
-  "vpn_privacy_note": "Bağlantı sunucunuzun güvenliğine bağlıdır. DNS/IPv6 sızıntısı ve yeniden bağlanma testi gerçek telefonda yapılmalıdır."
+  "vpn_privacy_note": "Bağlantı sunucunuzun güvenliğine bağlıdır. DNS/IPv6 sızıntısı ve yeniden bağlanma testi gerçek telefonda yapılmalıdır.",
+  "vpn_importing": "VPN dosyası şifrelenerek içe aktarılıyor",
+  "vpn_always_on_unavailable": "Bu sürümde Android 'Her zaman açık VPN' modu etkinleştirilmez. Bağlantı koparsa trafik sistem tarafından otomatik engellenmeyebilir.",
+  "vpn_monitoring": "VPN ekranı açıkken sunucu el sıkışması yaklaşık 15 saniyede bir denetlenir. Eski yanıtlar bağlantı kanıtı sayılmaz."
 }
