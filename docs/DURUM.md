@@ -14,6 +14,7 @@ Son güncelleme: 2026-11-06
 - Açık kaynak lisans/notları uygulamanın Hakkında bölümüne eklendi. Türkçe/İngilizce ana ekran, araç çubuğu ve menü metinleri kaynak anahtarlarına bağlandı.
 - Araçlar derlemesinde yeni yerelleştirilmiş menüdeki eksik `menu_reload` anahtarı düzeltildi.
 - Son derlemede dil alanının Kotlin setter’ı ile aynı JVM adına sahip callback `updateLanguage` olarak ayrıldı; özellik davranışı korunur.
+- UI testi her iki Android sürümünde gerçek popup sekmesine geçişe ulaştı. Sonraki test okuması `GeckoSession.isOpen()` ana iş parçacığı gerektirdiği için durdu; üretim kodu değil test okuyucusu ana iş parçacığına alındı.
 - Yeni gerçek UI kabulü: HTTPS sayfasında açılır pencere/opener/kapanış; bilinen çerez reddet düğmesine yerleşik eklentinin gerçek tıklaması; gerçek Gecko çerez/DOM deposunu temizleme; motorun parmak izi/HTTPS/çerez tercihleri; Android otomatik doldurma katılımı; Mozilla imzalı eklentiyi gerçekten kurma/açma/kapama/kaldırma; ebeveyn PIN’inin yanlış/doğru değerleri ve gizli çocuk oturumu; yerel Android QR görüntüsü çözme; gerçek Activity dil değişimi sınanacak. Banka/hesap verisi kullanılmaz. Bu kabul henüz geçmedi.
 - Bu düzeltme henüz derleme/gerçek popup etkileşim testinde sınanmadı. Son imzalı yayın v1.0.17; bankada kişisel giriş/para işlemi yapılmadı.
 

@@ -224,15 +224,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(label(R.string.addon_install));
         awaitLong(() -> find(label(R.string.addon_permissions), false) != null, "Mozilla-signed XPI reaches native permission prompt", 90000);
         click(label(R.string.addon_install));
-        awaitLong(() -> !addons.getItems().isEmpty() && !addons.getBusy(), "real Mozilla-signed extension installed", 90000);
+        awaitLong(() -> uiCheck(() -> !addons.getItems().isEmpty() && !addons.getBusy()), "real Mozilla-signed extension installed", 90000);
         String addOnName = addons.getItems().get(0).metaData.name;
         scrollClick(addOnName);
-        await(() -> !addons.getItems().get(0).metaData.enabled, "installed extension disabled through Gecko");
+        await(() -> uiCheck(() -> !addons.getItems().isEmpty() && !addons.getItems().get(0).metaData.enabled), "installed extension disabled through Gecko");
         click(addOnName);
-        await(() -> addons.getItems().get(0).metaData.enabled, "installed extension re-enabled through Gecko");
+        await(() -> uiCheck(() -> !addons.getItems().isEmpty() && addons.getItems().get(0).metaData.enabled), "installed extension re-enabled through Gecko");
         capture("extensions-installed.png", true);
         scrollClick(label(R.string.addon_remove)); click(activity.getString(android.R.string.ok));
-        await(() -> addons.getItems().isEmpty(), "real extension uninstalled");
+        await(() -> uiCheck(() -> addons.getItems().isEmpty()), "real extension uninstalled");
         click(label(R.string.back)); click(label(R.string.back));
 
         openSettingsItem(R.string.settings_child_mode);
@@ -342,7 +342,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> "Eymen popup fixture".equals(title.get()), "in-page popup fixture ready");
         tapBrowserCenter();
         await(() -> currentSession() != parent, "user-clicked sign-in popup attached without app crash");
-        require(currentSession().isOpen(), "Gecko opened the popup session before the view attached");
+        org.mozilla.geckoview.GeckoSession popup = currentSession();
+        require(uiCheck(popup::isOpen), "Gecko opened the popup session before the view attached");
         await(() -> "Eymen opener verified".equals(title.get()), "popup can write and reach its live parent");
         waitForIdleSync(); SystemClock.sleep(350);
         tapBrowserCenter();
@@ -356,6 +357,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             view.getLocationOnScreen(point); point[0] += view.getWidth() / 2; point[1] += view.getHeight() / 2;
         } catch (Exception e) { throw new RuntimeException(e); } });
         tapAt(point[0], point[1]);
+    }
+    private boolean uiCheck(BooleanSupplier condition) {
+        java.util.concurrent.atomic.AtomicBoolean result = new java.util.concurrent.atomic.AtomicBoolean();
+        runOnMainSync(() -> result.set(condition.getAsBoolean()));
+        return result.get();
     }
     private String label(int resource) { return activity.getString(resource); }
     private static String text(AccessibilityNodeInfo node) {
