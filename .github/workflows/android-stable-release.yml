@@ -6,12 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.11"
-  # One-time reviewed release request. Ordinary code pushes never publish.
-  push:
-    branches: [main]
-    paths:
-      - '.github/release-requests/v1.0.11.txt'
+        default: "1.0.12"
 permissions:
   contents: write
 concurrency:
@@ -46,7 +41,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.11' }}
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
