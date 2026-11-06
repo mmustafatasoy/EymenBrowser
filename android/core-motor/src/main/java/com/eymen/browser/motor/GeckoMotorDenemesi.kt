@@ -8,6 +8,7 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebResponse
@@ -125,13 +126,37 @@ object GeckoMotorDenemesi {
         initialLoad: Boolean = true,
         onTitle: (String?) -> Unit = {},
         trackingProtection: Boolean = false,
-        onBlocked: (Int) -> Unit = { _ -> Unit }
+        onBlocked: (Int) -> Unit = { _ -> Unit },
+        onExternalAppLink: (String, String?, Boolean) -> Boolean = { _, _, _ -> false }
     ): GeckoSession {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
             .useTrackingProtection(trackingProtection)
             .build()
         val session = GeckoSession(settings)
+        // Bank and other mobile apps often publish intent:// or custom app
+        // links. GeckoView cannot launch them without the host application's
+        // explicit NavigationDelegate. HTTPS navigation remains unchanged.
+        session.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            override fun onLoadRequest(
+                session: GeckoSession,
+                request: GeckoSession.NavigationDelegate.LoadRequest
+            ): GeckoResult<AllowOrDeny>? {
+                val uri = request.uri
+                val scheme = try {
+                    URI(uri).scheme?.lowercase(Locale.ROOT)
+                } catch (_: Exception) { null }
+                // Ordinary websites and internal Gecko URLs stay in Gecko.
+                if (scheme in setOf("https", "http", "about", "data", "blob")) return null
+                // Treat unsupported external schemes as handled, even when
+                // denied by policy, so no untrusted handler is auto-launched.
+                if (scheme != null) {
+                    onExternalAppLink(uri, request.triggerUri, request.hasUserGesture)
+                    return GeckoResult.fromValue(AllowOrDeny.DENY)
+                }
+                return null
+            }
+        }
         session.setContentBlockingDelegate(object : ContentBlocking.Delegate {
             override fun onContentBlocked(session: GeckoSession, event: ContentBlocking.BlockEvent) {
                 // Do not count "could have blocked" or allowed resources.
