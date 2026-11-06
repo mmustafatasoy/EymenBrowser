@@ -369,6 +369,9 @@ internal fun LightBrowserHome(
     val keyboard = LocalSoftwareKeyboardController.current
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxHeight < 650.dp
+        // Capture the BoxWithConstraints maxWidth before entering nested
+        // Column scopes; otherwise Kotlin's DSL receiver hides maxWidth.
+        val brandShiftDp = if (menuOpen) maxWidth * -0.15f else 0.dp
         val topSpace = if (compact) 76.dp else 101.dp
         val blockGap = if (compact) 14.dp else 22.dp
         val brandSize = if (compact) 78.dp else 94.dp
@@ -428,7 +431,7 @@ internal fun LightBrowserHome(
                     // In the approved menu-open reference, the logo/title
                     // occupy the left ~70% of the screen, leaving clear
                     // visual space for the top-right popup.
-                    Modifier.offset(x = if (menuOpen) maxWidth * -0.15f else 0.dp),
+                    Modifier.offset(x = brandShiftDp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
