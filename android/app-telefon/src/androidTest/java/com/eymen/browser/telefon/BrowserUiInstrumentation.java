@@ -241,9 +241,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
             if (!node.refresh()) continue;
-            if (node.isVisibleToUser() && matches(node, label)) {
+            if (node.isVisibleToUser() && !editorNode(node) && matches(node, label)) {
                 AccessibilityNodeInfo action = actionTarget(node);
-                if (action != null) return action;
+                if (action != null && !editorNode(action)) return action;
             }
             for (int i = 0; i < node.getChildCount(); i++) {
                 AccessibilityNodeInfo child = node.getChild(i);
