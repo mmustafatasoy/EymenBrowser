@@ -15,6 +15,11 @@
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+            <!-- No auto-restore callback on Android boot yet. Opt out of
+                 Always-on until persistent system-start reconnection is safe;
+                 otherwise Android may offer a misleading lockdown toggle. -->
+            <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
+                android:value="false" />
         </service>
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.updateprovider"
