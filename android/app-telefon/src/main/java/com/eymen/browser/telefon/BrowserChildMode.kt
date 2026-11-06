@@ -104,9 +104,12 @@ internal class BrowserChildMode(private val activity: ComponentActivity, private
             }.setOnDismissListener { first.text.clear() }.show()
     }
     private fun pinField() = EditText(activity).apply {
-        inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        importantForAutofill = android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        // setSingleLine replaces TextView's transformation method. Configure
+        // it first, then apply password semantics and masking explicitly.
         setSingleLine(true)
+        inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+        importantForAutofill = android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
     }
     private fun saveHosts() { prefs.edit().putStringSet("hosts", allowed.toSet()).commit() }
     fun stop() { dialog?.dismiss(); dialog = null }

@@ -648,7 +648,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        if (intent?.action == EymenDownloadService.OPEN_DOWNLOADS) {
+        if (savedInstanceState == null && intent?.action == EymenDownloadService.OPEN_DOWNLOADS) {
             root.post { showDownloads() }
         }
         if (savedInstanceState?.getBoolean("language_settings_visible", false) == true) {
