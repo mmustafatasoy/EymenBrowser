@@ -225,5 +225,11 @@
   "vpn_privacy_note": "Security depends on your server. DNS/IPv6 leaks and reconnection must be tested on a real phone.",
   "vpn_importing": "Importing and encrypting VPN file",
   "vpn_always_on_unavailable": "Android Always-on VPN is deliberately disabled in this version. If the tunnel disconnects, Android may allow direct traffic.",
-  "vpn_monitoring": "While this page is open, the peer handshake is checked about every 15 seconds. Old handshakes are not proof of current connectivity."
+  "vpn_monitoring": "While this page is open, the peer handshake is checked about every 15 seconds. Old handshakes are not proof of current connectivity.",
+  "vpn_received": "Tunnel received",
+  "vpn_sent": "Tunnel sent",
+  "vpn_last_handshake": "Last server handshake",
+  "vpn_seconds_ago": "seconds ago",
+  "vpn_never": "Not yet available",
+  "vpn_stats_note": "These are real WireGuard tunnel counters. They do not prove there are no DNS or IP leaks."
 }
