@@ -242,5 +242,6 @@
   "bank_external_confirm": "Uygulamayı aç",
   "bank_https_handoff_prompt": "Yalnızca bankanın resmî uygulaması yüklüyse seç. Şifre, SMS kodu veya hesap bilgilerini bu tarayıcıya ait olmayan bir ekranda girmeden önce uygulamayı doğrula.",
   "bank_js_prompt_title": "Web sitesinin mesajı",
-  "bank_js_cancel": "İptal"
+  "bank_js_cancel": "İptal",
+  "bank_external_security_warning": "Uyarı: Uygulamanın gerçekten bu bankaya ait olduğunu EYMEN Browser doğrulamadı. Resmî uygulama olduğunu kontrol etmeden devam etme."
 }
