@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.14"
+  # One-shot reviewed request; signed production release is still gated by
+  # source checks, JVM tests, ABI builds and original-signature upgrade.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.14.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +47,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.14' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -339,6 +345,17 @@ jobs:
             resmi uygulama sahipligi, banka cihaz guvenligi,
             Play Integrity, biyometri ve bankaya ozel giris islemeleri
             atlatilmaz. Tum banka girislerinin calistigi iddia edilmez.
+          - v1.0.14: Kullanici tiklamasiyla acilan guvenli HTTPS
+            kimlik dogrulama pencereleri icin yeni GeckoSession olusturulur;
+            window.open ve target blank akisi bos sekmede takilmaz.
+          - Otomatik acilir pencereler reddedilir. Gizli sekmenin
+            gizlilik modu korunur; normal sekme sayisi sinirlidir.
+          - Baska tarayicida ac secenegi Android uygulama secicisini
+            acarak resmi HTTPS web bankaciligi sayfasina gecis saglar.
+          - Tarayicilar arasi sifre/cerez/oturum bilgileri aktarilmaz.
+          - Banka uygulamalarinin kendi cihaz kaydi, biyometri,
+            FIDO ve cihaz guvenligi testleri atlatilmaz.
+            Tum bankalarin girisinin duzeldigi iddia edilmez.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
