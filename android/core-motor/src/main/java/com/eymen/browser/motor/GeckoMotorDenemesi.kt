@@ -147,7 +147,7 @@ object GeckoMotorDenemesi {
                     URI(uri).scheme?.lowercase(Locale.ROOT)
                 } catch (_: Exception) { null }
                 // Ordinary websites and internal Gecko URLs stay in Gecko.
-                if (scheme in setOf("https", "http", "about", "data", "blob")) return null
+                if (scheme in setOf("https", "http", "about", "data", "blob", "javascript")) return null
                 // Treat unsupported external schemes as handled, even when
                 // denied by policy, so no untrusted handler is auto-launched.
                 if (scheme != null) {
