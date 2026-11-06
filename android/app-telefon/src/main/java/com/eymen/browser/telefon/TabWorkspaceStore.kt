@@ -39,12 +39,13 @@ internal class TabWorkspaceStore(context: Context) {
 
     internal fun safeHttpsUrl(candidate: String?): String? {
         if (candidate.isNullOrBlank() || candidate.length > MAX_URL_CHARS ||
-            candidate.any { it.isWhitespace() || it.isISOControl() }
+            candidate.any { it.isWhitespace() || it.code < 32 || it.code == 127 }
         ) return null
         return try {
             val parsed = URI(candidate)
-            if (parsed.scheme != "https" || parsed.host.isNullOrBlank() ||
-                parsed.userInfo != null || parsed.fragment != null
+            if (!parsed.scheme.equals("https", ignoreCase = true) ||
+                parsed.host.isNullOrBlank() ||
+                parsed.userInfo != null
             ) null else candidate
         } catch (_: Exception) {
             null
