@@ -66,6 +66,9 @@ assert 'tabs.firstOrNull { it.id == tabId && !it.privateMode }' in main
 assert 'onNewGroup = ::promptNewTabGroup' in main
 assert 'onAssignGroup = ::promptTabGroupSelection' in main
 assert 'onUndoClose = ::restoreLastClosedNormalTab' in main
+assert 'val wasOverviewOpen = overviewShowing' in main
+assert 'if (wasOverviewOpen && ::tabsLayer.isInitialized)' in main
+assert 'openTabOverview(false)' in main
 assert 'groups: List<TabGroupPreview>' in tabs
 assert 'undoAvailable: Boolean' in tabs
 assert 'selectedGroupId == null || tab.groupId == selectedGroupId' in tabs
