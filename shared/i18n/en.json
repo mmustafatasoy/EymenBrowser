@@ -243,5 +243,8 @@
   "bank_https_handoff_prompt": "Select the bank's official installed app only. Verify it before entering passwords, SMS codes, or account information outside this browser.",
   "bank_js_prompt_title": "Website message",
   "bank_js_cancel": "Cancel",
-  "bank_external_security_warning": "Warning: EYMEN Browser has NOT verified that the target app belongs to this bank. Do not proceed unless it is the official app."
+  "bank_external_security_warning": "Warning: EYMEN Browser has NOT verified that the target app belongs to this bank. Do not proceed unless it is the official app.",
+  "menu_open_other_browser": "Open in another browser",
+  "menu_open_other_browser_hint": "Web banking",
+  "bank_browser_handoff_notice": "Open the bank's official HTTPS website in your chosen browser. Enter credentials only on the bank's real website."
 }
