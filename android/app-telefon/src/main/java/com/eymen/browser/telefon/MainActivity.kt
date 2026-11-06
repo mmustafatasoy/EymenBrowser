@@ -234,7 +234,9 @@ class MainActivity : ComponentActivity() {
         cosmeticFilterWanted.value = prefs.getBoolean("cosmetic_filter_wanted", false)
         GeckoMotorDenemesi.configureTrackerProtection(this, strictShieldWanted.value)
         initializeCosmeticExtension()
-        val incomingUrl = GeckoMotorDenemesi.urlFromIntent(intent)
+        // A locale recreation must restore the workspace rather than replay
+        // the external URL which originally launched this Activity.
+        val incomingUrl = if (savedInstanceState == null) GeckoMotorDenemesi.urlFromIntent(intent) else null
 
         root = FrameLayout(this)
         updateSystemBarsAppearance()
@@ -649,6 +651,16 @@ class MainActivity : ComponentActivity() {
         if (intent?.action == EymenDownloadService.OPEN_DOWNLOADS) {
             root.post { showDownloads() }
         }
+        if (savedInstanceState?.getBoolean("language_settings_visible", false) == true) {
+            openSettingsPage(BrowserSettingsPage.MAIN)
+            functionalSettingsPage = FunctionalSettingsPage.LANGUAGE
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("language_settings_visible",
+            settingsShowing && functionalSettingsPage == FunctionalSettingsPage.LANGUAGE)
+        super.onSaveInstanceState(outState)
     }
 
     /** Existing attached sessions are released, never closed on tab switches. */

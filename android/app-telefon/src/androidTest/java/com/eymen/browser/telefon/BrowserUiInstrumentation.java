@@ -202,7 +202,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         scrollClick(label(R.string.cookie_policy_partition));
         capture("privacy-settings.png", true);
         scrollClick(label(R.string.cookie_clear));
-        click(activity.getString(android.R.string.ok));
+        clickNativePositive();
         await(() -> !services.getClearing() && currentSession() != page, "clearing closes old Gecko sessions and finishes actual storage removal");
         click(label(R.string.back)); click(label(R.string.back));
         org.mozilla.geckoview.GeckoSession clean = currentSession();
@@ -240,7 +240,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         search(label(R.string.addon_url_hint), "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi");
         click(label(R.string.addon_install));
         awaitLong(() -> find(label(R.string.addon_permissions), false) != null, "Mozilla-signed XPI reaches native permission prompt", 90000);
-        click(label(R.string.addon_install));
+        clickNativePositive();
         awaitLong(() -> uiCheck(() -> !addons.getItems().isEmpty() && !addons.getBusy()), "real Mozilla-signed extension installed", 90000);
         String addOnName = addons.getItems().get(0).metaData.name;
         scrollClick(addOnName);
@@ -248,7 +248,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(addOnName);
         await(() -> uiCheck(() -> !addons.getItems().isEmpty() && addons.getItems().get(0).metaData.enabled), "installed extension re-enabled through Gecko");
         capture("extensions-installed.png", true);
-        scrollClick(label(R.string.addon_remove)); click(activity.getString(android.R.string.ok));
+        scrollClick(label(R.string.addon_remove)); clickNativePositive();
         await(() -> uiCheck(() -> addons.getItems().isEmpty()), "real extension uninstalled");
         click(label(R.string.back)); click(label(R.string.back));
 
@@ -304,7 +304,27 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> pinEditor() != null, "native parent PIN editor");
         Bundle args = new Bundle(); args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
         require(pinEditor().performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,args), "enter test-only PIN");
-        click(activity.getString(android.R.string.ok));
+        clickNativePositive();
+    }
+    private AccessibilityNodeInfo nativePositive() {
+        ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        while (!queue.isEmpty()) {
+            AccessibilityNodeInfo node = queue.removeFirst();
+            if (!node.refresh()) continue;
+            if (node.isVisibleToUser() && node.isEnabled() && node.isClickable() &&
+                "android:id/button1".equals(node.getViewIdResourceName())) return node;
+            for (int i = 0; i < node.getChildCount(); i++) {
+                AccessibilityNodeInfo child = node.getChild(i);
+                if (child != null) queue.add(child);
+            }
+        }
+        return null;
+    }
+    private void clickNativePositive() throws Exception {
+        // Android's dialog theme uppercases labels (Tamam -> TAMAM).
+        // Use its real positive-button ID, independent of display casing.
+        await(() -> nativePositive() != null, "native confirmation positive button");
+        tap(nativePositive()); waitForIdleSync(); SystemClock.sleep(100);
     }
     private AccessibilityNodeInfo pinEditor() {
         AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
