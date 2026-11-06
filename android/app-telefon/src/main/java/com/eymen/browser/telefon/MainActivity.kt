@@ -512,9 +512,9 @@ class MainActivity : ComponentActivity() {
                     addressBottom = addressBottom,
                     visible = settingsShowing,
                     initialPage = settingsInitialPage,
-                    onSearchEngine = ::setSearchEngine,
-                    onDayMode = ::setDayMode,
-                    onAddressBottom = ::setAddressBottom,
+                    onSearchEngine = ::updateSearchEnginePreference,
+                    onDayMode = ::updateDayThemePreference,
+                    onAddressBottom = ::updateAddressPositionPreference,
                     onBack = ::hideSettings,
                     onAction = ::handleSettingsAction
                 )
@@ -590,6 +590,7 @@ class MainActivity : ComponentActivity() {
         initialUrl: String? = null,
         deferRestoreLoad: Boolean = false
     ) {
+        if (::root.isInitialized) hideBrowserKeyboard()
         if (!privateMode && tabs.count { !it.privateMode } >= TabWorkspaceStore.MAX_TABS) {
             Toast.makeText(this, "En fazla 32 normal sekme açılabilir.", Toast.LENGTH_SHORT).show()
             return
@@ -702,6 +703,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun activateTab(id: Long) {
+        if (::root.isInitialized) hideBrowserKeyboard()
         val tab = tabs.firstOrNull { it.id == id } ?: return
         if (activeId.value != id) {
             captureActiveTabThumbnail()
@@ -958,6 +960,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openTabOverview(devices: Boolean) {
+        if (::root.isInitialized) hideBrowserKeyboard()
         if (!::tabsLayer.isInitialized || videoFullScreen) return
         if (!devices) captureActiveTabThumbnail()
         devicesRequested.value = devices
@@ -1013,6 +1016,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openUrl(url: String) {
+        if (::root.isInitialized) hideBrowserKeyboard()
         val verified = GeckoMotorDenemesi.verifiedHttpsUrl(url)
         if (verified == null) {
             notice(R.string.invalid_address)
@@ -1505,20 +1509,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun setSearchEngine(engine: String) {
+    private fun updateSearchEnginePreference(engine: String) {
         if (engine !in listOf("Google", "DuckDuckGo", "Bing", "Yandex")) return
         searchEngine = engine
         prefs.edit().putString("search_engine", engine).apply()
     }
 
-    private fun setDayMode(day: Boolean) {
+    private fun updateDayThemePreference(day: Boolean) {
         dayMode.value = day
         prefs.edit().putBoolean("day_theme", day).apply()
         updateSystemBarsAppearance()
         updateChromeMargins()
     }
 
-    private fun setAddressBottom(bottom: Boolean) {
+    private fun updateAddressPositionPreference(bottom: Boolean) {
         addressBottom = bottom
         prefs.edit().putBoolean("address_at_bottom", bottom).apply()
         updateChromeMargins()
