@@ -22,7 +22,7 @@ import com.eymen.browser.tema.EymenPaths
 import com.eymen.browser.tema.EymenTokens as T
 
 internal enum class SettingsAction {
-    SHIELD, PASSWORDS, SEARCH_ENGINE, APPEARANCE, EXTENSIONS,
+    SHIELD, VPN, PASSWORDS, SEARCH_ENGINE, APPEARANCE, EXTENSIONS,
     SITE_PERMISSIONS, DOWNLOADS, LANGUAGE, CHILD_MODE, ABOUT
 }
 private data class SettingRow(
@@ -31,6 +31,7 @@ private data class SettingRow(
 )
 private val settingsRows = listOf(
     SettingRow(R.string.settings_shield, EymenPaths.kalkan, SettingsAction.SHIELD, true),
+    SettingRow(R.string.vpn_title, EymenPaths.kalkan, SettingsAction.VPN, true),
     SettingRow(R.string.settings_passwords, EymenPaths.kilit, SettingsAction.PASSWORDS),
     SettingRow(R.string.menu_settings_search, EymenPaths.ara, SettingsAction.SEARCH_ENGINE, true),
     SettingRow(R.string.settings_appearance, EymenPaths.ay, SettingsAction.APPEARANCE, true),
@@ -141,6 +142,7 @@ internal fun SettingsScreen(
         ) {
             filtered.forEach { row ->
                 val note = when (row.action) {
+                    SettingsAction.VPN -> stringResource(R.string.vpn_subtitle)
                     SettingsAction.SHIELD -> stringResource(
                         if (globalShield) R.string.settings_enabled else R.string.settings_disabled
                     )
