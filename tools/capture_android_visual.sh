@@ -206,22 +206,39 @@ adb exec-out screencap -p > visual-captures/T07-Acik-Menu.png
 python - <<'PY'
 from PIL import Image, ImageChops
 with Image.open("visual-captures/T03-Yeni-sekme.png") as original:
-    base = original.convert("RGB").crop((125, 90, 388, 585))
+    full_home = original.convert("RGB")
 with Image.open("visual-captures/T07-Acik-Menu.png") as current:
-    full = current.convert("RGB")
-    menu = full.crop((125, 90, 388, 585))
-    # The approved popup has no screen-darkening scrim. Check the real
-    # light-blue Back/Forward rows rather than requiring an old dark overlay.
-    highlighted = full.crop((191, 100, 372, 178))
-    blue = sum(
-        205 <= r < 239 and 215 <= g <= 248 and b > 246
-        for r, g, b in highlighted.getdata()
+    full_menu = current.convert("RGB")
+# The approved menu is narrow (~154px on this 390px density-160 fixture),
+# top-right aligned, and leaves the center-left home UNDIMMED.
+right_box = (228, 90, 389, 359)
+left_box = (125, 100, 205, 335)
+right_before = full_home.crop(right_box)
+right_after = full_menu.crop(right_box)
+right_diff = ImageChops.difference(right_before, right_after)
+right_fraction = sum(max(px) >= 24 for px in right_diff.getdata()) / (
+    right_diff.width * right_diff.height
+)
+left_before = full_home.crop(left_box)
+left_after = full_menu.crop(left_box)
+left_diff = ImageChops.difference(left_before, left_after)
+left_fraction = sum(max(px) >= 24 for px in left_diff.getdata()) / (
+    left_diff.width * left_diff.height
+)
+# Two highlighted navigation rows near the very top of the opened menu.
+highlighted = full_menu.crop((234, 90, 376, 143))
+blue = sum(
+    205 <= r < 239 and 215 <= g <= 248 and b > 246
+    for r, g, b in highlighted.getdata()
+)
+print(
+    f"Actual T07 compact popup: right delta={right_fraction:.3f}, "
+    f"left scrim delta={left_fraction:.3f}, highlighted pixels={blue}"
+)
+if right_fraction < 0.12 or blue < 3000 or left_fraction > 0.07:
+    raise SystemExit(
+        "Approved narrow/no-scrim three-dot menu failed its screenshot geometry"
     )
-diff = ImageChops.difference(base, menu)
-fraction = sum(max(p) >= 24 for p in diff.getdata()) / (diff.width * diff.height)
-print(f"Actual T07 top-right popup delta={fraction:.3f}, blue row pixels={blue}")
-if fraction < 0.12 or blue < 1100:
-    raise SystemExit("Approved three-dot popup with blue Back/Forward rows did not open")
 PY
 adb shell input keyevent 4
 sleep 1
