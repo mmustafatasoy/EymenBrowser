@@ -132,25 +132,37 @@ internal class EymenVpnConfigStore(private val context: Context) {
 
     fun load(): Config {
         val raw = file.readFully()
-        require(raw.size in (IV_LENGTH + 18)..MAX_ENCRYPTED_BYTES && raw[0] == 1.toByte()) {
-            "Şifreli WireGuard yapılandırması bozulmuş."
-        }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.DECRYPT_MODE,
-            encryptionKey(),
-            GCMParameterSpec(128, raw.copyOfRange(1, 1 + IV_LENGTH))
-        )
-        val plaintext = cipher.doFinal(raw.copyOfRange(1 + IV_LENGTH, raw.size))
         try {
-            return parse(plaintext)
+            require(raw.size in (IV_LENGTH + 18)..MAX_ENCRYPTED_BYTES &&
+                raw[0] == 1.toByte()
+            ) { "Şifreli WireGuard yapılandırması bozulmuş." }
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                encryptionKey(),
+                GCMParameterSpec(128, raw.copyOfRange(1, 1 + IV_LENGTH))
+            )
+            val ciphertext = raw.copyOfRange(1 + IV_LENGTH, raw.size)
+            val plaintext = try {
+                cipher.doFinal(ciphertext)
+            } finally {
+                ciphertext.fill(0)
+            }
+            try {
+                return parse(plaintext)
+            } finally {
+                plaintext.fill(0)
+            }
         } finally {
-            plaintext.fill(0)
+            // Also clear sensitive buffers on invalid-GCM/corrupt-file paths.
             raw.fill(0)
         }
     }
 
     fun clear() {
         file.delete()
+        // Remove the no-longer-needed non-exportable encryption key too.
+        KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+            .deleteEntry(alias)
     }
 }
