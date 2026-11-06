@@ -7,7 +7,7 @@ import vm from "node:vm";
 const source = fs.readFileSync(
   "android/app-telefon/src/main/assets/eymen-cosmetic/cosmetic.js", "utf8"
 );
-async function check({enabled, rejectCookies = false, knownButton = false, hiddenButton = false, shouldReject = false, hasRoot = true, isFrame = false}) {
+async function check({enabled, rejectCookies = false, knownButton = false, hiddenButton = false, shouldReject = false, hasRoot = true, isFrame = false, rawReply}) {
   const appended = [];
   const listeners = [];
   let rejected = 0;
@@ -31,7 +31,7 @@ async function check({enabled, rejectCookies = false, knownButton = false, hidde
         assert.deepEqual(JSON.parse(JSON.stringify(request)),
           {type:"cosmetic-policy-v1"});
         return shouldReject ? Promise.reject(new Error("offline")) :
-          Promise.resolve({enabled,rejectCookies});
+          Promise.resolve(rawReply === undefined ? JSON.stringify({enabled,rejectCookies}) : rawReply);
       }
     }
   };
@@ -65,4 +65,6 @@ assert.equal(rejectOnly.appended.length,0,"cookie rejection does not imply cosme
 assert.equal((await check({enabled:false,rejectCookies:false,knownButton:true})).rejected,0,"disabled rejection never clicks");
 assert.equal((await check({enabled:false,rejectCookies:true,knownButton:true,hiddenButton:true})).rejected,0,"hidden controls never clicked");
 assert.equal((await check({enabled:false,rejectCookies:true,knownButton:false})).rejected,0,"unknown consent controls never clicked");
+assert.equal((await check({enabled:true,rawReply:"invalid JSON"})).appended.length,0,"malformed native policy fails closed");
+assert.equal((await check({enabled:true,rawReply:{enabled:true}})).appended.length,0,"only serialized native policy is accepted");
 console.log("Cookie rejection: explicit visible reject only, independently enabled and fail-closed tests passed.");

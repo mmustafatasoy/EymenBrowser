@@ -72,7 +72,9 @@
   // GeckoView MessageSender.session identifies the real owning GeckoSession.
   try {
     browser.runtime.sendNativeMessage("eymen_cosmetic", { type: "cosmetic-policy-v1" })
-      .then(reply => {
+      .then(serialized => {
+        if (typeof serialized !== "string") return;
+        const reply = JSON.parse(serialized);
         if (reply && reply.enabled === true) installCosmeticStyle();
         if (reply && reply.rejectCookies === true) rejectKnownCookieDialog();
       })

@@ -493,10 +493,10 @@ class MainActivity : ComponentActivity() {
                 onCosmeticToggle = ::setCosmeticFilterEnabled,
                 onPrivacyToggle = settingsServices::set,
                 onManagePrivacy = {
-                    hideShield(); showSettings(); functionalSettingsPage = FunctionalSettingsPage.PRIVACY
+                    hideShield(); showSettings(); handleSettingsAction(SettingsAction.SHIELD)
                 },
                 onSitePermissions = {
-                    hideShield(); showSettings(); functionalSettingsPage = FunctionalSettingsPage.PERMISSIONS
+                    hideShield(); showSettings(); handleSettingsAction(SettingsAction.SITE_PERMISSIONS)
                 }
             )
         }
@@ -1677,8 +1677,11 @@ class MainActivity : ComponentActivity() {
                         // and the owning GeckoSession's privacy mode.
                         protectionFor(sender.url, tab.privateMode)
                     return GeckoResult.fromValue(
+                        // Gecko's event callback accepts primitive values, not
+                        // org.json.JSONObject. Serialize this private policy
+                        // reply across the native messaging boundary.
                         JSONObject().put("enabled", allowed && cosmeticFilterWanted.value)
-                            .put("rejectCookies", allowed && settingsServices.cookieReject) as Any
+                            .put("rejectCookies", allowed && settingsServices.cookieReject).toString() as Any
                     )
                 }
             },
@@ -1778,6 +1781,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openDownloadedFile(file: SavedDownload) {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(Uri.parse(file.uri), file.mimeType)
@@ -1808,6 +1812,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleMenuAction(action: MenuAction) {
+        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE)) {
+            notice(R.string.child_blocked); return
+        }
         hideBrowserMenu()
         when (action) {
             MenuAction.BOOKMARKS -> showBookmarks()
@@ -1945,6 +1952,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun shareCurrentPage() {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
         val url = GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url)
             ?.takeIf { it == activeTab?.url && !atHome.value }
         if (url == null) {

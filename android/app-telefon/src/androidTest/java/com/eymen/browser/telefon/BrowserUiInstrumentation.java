@@ -154,8 +154,21 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void advancedSettings() throws Exception {
         BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");
         java.util.concurrent.atomic.AtomicReference<String> pageTitle = new java.util.concurrent.atomic.AtomicReference<>("");
+        java.util.concurrent.atomic.AtomicInteger completedLoads = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.concurrent.atomic.AtomicBoolean testPageLoading = new java.util.concurrent.atomic.AtomicBoolean();
         org.mozilla.geckoview.GeckoSession page = currentSession();
         runOnMainSync(() -> {
+            org.mozilla.geckoview.GeckoSession.ProgressDelegate progress = page.getProgressDelegate();
+            page.setProgressDelegate(new org.mozilla.geckoview.GeckoSession.ProgressDelegate() {
+                @Override public void onPageStart(org.mozilla.geckoview.GeckoSession s, String url) {
+                    testPageLoading.set("https://example.com/".equals(url));
+                    progress.onPageStart(s, url);
+                }
+                @Override public void onPageStop(org.mozilla.geckoview.GeckoSession s, boolean success) {
+                    if (testPageLoading.getAndSet(false) && success) completedLoads.incrementAndGet();
+                    progress.onPageStop(s, success);
+                }
+            });
             org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s, String value) {
@@ -164,15 +177,19 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             });
             page.loadUri("https://example.com/");
         });
-        await(() -> pageTitle.get() != null && pageTitle.get().contains("Example Domain"), "HTTPS page for real privacy settings");
+        await(() -> completedLoads.get() > 0 && pageTitle.get() != null && pageTitle.get().contains("Example Domain"), "completed HTTPS page for real privacy settings");
+        await(() -> uiCheck(() -> Boolean.TRUE.equals(((androidx.compose.runtime.MutableState<?>)controller("cosmeticFilterReady")).getValue())), "bundled policy extension installed in the real engine");
         openSettingsItem(R.string.settings_shield);
+        int loadsBeforeToggle = completedLoads.get();
         click(label(R.string.shield_cookie_dialog));
         await(services::getCookieReject, "cookie rejection preference enabled");
-        await(() -> pageTitle.get() != null && pageTitle.get().contains("Example Domain"), "privacy reload returns HTTPS page");
+        await(() -> completedLoads.get() > loadsBeforeToggle, "privacy change completes a fresh HTTPS reload");
         String fixture = "javascript:void(function(){var b=document.createElement('button');b.id='onetrust-reject-all-handler';b.textContent='Reject all test cookies';b.onclick=function(){document.title='Eymen cookie rejected';};document.body.prepend(b);document.cookie='eymen_ui_cookie=1;SameSite=Lax;Secure';localStorage.setItem('eymen_ui_cookie','1');}())";
         waitForIdleSync(); SystemClock.sleep(500);
         runOnMainSync(() -> page.loadUri(fixture));
         await(() -> "Eymen cookie rejected".equals(pageTitle.get()), "real bundled extension clicks explicit reject, without accepting");
+        runOnMainSync(() -> page.loadUri("javascript:void(document.title=(document.cookie.includes('eymen_ui_cookie=')&&localStorage.getItem('eymen_ui_cookie'))?'Eymen storage seeded':'Eymen storage missing')"));
+        await(() -> "Eymen storage seeded".equals(pageTitle.get()), "test cookie and DOM storage really exist before clearing");
         click(label(R.string.shield_fingerprint));
         await(() -> Boolean.TRUE.equals(runtime().getSettings().getFingerprintingProtection()), "fingerprinting toggle changes actual Gecko runtime");
         click(label(R.string.shield_fingerprint));
@@ -245,6 +262,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         scrollClick(label(R.string.child_enable)); enterPin("947251");
         await(() -> childPrefs.getBoolean("enabled", false), "PIN enables real child mode");
         require(currentSession().getSettings().getUsePrivateMode(), "child browsing uses a real private Gecko session");
+        runOnMainSync(() -> {
+            try {
+                java.lang.reflect.Method method = MainActivity.class.getDeclaredMethod("handleMenuAction", MenuAction.class);
+                method.setAccessible(true); method.invoke(activity, MenuAction.QR);
+            } catch (Exception error) { throw new RuntimeException(error); }
+        });
+        waitForIdleSync(); SystemClock.sleep(200);
+        require(getTargetContext().getPackageName().contentEquals(getUiAutomation().getRootInActiveWindow().getPackageName()),
+            "child mode does not hand off to camera or its permission activity");
         capture("child-mode.png", true);
         click(label(R.string.child_disable)); enterPin("000000");
         await(() -> find(label(R.string.child_wrong_pin), false) != null, "incorrect parent PIN is rejected");
