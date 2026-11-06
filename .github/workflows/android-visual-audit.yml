@@ -9,6 +9,7 @@ on:
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/TabOverview.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/TabWorkspaceStore.kt'
       - 'tools/capture_android_visual.sh'
       - 'tools/compare_approved_screenshots.py'
       - 'shared/i18n/tr.json'
