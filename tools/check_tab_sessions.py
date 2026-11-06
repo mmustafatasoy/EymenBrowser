@@ -117,7 +117,7 @@ assert 'if (tab.privateMode || tab.home || tab.pendingRestoreUrl != null' in mai
 assert 'view.capturePixels().accept(' in main
 assert 'tab.thumbnail?.asImageBitmap()' in main
 assert 'tab.thumbnail = null' in main
-assert 'tab.thumbnail: ImageBitmap? = null' in tabs
+assert 'val thumbnail: ImageBitmap? = null' in tabs
 assert 'if (!tab.privateMode && tab.thumbnail != null)' in tabs
 assert 'ContentScale.Crop' in tabs
 
