@@ -39,6 +39,28 @@ assert 'pageBlocked.toString()' in shield
 assert 'tabBlocked.toString()' in shield
 assert 'listOf(' in shield
 assert 'shield_scope_explanation' in shield
+# v1.0.9: an accurate GeckoView category count, not a synthetic ad counter.
+assert 'ContentBlocking.AntiTracking.STRICT' in motor
+assert 'ContentBlocking.AntiTracking.DEFAULT' in motor
+assert 'ContentBlocking.EtpLevel.STRICT' in motor
+assert 'fun configureTrackerProtection(context: Context, strict: Boolean)' in motor
+assert 'if (event.isBlocking) onBlocked(event.antiTrackingCategory)' in motor
+assert 'private val strictShieldWanted = mutableStateOf(false)' in main
+assert 'strictShieldWanted.value = prefs.getBoolean("shield_strict_mode", false)' in main
+assert 'GeckoMotorDenemesi.configureTrackerProtection(this, strictShieldWanted.value)' in main
+assert 'GeckoMotorDenemesi.configureTrackerProtection(this, strict)' in main
+assert 'setShieldForCurrentSite(enabled: Boolean)' in main
+assert 'if (current.privateMode)' in main
+assert 'category and ContentBlocking.AntiTracking.AD != 0' in main
+assert 'category and ContentBlocking.AntiTracking.ANALYTIC != 0' in main
+assert 'tab.adTrackerBlockedTab += 1' in main
+assert 'tab.analyticsBlockedTab += 1' in main
+assert 'tab.otherTrackerBlockedTab += 1' in main
+assert 'onModeChange = ::setShieldMode' in main
+assert 'onModeChange: (Boolean) -> Unit' in shield
+assert 'onModeChange(isStrict)' in shield
+assert 'shield_count_scope' in shield
+
 
 assert 'bytes = bytes' in download_engine
 assert 'savedAt = System.currentTimeMillis()' in download_engine
