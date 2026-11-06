@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         default: "1.0.10"
+  # Single checked release request; do not publish on ordinary code pushes.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.10.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +46,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.10' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -277,13 +282,25 @@ jobs:
             istisnalar yalniz bellek icindedir.
           - Yalnizca gercek GeckoView engelleme olaylarindan hesaplanan
             reklam takipcisi, analiz takipcisi ve diger engelleme sayilari.
-          - Bu koruma bilinen takipciler icindir; tum reklamlarin veya
-            kozmetik reklam bosluklarinin kaldirildigi iddia edilmez.
+          - Bilinen takipci listeleri kaynak engeller, tum reklamlarin
+            engellendigi iddia edilmez.
+          - v1.0.10: GeckoView'a APK icindeki EYMEN kozmetik WebExtension
+            guvenli ve hataya dayanikli bicimde kaydedilir.
+          - Koruma panelindeki istege bagli Beta secenegi, bilinen reklam
+            kutularini yalniz CSS ile gizler; ag isteklerini durdurmaz.
+          - Filtre varsayilan olarak kapalidir; modul kullanilamazsa
+            dugme etkinlesmez. Site korumasi kapaliysa o siteye uygulanmaz.
+          - Yerli politika: Mesajlar Gecko oturumuna, ust cerceveye ve
+            dogrulanmis HTTPS siteye baglanir; gizli oturumun adresi veya
+            cerez bilgileri eklentiye gonderilmez.
+          - Harici reklam listesi indirme, tum reklamlari engelleme veya
+            YouTube reklamlarini kaldirma bu surumde sunulmaz.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
           - Imza anahtari ayni kaldikca sonraki imzali surumler mevcut kurulum ustune guncellenebilir.
-          - VPN tuneli, tum eklentiler ve iOS/TV/PC bu Android telefon sürümünün kapsaminda degildir.
+          - Gercek VPN tuneli, harici eklenti magazasi ve iOS/TV/PC
+            bu Android telefon surumunun kapsaminda degildir.
 
           Bu surumde statik kaynak kontrolu, derleme, orijinal uretim imzasi,
           onceki yayinlanan APK ile paket/surum/imza uyumu ve dosya checksum testleri gecilir.
