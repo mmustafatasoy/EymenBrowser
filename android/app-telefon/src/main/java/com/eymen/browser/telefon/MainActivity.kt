@@ -1163,6 +1163,38 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
+    /**
+     * Interoperability escape hatch for banks that support ordinary web login
+     * in another full browser but reject this embedded GeckoView flow.
+     * The Android system chooser is user-controlled: no credentials, cookies,
+     * headers or session tokens are copied into the external browser.
+     */
+    private fun openCurrentPageInAnotherBrowser() {
+        val page = activeTab?.url
+        val verified = GeckoMotorDenemesi.verifiedHttpsUrl(page)
+            ?.takeIf { it == page && !atHome.value }
+        if (verified == null) {
+            notice(R.string.invalid_address)
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.menu_open_other_browser)
+            .setMessage(R.string.bank_browser_handoff_notice)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(verified)).apply {
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                }
+                try {
+                    startActivity(Intent.createChooser(intent,
+                        getString(R.string.menu_open_other_browser)))
+                } catch (_: Exception) {
+                    notice(R.string.bank_external_missing)
+                }
+            }
+            .show()
+    }
+
     private fun showHome(enabled: Boolean) {
         activeTab?.home = enabled
         atHome.value = enabled
@@ -1555,6 +1587,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
+            MenuAction.OPEN_BROWSER -> openCurrentPageInAnotherBrowser()
             MenuAction.THEME -> {
                 dayMode.value = !dayMode.value
                 prefs.edit().putBoolean("day_theme", dayMode.value).apply()
