@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         default: "1.0.7"
+  # One-shot trigger for the reviewed and compiled v1.0.7 tab manager.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.7.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +46,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.7' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
