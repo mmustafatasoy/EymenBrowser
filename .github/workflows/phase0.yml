@@ -35,6 +35,11 @@ jobs:
         run: python tools/check_menu_actions.py
       - name: T05 T08 T10 koruma indirme ayar regresyon denetimi
         run: python tools/check_stage2_features.py
+      - name: Gömülü görsel reklam modülü ve gizlilik sözleşmesi
+        run: |
+          python tools/check_cosmetic_extension.py
+          node --check android/app-telefon/src/main/assets/eymen-cosmetic/cosmetic.js
+          node tools/test_cosmetic_extension.mjs
       - name: Android imzali surum ve guncelleme guvenlik kontrati
         run: python tools/check_update_contract.py
       - uses: actions/upload-artifact@v4
