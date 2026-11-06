@@ -1091,7 +1091,8 @@ class MainActivity : ComponentActivity() {
         val description = getString(R.string.bank_external_prompt) + "\n\n" +
             getString(R.string.bank_external_origin) + ": " + safe.originHost + "\n" +
             getString(R.string.bank_external_target) + ": " +
-            (safe.packageName ?: safe.destinationScheme)
+            (safe.packageName ?: safe.destinationScheme) + "\n\n" +
+            getString(R.string.bank_external_security_warning)
         AlertDialog.Builder(this)
             .setTitle(R.string.bank_external_title)
             .setMessage(description)
