@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.speech.RecognizerIntent
 import android.content.Intent
 import android.net.Uri
+import android.net.VpnService
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -108,6 +109,21 @@ class MainActivity : ComponentActivity() {
     private val downloads = AndroidDownloadDenemesi(this)
     // Safe to create only when onCreate/onResume has attached the Activity Context.
     private val updater by lazy { BrowserUpdateManager(this) }
+    private val vpn by lazy { EymenWireGuardVpn.get(applicationContext) }
+    private val vpnImportLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) vpn.importConfig(uri)
+    }
+    private val vpnConsentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            vpn.connectWithUserPermission()
+        } else {
+            Toast.makeText(this, "Android VPN izni verilmedi; bağlantı açılmadı.", Toast.LENGTH_LONG).show()
+        }
+    }
     private val voiceSearchLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -127,6 +143,7 @@ class MainActivity : ComponentActivity() {
     private var shieldShowing = false
     private var downloadsShowing = false
     private var settingsShowing = false
+    private var vpnScreenVisible by mutableStateOf(false)
     private val globalShieldWanted = mutableStateOf(true)
     private val strictShieldWanted = mutableStateOf(false)
     private val cosmeticFilterWanted = mutableStateOf(false)
@@ -446,13 +463,31 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
         settingsLayer.setContent {
-            SettingsScreen(
-                globalShield = globalShieldWanted.value,
-                searchEngine = searchEngine,
-                dayMode = dayMode.value,
-                onBack = ::hideSettings,
-                onAction = ::handleSettingsAction
-            )
+            if (vpnScreenVisible) {
+                VpnSettingsScreen(
+                    status = vpn.status,
+                    configPresent = vpn.configPresent,
+                    message = vpn.message,
+                    onBack = { vpnScreenVisible = false },
+                    onImport = {
+                        vpnImportLauncher.launch(
+                            arrayOf("text/plain", "application/octet-stream", "*/*")
+                        )
+                    },
+                    onConnect = ::requestVpnConsent,
+                    onDisconnect = vpn::disconnect,
+                    onRefresh = vpn::refreshState,
+                    onDelete = ::confirmDeleteVpnConfiguration
+                )
+            } else {
+                SettingsScreen(
+                    globalShield = globalShieldWanted.value,
+                    searchEngine = searchEngine,
+                    dayMode = dayMode.value,
+                    onBack = ::hideSettings,
+                    onAction = ::handleSettingsAction
+                )
+            }
         }
         settingsLayer.visibility = View.GONE
         updateChromeMargins()
@@ -461,6 +496,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    settingsShowing && vpnScreenVisible -> vpnScreenVisible = false
                     settingsShowing -> hideSettings()
                     downloadsShowing -> hideDownloads()
                     shieldShowing -> hideShield()
@@ -1060,12 +1096,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hideSettings() {
+        vpnScreenVisible = false
         settingsShowing = false
         if (::settingsLayer.isInitialized) settingsLayer.visibility = View.GONE
     }
 
     private fun handleSettingsAction(action: SettingsAction) {
         when (action) {
+            SettingsAction.VPN -> {
+                vpnScreenVisible = true
+                vpn.refreshState()
+            }
             SettingsAction.SHIELD -> {
                 hideSettings()
                 showShield()
@@ -1079,6 +1120,35 @@ class MainActivity : ComponentActivity() {
             SettingsAction.ABOUT -> updater.check(manual = true)
             else -> Unit
         }
+    }
+
+    private fun requestVpnConsent() {
+        if (!vpn.configPresent) {
+            Toast.makeText(this, "Önce kendi WireGuard .conf dosyanı içe aktar.", Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            val request = VpnService.prepare(this)
+            if (request == null) {
+                vpn.connectWithUserPermission()
+            } else {
+                // Explicit system-managed user approval, never a fake dialog.
+                vpnConsentLauncher.launch(request)
+            }
+        } catch (_: Exception) {
+            Toast.makeText(this, "Android VPN izin penceresi açılamadı.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun confirmDeleteVpnConfiguration() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.vpn_remove)
+            .setMessage(R.string.vpn_saved_crypt)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                vpn.deleteConfiguration()
+            }
+            .show()
     }
 
     private fun initializeCosmeticExtension() {
@@ -1584,6 +1654,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::prefs.isInitialized) updater.onResumed()
+        vpn.refreshState()
     }
 
     override fun onDestroy() {
