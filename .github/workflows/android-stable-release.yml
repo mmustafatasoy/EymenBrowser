@@ -1,5 +1,8 @@
 name: EymenBrowser Android signed stable release
 on:
+  push:
+    branches: [main]
+    paths: ['.github/release-requests/android-v1.0.17.json']
   workflow_dispatch:
     inputs:
       version:
@@ -9,6 +12,7 @@ on:
         default: "1.0.17"
 permissions:
   contents: write
+  actions: read
 concurrency:
   # v1 held by a stuck GitHub emulator job and blocked later runs. This v2
   # group safely isolates recovery from the stale v1 queue.
@@ -16,6 +20,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   signed-phone-release:
+    if: "github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'release(android): request signed v1.0.17'"
     name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -39,9 +44,47 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.3.1"
+      - name: Verify reviewed source, acceptance workflows and both equivalent-source visual jobs
+        if: github.event_name == 'push'
+        run: |
+          python3 - <<'PYCODE'
+          import json, subprocess, os
+          from pathlib import Path
+          expected = "1a89d07ff7541910b2ee0d6a7d227f7fec19e800"
+          reviewed_request = {"version":"1.0.17","verified_source_sha":"1a89d07ff7541910b2ee0d6a7d227f7fec19e800","visual_jobs":[{"api":35,"run_id":42260046060,"job_id":128037274989,"source_sha":"a7bcd59b1729333992436b555f6df5f5a47aa9f1"},{"api":36,"run_id":42261410531,"job_id":128042000941,"source_sha":"1a89d07ff7541910b2ee0d6a7d227f7fec19e800"}]}
+          request = json.loads(Path(".github/release-requests/android-v1.0.17.json").read_text())
+          assert request == reviewed_request
+          def api(path):
+              return json.loads(subprocess.check_output(["gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/{path}"]))
+          def fetch(sha):
+              subprocess.run(["git", "fetch", "--depth=1", "origin", sha], check=True)
+          fetch(expected)
+          subprocess.run(["git", "diff", "--exit-code", expected, "HEAD", "--",
+                          "android", "shared", "design", "tools", "versions.toml"], check=True)
+          runs = api(f"actions/runs?head_sha={expected}&per_page=30")["workflow_runs"]
+          for workflow in (".github/workflows/phase0.yml", ".github/workflows/android-download-audit.yml",
+                           ".github/workflows/android-browser-ui-audit.yml"):
+              matches = [r for r in runs if r["path"] == workflow]
+              assert matches and matches[0]["conclusion"] == "success", f"Successful CI required: {workflow}"
+          for evidence in request["visual_jobs"]:
+              run = api(f"actions/runs/{evidence['run_id']}")
+              assert run["path"] == ".github/workflows/android-visual-audit.yml"
+              assert run["head_sha"] == evidence["source_sha"]
+              jobs = api(f"actions/runs/{evidence['run_id']}/jobs?per_page=100")["jobs"]
+              job = next(j for j in jobs if j["id"] == evidence["job_id"])
+              assert job["name"] == f"emulator-visual-audit ({evidence['api']})"
+              assert job["head_sha"] == evidence["source_sha"] and job["conclusion"] == "success"
+              fetch(evidence["source_sha"])
+              # Two matrix jobs can prove the same production source across commits.
+              # Only this test-APK instrumentation file and the status log may differ.
+              subprocess.run(["git", "diff", "--exit-code", evidence["source_sha"], expected, "--", ".",
+                  ":(exclude)docs/DURUM.md",
+                  ":(exclude)android/app-telefon/src/androidTest/java/com/eymen/browser/telefon/BrowserUiInstrumentation.java"], check=True)
+              print(f"Verified successful API{evidence['api']} visual job {job['id']} against identical application and audit sources")
+          PYCODE
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ inputs.version || '1.0.17' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -387,6 +430,25 @@ jobs:
             Bu test yerel deterministik veri akisiyladir, uzak VPN/ag testi degildir.
           - Fiziksel cihazda ekran kapali buyuk dosya, VPN ile dosya
             aktarimi ve Android 8/9 SAF saglayici testleri ayri kabul isidir.
+          - v1.0.17: Adres/arama cubuguna ilk dokunusta mevcut adresin
+            tamami secilir; yeni yazmaya baslamak eski adresi degistirir.
+            Normal imlec duzenleme ve temizle dugmesi korunur.
+          - Acik/koyu arac cubuklari ortak, IME bilesimini koruyan
+            adres duzenleme durumunu kullanir. Sekme ve ekran gecislerinde
+            eski duzenleme baska sekmeye tasinmaz.
+          - Indirmeler icin uygulamaya ozel acik/koyu ekran, gercek
+            ozetler, dosya arama, tur filtreleri, kaydirilabilir aktarim
+            kartlari ve dosyalari silmeyen ozel gecmis temizleme onayi.
+          - Ayarlar icin kategoriler, arama ve uygulama ici arama motoru,
+            gorunum/adres konumu ve hakkinda/guncelleme alt sayfalari.
+            Secilen motor ve tema tercihlere kaydedilir. VPN ayarlari
+            da secili gorunumu izler; tunel davranisi degismedi.
+          - Henuz gelistirilmemis ayarlar Yakinda olarak devre disidir.
+            Sifre yoneticisi, ceviri veya esitleme bu surumde eklendi denmez.
+          - Bes yeni JVM odak/secim/IME testi; Android 15/16 gercek dokunma,
+            eski adresi silmeden yeni metin yazma, imlec duzenleme,
+            ayar kaliciligi, gercek dosya arama/filtreleme ve temizleme
+            onayi kabul testleri ayri is akisinda yurutulur.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
