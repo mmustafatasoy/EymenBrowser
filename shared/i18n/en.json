@@ -222,5 +222,8 @@
   "vpn_no_fake": "The Android VPN icon or a local tunnel does not prove remote server availability. A recent WireGuard handshake is checked separately.",
   "vpn_dual_stack": "For safety, IPv4 and IPv6 full routes, both tunnel addresses and VPN DNS are required. Traffic from other apps is not routed.",
   "vpn_saved_crypt": "Server keys are encrypted using Android Keystore; never added to the APK or GitHub.",
-  "vpn_privacy_note": "Security depends on your server. DNS/IPv6 leaks and reconnection must be tested on a real phone."
+  "vpn_privacy_note": "Security depends on your server. DNS/IPv6 leaks and reconnection must be tested on a real phone.",
+  "vpn_importing": "Importing and encrypting VPN file",
+  "vpn_always_on_unavailable": "Android Always-on VPN is deliberately disabled in this version. If the tunnel disconnects, Android may allow direct traffic.",
+  "vpn_monitoring": "While this page is open, the peer handshake is checked about every 15 seconds. Old handshakes are not proof of current connectivity."
 }
