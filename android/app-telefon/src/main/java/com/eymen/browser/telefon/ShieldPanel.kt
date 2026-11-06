@@ -52,10 +52,12 @@ internal fun ShieldPanel(
     analyticsBlocked: Int,
     otherTrackerBlocked: Int,
     strictMode: Boolean,
+    globalEnabled: Boolean,
     canToggle: Boolean,
     onDismiss: () -> Unit,
     onToggle: (Boolean) -> Unit,
-    onModeChange: (Boolean) -> Unit
+    onModeChange: (Boolean) -> Unit,
+    onGlobalToggle: (Boolean) -> Unit
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
         val close = stringResource(R.string.shield_close)
@@ -156,6 +158,24 @@ internal fun ShieldPanel(
                         )
                     }
                 }
+            }
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 44.dp)
+                    .background(T.gece_yuzey2, RoundedCornerShape(14.dp))
+                    .clickable { onGlobalToggle(!globalEnabled) }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShieldText(
+                    stringResource(R.string.settings_shield), 15, T.gece_yazi,
+                    modifier = Modifier.weight(1f), strong = true
+                )
+                ShieldText(
+                    stringResource(
+                        if (globalEnabled) R.string.settings_enabled
+                        else R.string.settings_disabled
+                    ), 14, if (globalEnabled) T.gece_koruma else T.gece_uyari
+                )
             }
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 ShieldText(
