@@ -467,8 +467,12 @@ class MainActivity : ComponentActivity() {
                 VpnSettingsScreen(
                     status = vpn.status,
                     configPresent = vpn.configPresent,
+                    importing = vpn.importing,
                     message = vpn.message,
-                    onBack = { vpnScreenVisible = false },
+                    onBack = {
+                        vpn.stopUiMonitoring()
+                        vpnScreenVisible = false
+                    },
                     onImport = {
                         vpnImportLauncher.launch(
                             arrayOf("text/plain", "application/octet-stream", "*/*")
@@ -496,7 +500,10 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
-                    settingsShowing && vpnScreenVisible -> vpnScreenVisible = false
+                    settingsShowing && vpnScreenVisible -> {
+                        vpn.stopUiMonitoring()
+                        vpnScreenVisible = false
+                    }
                     settingsShowing -> hideSettings()
                     downloadsShowing -> hideDownloads()
                     shieldShowing -> hideShield()
@@ -1096,6 +1103,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hideSettings() {
+        vpn.stopUiMonitoring()
         vpnScreenVisible = false
         settingsShowing = false
         if (::settingsLayer.isInitialized) settingsLayer.visibility = View.GONE
@@ -1105,7 +1113,7 @@ class MainActivity : ComponentActivity() {
         when (action) {
             SettingsAction.VPN -> {
                 vpnScreenVisible = true
-                vpn.refreshState()
+                vpn.startUiMonitoring()
             }
             SettingsAction.SHIELD -> {
                 hideSettings()
@@ -1646,6 +1654,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        // UI status polling does not run while the Activity is hidden.
+        vpn.stopUiMonitoring()
         // Synchronous write at the lifecycle boundary for process/phone death.
         if (::view.isInitialized) saveNormalWorkspace(durable = true)
         super.onStop()
@@ -1654,10 +1664,12 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::prefs.isInitialized) updater.onResumed()
-        vpn.refreshState()
+        if (vpnScreenVisible) vpn.startUiMonitoring()
+        else vpn.refreshState()
     }
 
     override fun onDestroy() {
+        vpn.stopUiMonitoring()
         updater.dispose()
         downloads.dispose()
         if (::view.isInitialized) view.releaseSession()
