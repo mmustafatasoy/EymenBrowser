@@ -36,13 +36,19 @@ object GeckoMotorDenemesi {
         context: Context,
         onReady: (WebExtension?) -> Unit
     ) {
-        getRuntime(context).webExtensionController.ensureBuiltIn(
-            "resource://android/assets/eymen-cosmetic/",
-            "eymen-cosmetic@atasoyyazilim.com"
-        ).accept(
-            { extension -> onReady(extension) },
-            { _ -> onReady(null) }
-        )
+        try {
+            getRuntime(context).webExtensionController.ensureBuiltIn(
+                "resource://android/assets/eymen-cosmetic/",
+                "eymen-cosmetic@atasoyyazilim.com"
+            ).accept(
+                { extension -> onReady(extension) },
+                { _ -> onReady(null) }
+            )
+        } catch (_: RuntimeException) {
+            // Not all Gecko device builds have the same add-on startup path.
+            // A cosmetic add-on must never prevent ordinary browsing.
+            onReady(null)
+        }
     }
 
     /**
