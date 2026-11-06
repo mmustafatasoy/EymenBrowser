@@ -2,6 +2,13 @@
 
 Son güncelleme: 2026-11-06
 
+## Yeni çalışma — banka giriş penceresi ve işlevsel ayarlar (v1.0.18 hazırlığı)
+
+- Kullanıcı banka mobil şubesinde EYMEN Browser’ın kapandığını bildirdi; banka adı/URL henüz verilmedi. Native banka uygulaması değil, tarayıcı kapanıyor.
+- Kodda somut hata: `onNewSession` için `createTab` zaten açılmış bir GeckoSession döndürüyordu. Gecko bu durumda `Must use an unopened GeckoSession instance` hatası verir. Popup sekmesi artık kapalı oluşturulur, Gecko’nun kendisi açtıktan sonra ekrana bağlanır. Parent/opener ve gizli mod korunur. Beklenmedik açık child güvenle reddedilir.
+- Çerez/gizlilik ve Ayarlar içindeki pasif işlevler gerçek motor/Android API’lerine bağlanıyor. Pasif etiketleri kaldırmak tek başına kabul değildir. Mevcut onaylı açık tasarım ve site A logosu korunur.
+- Bu düzeltme henüz derleme/gerçek popup etkileşim testinde sınanmadı. Son imzalı yayın v1.0.17; bankada kişisel giriş/para işlemi yapılmadı.
+
 ## Güncel çalışma — adres düzenleme ve özel ekranlar (v1.0.17)
 
 - **Kapsam:** Adrese ilk dokunuşta tüm metni seçme, özel İndirmeler ve özel Ayarlar bu tek güncellemede birleştirildi. **[v1.0.17 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.17)** — 2026-11-06 20:41 Türkiye saati. Önceki günlük bölümleri tarihseldir.

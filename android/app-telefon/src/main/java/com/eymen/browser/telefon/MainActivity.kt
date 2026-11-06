@@ -588,14 +588,15 @@ class MainActivity : ComponentActivity() {
     private fun createTab(
         privateMode: Boolean,
         initialUrl: String? = null,
-        deferRestoreLoad: Boolean = false
-    ) {
+        deferRestoreLoad: Boolean = false,
+        popupRequest: Boolean = false
+    ): GeckoSession? {
         if (::root.isInitialized) hideBrowserKeyboard()
         if (!privateMode && tabs.count { !it.privateMode } >= TabWorkspaceStore.MAX_TABS) {
             Toast.makeText(this, "En fazla 32 normal sekme açılabilir.", Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
-        if (tabs.isNotEmpty()) {
+        if (!popupRequest && tabs.isNotEmpty()) {
             view.releaseSession()
         }
         val id = nextId++
@@ -611,6 +612,7 @@ class MainActivity : ComponentActivity() {
             onDownload = downloads::handleResponse,
             privateMode = privateMode,
             initialLoad = initialUrl != null && !deferRestoreLoad,
+            openSession = !popupRequest,
             trackingProtection = protectionFor(initialUrl, privateMode),
             onBlocked = { category ->
                 runOnUiThread {
@@ -645,13 +647,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     null
                 } else {
-                    val oldId = activeId.value
-                    createTab(privateMode = privateMode)
-                    // createTab enforces the normal-tab capacity bound.
-                    // No child session is returned if that limit was reached.
-                    tabs.firstOrNull {
-                        it.id == activeId.value && it.id != oldId
-                    }?.gecko
+                    // Keep the parent displayed and return an UNOPENED child.
+                    // Gecko initializes the popup and its window.opener link.
+                    createTab(privateMode = privateMode, initialUrl = popupUri,
+                        popupRequest = true)
                 }
             }
         )
@@ -694,12 +693,34 @@ class MainActivity : ComponentActivity() {
         }
         tabs.add(tab)
         cosmeticExtension?.let { installCosmeticPolicy(tab, it) }
+        if (popupRequest) {
+            val openerId = activeId.value
+            awaitPopupOpen(tab, openerId)
+            return session
+        }
         activeId.value = id
         currentUrl.value = initialUrl.orEmpty()
         atHome.value = initialUrl == null
         if (::tabsLayer.isInitialized) hideTabs()
         updateHomeVisibility()
         if (!privateMode) saveNormalWorkspace()
+        return session
+    }
+
+    /** Wait for Gecko's own open() before attaching the popup to GeckoView. */
+    private fun awaitPopupOpen(tab: BrowserTab, openerId: Long, attempts: Int = 0) {
+        view.postDelayed({
+            if (isFinishing || isDestroyed || tabs.none { it.id == tab.id }) return@postDelayed
+            if (tab.gecko.isOpen) {
+                if (activeId.value == openerId) activateTab(tab.id)
+                if (!tab.privateMode) saveNormalWorkspace()
+            } else if (attempts < 125) {
+                awaitPopupOpen(tab, openerId, attempts + 1)
+            } else {
+                tabs.remove(tab)
+                if (activeId.value == openerId) notice(R.string.bank_popup_failed)
+            }
+        }, 40L)
     }
 
     private fun activateTab(id: Long) {

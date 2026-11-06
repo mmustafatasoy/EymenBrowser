@@ -31,8 +31,11 @@ assert "val child = onUserOpenedWindow(uri)" in motor
 assert "return GeckoResult.fromValue(child)" in motor
 assert "onUserOpenedWindow = { popupUri ->" in activity
 assert "activeId.value != id" in activity
-assert "createTab(privateMode = privateMode)" in activity
-assert "it.id == activeId.value && it.id != oldId" in activity
+assert "popupRequest = true" in activity
+assert "openSession = !popupRequest" in activity
+assert "awaitPopupOpen(tab, openerId)" in activity
+assert "if (child.isOpen) return null" in motor
+assert "if (openSession)" in motor
 assert 'GeckoMotorDenemesi.verifiedHttpsUrl(parent.url) != parent.url' in activity
 assert '"https", "http", "about", "data", "blob", "javascript"' in motor
 

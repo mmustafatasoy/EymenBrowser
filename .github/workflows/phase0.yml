@@ -81,6 +81,15 @@ jobs:
       - name: GeckoView Android telefon APK'larini derle
         working-directory: android
         run: gradle --no-daemon :app-telefon:assembleDebug --stacktrace
+      - name: Inspect pinned GeckoView public API signatures
+        if: always()
+        run: python tools/report_gecko_api.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EymenBrowser-pinned-Gecko-public-API
+          path: gecko-api-report/*.txt
+          if-no-files-found: warn
       - name: ABI APK dosyalarını ölç ve doğrula
         run: |
           python - <<'PY'

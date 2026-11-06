@@ -281,5 +281,6 @@
   "settings_vpn_note": "Profil ve bağlantı ayarları",
   "settings_updates_note": "Sürüm ve güncellemeler",
   "settings_search_explanation": "Adres çubuğundaki aramalar için kullanılacak motor.",
-  "settings_app_version": "Sürüm %1$s"
+  "settings_app_version": "Sürüm %1$s",
+  "bank_popup_failed": "Giriş penceresi açılamadı. Sayfa açık kaldı; yeniden deneyebilirsin."
 }

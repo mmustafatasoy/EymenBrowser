@@ -281,5 +281,6 @@
   "settings_vpn_note": "Profile and connection settings",
   "settings_updates_note": "Version and updates",
   "settings_search_explanation": "The engine used for searches from the address bar.",
-  "settings_app_version": "Version %1$s"
+  "settings_app_version": "Version %1$s",
+  "bank_popup_failed": "The sign-in window could not open. The current page is still available; please try again."
 }

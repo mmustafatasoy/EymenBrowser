@@ -124,6 +124,7 @@ object GeckoMotorDenemesi {
         onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit },
         privateMode: Boolean = false,
         initialLoad: Boolean = true,
+        openSession: Boolean = true,
         onTitle: (String?) -> Unit = {},
         trackingProtection: Boolean = false,
         onBlocked: (Int) -> Unit = { _ -> Unit },
@@ -180,6 +181,9 @@ object GeckoMotorDenemesi {
                 userPopupUri = null
                 if (!authorized) return null
                 val child = onUserOpenedWindow(uri) ?: return null
+                // Gecko itself opens the returned window. Returning an open
+                // session throws an AssertionError inside GeckoSession.
+                if (child.isOpen) return null
                 return GeckoResult.fromValue(child)
             }
         }
@@ -256,10 +260,12 @@ object GeckoMotorDenemesi {
             if (strictTrackingMode) ContentBlocking.AntiTracking.STRICT
             else ContentBlocking.AntiTracking.DEFAULT
         )
-        session.open(geckoRuntime)
-        view.setSession(session)
-        if (initialLoad || url != null) {
-            session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)
+        if (openSession) {
+            session.open(geckoRuntime)
+            view.setSession(session)
+            if (initialLoad || url != null) {
+                session.loadUri(verifiedHttpsUrl(url) ?: DEFAULT_URL)
+            }
         }
         return session
     }
