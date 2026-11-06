@@ -9,6 +9,7 @@ import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebResponse
 import java.net.URI
 import java.util.Locale
@@ -22,6 +23,27 @@ object GeckoMotorDenemesi {
     @Synchronized
     private fun getRuntime(context: Context): GeckoRuntime =
         runtime ?: GeckoRuntime.create(context.applicationContext).also { runtime = it }
+
+    /**
+     * Only a signed-APK-bundled cosmetic WebExtension is permitted. It
+     * receives no URLs or user history, and can inject CSS only when the
+     * embedding GeckoSession's native policy authorizes it.
+     *
+     * An installation problem fails CLOSED; the regular Gecko tracker
+     * protection works independently.
+     */
+    fun ensureCosmeticExtension(
+        context: Context,
+        onReady: (WebExtension?) -> Unit
+    ) {
+        getRuntime(context).webExtensionController.ensureBuiltIn(
+            "resource://android/assets/eymen-cosmetic/",
+            "eymen-cosmetic@atasoyyazilim.com"
+        ).accept(
+            { extension -> onReady(extension) },
+            { _ -> onReady(null) }
+        )
+    }
 
     /**
      * Global Gecko tracking list policy. Individual website exceptions are
