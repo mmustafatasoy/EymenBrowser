@@ -223,6 +223,10 @@ internal fun LightBrowserToolbar(
     val requester = remember { FocusRequester() }
     val addressLabel = stringResource(R.string.address_edit_label)
     val clearLabel = stringResource(R.string.address_clear)
+    val voiceLabel = stringResource(R.string.voice_search)
+    val newTabLabel = stringResource(R.string.new_tab)
+    val tabsLabel = stringResource(R.string.tabs)
+    val menuLabel = stringResource(R.string.browser_menu)
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
         Modifier.fillMaxWidth()
@@ -231,7 +235,7 @@ internal fun LightBrowserToolbar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        LightIcon("Ana sayfa", EymenPaths.ev, onHome, Modifier.size(36.dp))
+        LightIcon(stringResource(R.string.home), EymenPaths.ev, onHome, Modifier.size(36.dp))
         Row(
             Modifier.weight(1f).height(47.dp)
                 .shadow(2.dp, RoundedCornerShape(26.dp))
@@ -259,7 +263,7 @@ internal fun LightBrowserToolbar(
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.text.isBlank()) LightText("Arama yapın veya URL girin", 12, secondary)
+                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, secondary)
                         field()
                     }
                 }
@@ -273,7 +277,7 @@ internal fun LightBrowserToolbar(
             } else {
             Box(
                 Modifier.size(31.dp)
-                    .semantics { contentDescription = "Sesli arama"; role = Role.Button }
+                    .semantics { contentDescription = voiceLabel; role = Role.Button }
                     .clickable(onClick = onVoiceSearch),
                 contentAlignment = Alignment.Center
             ) { MicrophoneIcon(Modifier.size(21.dp)) }
@@ -281,13 +285,13 @@ internal fun LightBrowserToolbar(
         }
         Box(
             Modifier.size(35.dp)
-                .semantics { contentDescription = "Yeni sekme"; role = Role.Button }
+                .semantics { contentDescription = newTabLabel; role = Role.Button }
                 .clickable(onClick = onNewTab),
             contentAlignment = Alignment.Center
         ) { LightText("+", 30, ink) }
         Box(
             Modifier.size(36.dp)
-                .semantics { contentDescription = "Sekmeler"; role = Role.Button }
+                .semantics { contentDescription = tabsLabel; role = Role.Button }
                 .clickable(onClick = onTabs),
             contentAlignment = Alignment.Center
         ) {
@@ -298,7 +302,7 @@ internal fun LightBrowserToolbar(
         }
         Box(
             Modifier.size(35.dp).background(Color(0xFFB1D6FF), RoundedCornerShape(13.dp))
-                .semantics { contentDescription = "Tarayıcı menüsü"; role = Role.Button }
+                .semantics { contentDescription = menuLabel; role = Role.Button }
                 .clickable(onClick = onMenu),
             contentAlignment = Alignment.Center
         ) { LightText("⋮", 26, ink) }
@@ -355,24 +359,24 @@ private fun CategoryArtwork(kind: String, color: Color) {
 }
 
 private data class CategoryLink(
-    val title: String, val symbol: String, val tile: Color, val symbolColor: Color, val url: String
+    val title: Int, val symbol: String, val tile: Color, val symbolColor: Color, val url: String
 )
 private val categories = listOf(
-    CategoryLink("Android\nUygulamaları", "Android", Color(0xFFF1E8FF), Color(0xFF9347E9),
+    CategoryLink(R.string.home_android, "Android", Color(0xFFF1E8FF), Color(0xFF9347E9),
         "https://play.google.com/store/apps"),
-    CategoryLink("TV\nUygulamaları", "TV", Color(0xFFFFEAF0), Color(0xFFF3474D),
+    CategoryLink(R.string.home_tv, "TV", Color(0xFFFFEAF0), Color(0xFFF3474D),
         "https://www.google.com/search?q=akilli+tv+uygulamalari"),
-    CategoryLink("Araç\nUygulamaları", "Araç", Color(0xFFE1F0FF), Color(0xFF1675DE),
+    CategoryLink(R.string.home_car, "Araç", Color(0xFFE1F0FF), Color(0xFF1675DE),
         "https://www.google.com/search?q=android+auto+uygulamalari"),
-    CategoryLink("Özel\nYazılımlar", "⬡", Color(0xFFDFF7F1), Color(0xFF11B98B),
+    CategoryLink(R.string.home_custom, "⬡", Color(0xFFDFF7F1), Color(0xFF11B98B),
         "https://www.google.com/search?q=yazilim+uygulamalari")
 )
 private val browseChips = listOf(
-    "Önerilen" to "",
-    "Haberler" to "https://news.google.com/",
-    "Oyunlar" to "https://play.google.com/store/games",
-    "TV / Canlı" to "https://www.google.com/search?q=canli+tv",
-    "Uygulamalar" to "https://play.google.com/store/apps"
+    R.string.home_recommended to "",
+    R.string.home_news to "https://news.google.com/",
+    R.string.home_games to "https://play.google.com/store/games",
+    R.string.home_live to "https://www.google.com/search?q=canli+tv",
+    R.string.home_apps to "https://play.google.com/store/apps"
 )
 
 
@@ -387,6 +391,7 @@ internal fun LightBrowserHome(
 ) {
     var input by remember { mutableStateOf("") }
     val keyboard = LocalSoftwareKeyboardController.current
+    val voiceLabel = stringResource(R.string.voice_search)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxHeight < 650.dp
         // Capture the BoxWithConstraints maxWidth before entering nested
@@ -532,7 +537,7 @@ internal fun LightBrowserHome(
                         decorationBox = { field ->
                             Box {
                                 if (input.isBlank()) {
-                                    LightText("Google'da arayın...", 14, secondary)
+                                    LightText(stringResource(R.string.address_edit_label), 14, secondary)
                                 }
                                 field()
                             }
@@ -541,7 +546,7 @@ internal fun LightBrowserHome(
                     Box(
                         Modifier.size(37.dp)
                             .semantics {
-                                contentDescription = "Google sesli arama"; role = Role.Button
+                                contentDescription = voiceLabel; role = Role.Button
                             }
                             .clickable(onClick = onVoiceSearch),
                         contentAlignment = Alignment.Center
@@ -601,7 +606,7 @@ internal fun LightBrowserHome(
                             LightText(symbols[index], 14,
                                 if (index == 0) Color.White else ink)
                             Spacer(Modifier.width(3.dp))
-                            LightText(pair.first, if (compact) 9 else 10,
+                            LightText(stringResource(pair.first), if (compact) 9 else 10,
                                 if (index == 0) Color.White else ink,
                                 bold = index == 0)
                         }
@@ -625,7 +630,7 @@ internal fun LightBrowserHome(
                         ) {
                             CategoryArtwork(category.symbol, category.symbolColor)
                             BasicText(
-                                category.title,
+                                stringResource(category.title),
                                 style = TextStyle(
                                     color = ink,
                                     fontSize = if (compact) 10.sp else 11.sp,
@@ -639,7 +644,7 @@ internal fun LightBrowserHome(
                 if (recentUrls.isNotEmpty()) {
                     Column(Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        LightText("Son ziyaret edilenler", 14, ink, bold = true)
+                        LightText(stringResource(R.string.home_recent), 14, ink, bold = true)
                         recentUrls.take(2).forEach { url ->
                             Row(
                                 Modifier.fillMaxWidth().heightIn(min = 42.dp)
@@ -806,28 +811,29 @@ internal fun LightBrowserMenu(
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 5.dp)
         ) {
-            LightMenuRow("Geri", "←", highlighted = true) {
+            LightMenuRow(stringResource(R.string.back), "←", highlighted = true) {
                 onDismiss(); onBack()
             }
-            LightMenuRow("İleri", "→", highlighted = true) {
+            LightMenuRow(stringResource(R.string.forward), "→", highlighted = true) {
                 onDismiss(); onForward()
             }
-            LightMenuRow("Yenile", "⟳", enabled = hasPage) {
+            LightMenuRow(stringResource(R.string.menu_reload), "⟳", enabled = hasPage) {
                 onDismiss(); onReload()
             }
             Box(Modifier.fillMaxWidth().padding(
                 horizontal = 9.dp, vertical = 3.dp
             ).height(1.dp).background(outline))
-            LightMenuRow("Paylaş", "♧", enabled = hasPage) {
+            LightMenuRow(stringResource(R.string.menu_share), "♧", enabled = hasPage) {
                 onAction(MenuAction.SHARE)
             }
-            LightMenuRow("Yer İmleri", "☆") { onAction(MenuAction.BOOKMARKS) }
-            LightMenuRow("İndirilenler", "↓") { onAction(MenuAction.DOWNLOADS) }
+            LightMenuRow(stringResource(R.string.bookmarks), "☆") { onAction(MenuAction.BOOKMARKS) }
+            LightMenuRow(stringResource(R.string.downloads), "↓") { onAction(MenuAction.DOWNLOADS) }
             Box(Modifier.fillMaxWidth().padding(
                 horizontal = 9.dp, vertical = 3.dp
             ).height(1.dp).background(outline))
-            LightMenuRow("Gizli Sekme", "◎") { onAction(MenuAction.PRIVATE) }
-            LightMenuRow("Ayarlar", "⚙") { onAction(MenuAction.SETTINGS) }
+            LightMenuRow(stringResource(R.string.private_tab), "◎") { onAction(MenuAction.PRIVATE) }
+            LightMenuRow(stringResource(R.string.menu_tools), "⚙") { onAction(MenuAction.TOOLS) }
+            LightMenuRow(stringResource(R.string.settings), "⚙") { onAction(MenuAction.SETTINGS) }
         }
     }
 }

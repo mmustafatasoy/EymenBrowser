@@ -12,6 +12,7 @@ import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebResponse
+import org.mozilla.geckoview.TranslationsController
 import java.net.URI
 import java.util.Locale
 
@@ -141,6 +142,7 @@ object GeckoMotorDenemesi {
             .useTrackingProtection(trackingProtection)
             .build()
         val session = GeckoSession(settings)
+        session.setTranslationsSessionDelegate(object : TranslationsController.SessionTranslation.Delegate {})
         // Bank apps publish intent:// links, while federated login flows
         // often use a user-clicked window.open(). The host must return a
         // distinct GeckoSession for an allowed popup; without it the popup

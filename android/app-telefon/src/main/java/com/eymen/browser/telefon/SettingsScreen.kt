@@ -25,7 +25,7 @@ import com.eymen.browser.tema.EymenTokens as T
 
 internal enum class SettingsAction {
     SHIELD, VPN, PASSWORDS, SEARCH_ENGINE, APPEARANCE, EXTENSIONS,
-    SITE_PERMISSIONS, DOWNLOADS, LANGUAGE, CHILD_MODE, ABOUT
+    SITE_PERMISSIONS, DOWNLOADS, LANGUAGE, CHILD_MODE, ABOUT, TOOLS, LICENSES
 }
 internal enum class BrowserSettingsPage { MAIN, SEARCH, APPEARANCE, ABOUT }
 private data class SettingRow(val title: Int, val icon: String, val action: SettingsAction,
@@ -39,6 +39,7 @@ private val settingsRows = listOf(
     SettingRow(R.string.settings_appearance, EymenPaths.ay, SettingsAction.APPEARANCE, R.string.settings_group_browsing, true),
     SettingRow(R.string.settings_language, EymenPaths.cevir, SettingsAction.LANGUAGE, R.string.settings_group_browsing, true),
     SettingRow(R.string.downloads, EymenPaths.indir, SettingsAction.DOWNLOADS, R.string.settings_group_tools, true),
+    SettingRow(R.string.menu_tools, EymenPaths.ayarlar, SettingsAction.TOOLS, R.string.settings_group_tools, true),
     SettingRow(R.string.menu_extensions, EymenPaths.eklenti, SettingsAction.EXTENSIONS, R.string.settings_group_tools, true),
     SettingRow(R.string.settings_child_mode, EymenPaths.cocuk, SettingsAction.CHILD_MODE, R.string.settings_group_tools, true),
     SettingRow(R.string.settings_about_update, EymenPaths.bilgi, SettingsAction.ABOUT, R.string.settings_group_app, true)
@@ -184,6 +185,7 @@ internal fun SettingsScreen(
                         ScreenText(stringResource(R.string.settings_app_version, version), p.muted)
                     }
                     ScreenButton(stringResource(R.string.update_manual_check), p, { onAction(SettingsAction.ABOUT) }, primary = true)
+                    ScreenButton(stringResource(R.string.about_licenses), p, { onAction(SettingsAction.LICENSES) })
                 }
             }
         }

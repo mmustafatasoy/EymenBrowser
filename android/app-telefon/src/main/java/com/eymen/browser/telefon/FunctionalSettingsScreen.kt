@@ -70,8 +70,8 @@ internal fun PrivacySettingsScreen(services: BrowserSettingsServices, dayMode: B
             { services.setCookies(mode) }, primary = services.cookieMode == mode)
     }
     ScreenText(stringResource(R.string.cookie_policy_note), p.muted, T.telefon_yazi_ikincil, maxLines = 5)
-    ScreenButton(stringResource(R.string.cookie_clear), p, { onClear(false) }, enabled = !services.busy)
-    ScreenButton(stringResource(R.string.cache_clear), p, { onClear(true) }, enabled = !services.busy)
+    ScreenButton(stringResource(R.string.cookie_clear), p, { onClear(false) }, enabled = !services.clearing)
+    ScreenButton(stringResource(R.string.cache_clear), p, { onClear(true) }, enabled = !services.clearing)
     if (services.message.isNotEmpty()) ScreenText(services.message, p.muted, maxLines = 4)
 }
 
@@ -177,3 +177,28 @@ internal fun ChildSettingsScreen(child: BrowserChildMode, dayMode: Boolean, onBa
         if (child.message.isNotEmpty()) ScreenText(child.message, p.muted, maxLines = 4)
     }
 }
+
+@Composable
+internal fun BrowserToolsScreen(services: BrowserSettingsServices, dayMode: Boolean,
+    hasPage: Boolean, onBack: () -> Unit, onAction: (MenuAction) -> Unit) =
+    SettingsPage(R.string.menu_tools, dayMode, onBack) { p ->
+        ScreenText(stringResource(R.string.menu_text_size), p.text, strong = true)
+        ScreenText(stringResource(R.string.menu_text_size_value, services.textPercent), p.accent)
+        Row(horizontalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+            ScreenButton("−", p, { services.setTextSize(services.textPercent - 10) },
+                Modifier.weight(1f), enabled = services.textPercent > 50)
+            ScreenButton("100%", p, { services.setTextSize(100) }, Modifier.weight(1f))
+            ScreenButton("+", p, { services.setTextSize(services.textPercent + 10) },
+                Modifier.weight(1f), enabled = services.textPercent < 300)
+        }
+        listOf(MenuAction.HISTORY to R.string.history, MenuAction.QR to R.string.menu_scan_qr,
+            MenuAction.TRANSLATE to R.string.menu_translate, MenuAction.READER to R.string.menu_reader,
+            MenuAction.FIND to R.string.menu_find, MenuAction.PDF to R.string.menu_save_pdf,
+            MenuAction.DESKTOP to R.string.menu_desktop, MenuAction.SEND_TO_DEVICE to R.string.menu_send_device,
+            MenuAction.OPEN_EXTERNAL to R.string.menu_open_official_app,
+            MenuAction.OPEN_BROWSER to R.string.menu_open_other_browser).forEach { (action, label) ->
+            ScreenButton(stringResource(label), p, { onAction(action) },
+                enabled = hasPage || action in setOf(MenuAction.HISTORY, MenuAction.QR, MenuAction.READER))
+        }
+        ScreenText(stringResource(R.string.menu_devices_share_note), p.muted, maxLines = 5)
+    }

@@ -17,7 +17,7 @@ import org.mozilla.geckoview.GeckoResult
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal enum class FunctionalSettingsPage { PRIVACY, PERMISSIONS, PASSWORDS, EXTENSIONS, LANGUAGE, CHILD }
+internal enum class FunctionalSettingsPage { PRIVACY, PERMISSIONS, PASSWORDS, EXTENSIONS, LANGUAGE, CHILD, TOOLS }
 internal enum class PrivacyOption { COOKIE_REJECT, FINGERPRINT, HTTPS, AUTOPLAY, AUTOFILL }
 
 /** Preferences are applied to the real Gecko runtime; site permissions stay in Gecko. */
@@ -35,8 +35,10 @@ internal class BrowserSettingsServices(
     var autofill by mutableStateOf(prefs.getBoolean("autofill", true)); private set
     var cookieMode by mutableStateOf(prefs.getString("cookie_mode", "partition") ?: "partition"); private set
     var language by mutableStateOf(prefs.getString("app_language", "system") ?: "system"); private set
+    var textPercent by mutableIntStateOf(prefs.getInt("text_percent", 100).coerceIn(50, 300)); private set
     val permissions = mutableStateListOf<GeckoSession.PermissionDelegate.ContentPermission>()
     var busy by mutableStateOf(false); private set
+    var clearing by mutableStateOf(false); private set
     var message by mutableStateOf(""); private set
     private var currentDialog: AlertDialog? = null
     private var pendingAndroid: ((Boolean) -> Unit)? = null
@@ -64,6 +66,13 @@ internal class BrowserSettingsServices(
         // Android's user-selected password service owns its own vault/biometric UI.
         // No credentials are copied into app preferences or a sync service.
         runtime.settings.setLoginAutofillEnabled(false)
+        runtime.settings.setFontSizeFactor(textPercent / 100f)
+    }
+
+    fun setTextSize(percent: Int) {
+        textPercent = percent.coerceIn(50, 300)
+        prefs.edit().putInt("text_percent", textPercent).apply()
+        runtime.settings.setFontSizeFactor(textPercent / 100f)
     }
 
     fun set(option: PrivacyOption, enabled: Boolean) {
@@ -127,6 +136,8 @@ internal class BrowserSettingsServices(
             busy = false
         }, { _ -> busy = false; message = activity.getString(R.string.settings_operation_failed) })
     }
+    fun beginClear() { clearing = true; message = "" }
+    fun finishClear(messageId: Int) { clearing = false; message = activity.getString(messageId) }
 
     fun changePermission(perm: GeckoSession.PermissionDelegate.ContentPermission) {
         val values = intArrayOf(allow, deny, GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT)

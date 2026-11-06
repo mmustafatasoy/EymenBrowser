@@ -120,8 +120,8 @@ assert "private var menuShowing by mutableStateOf(false)" in main
 assert "menuOpen = menuShowing" in main
 assert ".padding(top = 57.dp, end = 6.dp)" in light_ui
 assert "ReferenceMenuIcon(symbol, enabled)" in light_ui
-assert 'LightMenuRow("Geri", "←", highlighted = true)' in light_ui
-assert 'LightMenuRow("İleri", "→", highlighted = true)' in light_ui
+assert 'LightMenuRow(stringResource(R.string.back), "←", highlighted = true)' in light_ui
+assert 'LightMenuRow(stringResource(R.string.forward), "→", highlighted = true)' in light_ui
 assert "buildAnnotatedString" in light_ui
 assert 'append("Eymen ")' in light_ui and 'append("Browser")' in light_ui
 assert "quadraticBezierTo(" in light_ui

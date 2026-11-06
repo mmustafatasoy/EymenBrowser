@@ -39,6 +39,8 @@ def verify():
             errors.append(f"{module} Android alt sürüm farklı")
         if f'versionName = "{V["project"]["version"]}"' not in gradle:
             errors.append(f"{module} uygulama sürümü farklı")
+    if 'implementation("com.google.zxing:core:' + V['android'].get('zxing_core', '') + '")' not in (ROOT / 'android/app-telefon/build.gradle.kts').read_text():
+        errors.append("ZXing sürümü versions.toml ile uyuşmuyor")
     if errors:
         raise SystemExit("\n".join(errors))
     print("Şartname bağımlılıkları, sürüm kilitleri ve tasarım temel denetimi geçti.")

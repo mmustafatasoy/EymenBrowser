@@ -26,7 +26,7 @@ import com.eymen.browser.tema.EymenTokens as T
 internal enum class MenuAction {
     BOOKMARKS, HISTORY, DOWNLOADS, PRIVATE, TRANSLATE, FIND,
     READER, DESKTOP, PDF, SHARE, SEND_TO_DEVICE, QR,
-    EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS
+    EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS, TOOLS
 }
 
 private data class MenuTile(
@@ -41,14 +41,14 @@ private val tiles = listOf(
     MenuTile(R.string.history, EymenPaths.gecmis, MenuAction.HISTORY),
     MenuTile(R.string.downloads, EymenPaths.indir, MenuAction.DOWNLOADS),
     MenuTile(R.string.private_tab, EymenPaths.gizli, MenuAction.PRIVATE),
-    MenuTile(R.string.menu_translate, EymenPaths.cevir, MenuAction.TRANSLATE, false),
+    MenuTile(R.string.menu_translate, EymenPaths.cevir, MenuAction.TRANSLATE),
     MenuTile(R.string.menu_find, EymenPaths.ara, MenuAction.FIND),
-    MenuTile(R.string.menu_reader, EymenPaths.okuma, MenuAction.READER, false),
+    MenuTile(R.string.menu_reader, EymenPaths.okuma, MenuAction.READER),
     MenuTile(R.string.menu_desktop, EymenPaths.masaustu, MenuAction.DESKTOP),
     MenuTile(R.string.menu_save_pdf, EymenPaths.belge, MenuAction.PDF),
     MenuTile(R.string.menu_share, EymenPaths.paylas, MenuAction.SHARE),
-    MenuTile(R.string.menu_send_device, EymenPaths.cihazlar, MenuAction.SEND_TO_DEVICE, false),
-    MenuTile(R.string.menu_scan_qr, EymenPaths.qr, MenuAction.QR, false)
+    MenuTile(R.string.menu_send_device, EymenPaths.cihazlar, MenuAction.SEND_TO_DEVICE),
+    MenuTile(R.string.menu_scan_qr, EymenPaths.qr, MenuAction.QR)
 )
 
 /**
@@ -61,11 +61,13 @@ internal fun BrowserMenu(
     hasPage: Boolean,
     isDesktop: Boolean,
     dayMode: Boolean,
+    textPercent: Int,
+    onTextSize: (Int) -> Unit,
     onDismiss: () -> Unit,
     onAction: (MenuAction) -> Unit
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
-        val disabledText = stringResource(R.string.menu_not_available)
+        val disabledText = stringResource(R.string.menu_requires_page)
         val dismissText = stringResource(R.string.menu_dismiss)
         Box(
             Modifier.fillMaxSize().clickable(onClick = onDismiss)
@@ -96,7 +98,8 @@ internal fun BrowserMenu(
                             val itemTitle = stringResource(tile.title)
                             val allowed = tile.supported && (
                                 tile.action !in listOf(
-                                    MenuAction.FIND, MenuAction.DESKTOP, MenuAction.PDF, MenuAction.SHARE
+                                    MenuAction.FIND, MenuAction.DESKTOP, MenuAction.PDF, MenuAction.SHARE,
+                                    MenuAction.TRANSLATE, MenuAction.READER, MenuAction.SEND_TO_DEVICE
                                 ) || hasPage
                             )
                             Column(
@@ -141,8 +144,7 @@ internal fun BrowserMenu(
                 }
             }
 
-            // The approved zoom row stays visible, but is explicitly disabled:
-            // GeckoView's scroll-factor API is not page zoom. No fake % value.
+            // Actual Gecko text scaling; pinch zoom remains the engine's gesture.
             Row(
                 Modifier.fillMaxWidth().height(56.dp)
                     .background(T.gece_yuzey2, RoundedCornerShape(16.dp))
@@ -150,21 +152,21 @@ internal fun BrowserMenu(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 MenuLabel(
-                    stringResource(R.string.menu_page_zoom), 15, T.gece_yazi,
+                    stringResource(R.string.menu_text_size), 15, T.gece_yazi,
                     modifier = Modifier.weight(1f), medium = true
                 )
-                MenuLabel(stringResource(R.string.menu_not_available), 12, T.gece_yaziIkincil)
+                MenuLabel("$textPercent%", 12, T.gece_yaziIkincil,
+                    modifier = Modifier.clickable { onTextSize(100) })
                 Spacer(Modifier.width(10.dp))
-                MenuZoomPlaceholder("−")
+                MenuZoomButton("−", textPercent > 50) { onTextSize(textPercent - 10) }
                 Spacer(Modifier.width(6.dp))
-                MenuZoomPlaceholder("+")
+                MenuZoomButton("+", textPercent < 300) { onTextSize(textPercent + 10) }
             }
 
             Column {
                 MenuBottomRow(
-                    R.string.menu_extensions, EymenPaths.eklenti,
-                    stringResource(R.string.menu_not_available), enabled = false
-                ) { }
+                    R.string.menu_extensions, EymenPaths.eklenti
+                ) { onAction(MenuAction.EXTENSIONS) }
                 MenuBottomRow(
                     R.string.menu_open_official_app, EymenPaths.cihazlar,
                     stringResource(R.string.menu_open_official_app_hint),
@@ -207,13 +209,14 @@ private fun MenuLabel(
 }
 
 @Composable
-private fun MenuZoomPlaceholder(label: String) {
+private fun MenuZoomButton(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(44.dp)
-            .background(T.gece_yuzey3, RoundedCornerShape(12.dp)),
+            .background(T.gece_yuzey3, RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        MenuLabel(label, 22, T.gece_yaziPasif)
+        MenuLabel(label, 22, if (enabled) T.gece_yazi else T.gece_yaziPasif)
     }
 }
 

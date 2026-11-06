@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var settingsServices: BrowserSettingsServices
     private lateinit var childMode: BrowserChildMode
     private lateinit var addons: BrowserAddons
+    private lateinit var qrScanner: BrowserQrScanner
     private var functionalSettingsPage by mutableStateOf<FunctionalSettingsPage?>(null)
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -173,6 +174,7 @@ class MainActivity : ComponentActivity() {
     private val devicesRequested = mutableStateOf(false)
     // Never persist site names visited in private browsing mode.
     private val privateShieldOverrides = mutableMapOf<String, Boolean>()
+    private val webPrompts = mutableSetOf<AlertDialog>()
 
     private val activeTab: BrowserTab?
         get() = tabs.firstOrNull { it.id == activeId.value }
@@ -214,6 +216,7 @@ class MainActivity : ComponentActivity() {
             })
         settingsServices.apply()
         addons = BrowserAddons(this)
+        qrScanner = BrowserQrScanner(this, ::openUrl, ::notice)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         // v1.0.4 changed the default to light but old installs retain the legacy
@@ -449,6 +452,8 @@ class MainActivity : ComponentActivity() {
                         GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
                     isDesktop = activeTab?.desktop == true,
                     dayMode = dayMode.value,
+                    textPercent = settingsServices.textPercent,
+                    onTextSize = settingsServices::setTextSize,
                     onDismiss = ::hideBrowserMenu,
                     onAction = ::handleMenuAction
                 )
@@ -558,6 +563,10 @@ class MainActivity : ComponentActivity() {
                         onOptions = ::openAddonOptions)
                     FunctionalSettingsPage.LANGUAGE -> LanguageSettingsScreen(settingsServices, dayMode.value, back, ::translateCurrentPage)
                     FunctionalSettingsPage.CHILD -> ChildSettingsScreen(childMode, dayMode.value, back)
+                    FunctionalSettingsPage.TOOLS -> BrowserToolsScreen(settingsServices, dayMode.value,
+                        !atHome.value && verifiedHost(currentUrl.value) != null, back) { action ->
+                        hideSettings(); handleMenuAction(action)
+                    }
                     null -> Unit
                 }
             } else {
@@ -1151,7 +1160,7 @@ class MainActivity : ComponentActivity() {
                 prompt: GeckoSession.PromptDelegate.AlertPrompt
             ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
                 val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
-                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                if (isFinishing || isDestroyed || activeId.value != tab.id || tabs.none { it.id == tab.id }) {
                     result.complete(prompt.dismiss())
                     return result
                 }
@@ -1159,12 +1168,13 @@ class MainActivity : ComponentActivity() {
                 fun finish() {
                     if (done.compareAndSet(false, true)) result.complete(prompt.dismiss())
                 }
-                AlertDialog.Builder(this@MainActivity)
+                val builder = AlertDialog.Builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
                     .setOnCancelListener { finish() }
-                    .show()
+
+                presentWebPrompt(builder) { finish() }
                 return result
             }
 
@@ -1173,7 +1183,7 @@ class MainActivity : ComponentActivity() {
                 prompt: GeckoSession.PromptDelegate.ButtonPrompt
             ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
                 val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
-                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                if (isFinishing || isDestroyed || activeId.value != tab.id || tabs.none { it.id == tab.id }) {
                     result.complete(prompt.dismiss())
                     return result
                 }
@@ -1186,13 +1196,14 @@ class MainActivity : ComponentActivity() {
                         ))
                     }
                 }
-                AlertDialog.Builder(this@MainActivity)
+                val builder = AlertDialog.Builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
                     .setPositiveButton(android.R.string.ok) { _, _ -> finish(true) }
                     .setOnCancelListener { finish(false) }
-                    .show()
+
+                presentWebPrompt(builder) { finish(false) }
                 return result
             }
 
@@ -1201,7 +1212,7 @@ class MainActivity : ComponentActivity() {
                 prompt: GeckoSession.PromptDelegate.TextPrompt
             ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
                 val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
-                if (activeId.value != tab.id || tabs.none { it.id == tab.id }) {
+                if (isFinishing || isDestroyed || activeId.value != tab.id || tabs.none { it.id == tab.id }) {
                     result.complete(prompt.dismiss())
                     return result
                 }
@@ -1218,17 +1229,26 @@ class MainActivity : ComponentActivity() {
                         edit.text.clear()
                     }
                 }
-                AlertDialog.Builder(this@MainActivity)
+                val builder = AlertDialog.Builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setView(edit)
                     .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
                     .setPositiveButton(android.R.string.ok) { _, _ -> finish(true) }
                     .setOnCancelListener { finish(false) }
-                    .show()
+
+                presentWebPrompt(builder) { finish(false) }
                 return result
             }
         }
+    }
+
+    private fun presentWebPrompt(builder: AlertDialog.Builder, dismissed: () -> Unit) {
+        if (isFinishing || isDestroyed) { dismissed(); return }
+        val dialog = builder.create()
+        dialog.setOnDismissListener { webPrompts.remove(dialog); dismissed() }
+        try { dialog.show(); webPrompts.add(dialog) }
+        catch (_: RuntimeException) { dismissed() }
     }
 
     /**
@@ -1495,6 +1515,7 @@ class MainActivity : ComponentActivity() {
             SettingsAction.LANGUAGE -> functionalSettingsPage = FunctionalSettingsPage.LANGUAGE
             SettingsAction.EXTENSIONS -> functionalSettingsPage = FunctionalSettingsPage.EXTENSIONS
             SettingsAction.CHILD_MODE -> functionalSettingsPage = FunctionalSettingsPage.CHILD
+            SettingsAction.TOOLS -> functionalSettingsPage = FunctionalSettingsPage.TOOLS
             SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()
             SettingsAction.APPEARANCE -> showAppearanceOptions()
             SettingsAction.DOWNLOADS -> {
@@ -1502,6 +1523,11 @@ class MainActivity : ComponentActivity() {
                 showDownloads()
             }
             SettingsAction.ABOUT -> updater.check(manual = true)
+            SettingsAction.LICENSES -> {
+                val text = assets.open("OPEN_SOURCE_NOTICES.txt").bufferedReader().use { it.readText() }
+                AlertDialog.Builder(this).setTitle(R.string.about_licenses).setMessage(text)
+                    .setPositiveButton(android.R.string.ok, null).show()
+            }
         }
     }
 
@@ -1523,11 +1549,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clearBrowsingData(cacheOnly: Boolean) {
+        if (settingsServices.clearing) return
         val title = if (cacheOnly) R.string.cache_clear else R.string.cookie_clear
         AlertDialog.Builder(this).setTitle(title)
             .setMessage(if (cacheOnly) R.string.cache_clear_confirm else R.string.cookie_clear_confirm)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok) { _, _ ->
+                if (settingsServices.clearing) return@setPositiveButton
+                settingsServices.beginClear()
                 view.releaseSession()
                 tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
                 tabs.clear(); activeId.value = -1L; privateShieldOverrides.clear()
@@ -1535,10 +1564,11 @@ class MainActivity : ComponentActivity() {
                     StorageController.ClearFlags.COOKIES or StorageController.ClearFlags.DOM_STORAGES or StorageController.ClearFlags.AUTH_SESSIONS
                 GeckoMotorDenemesi.getRuntime(this).storageController.clearData(flags).accept({ _ ->
                     if (!isFinishing && !isDestroyed) {
-                        createTab(false); notice(if (cacheOnly) R.string.cache_clear_success else R.string.cookie_clear_success)
+                        createTab(false)
+                        settingsServices.finishClear(if (cacheOnly) R.string.cache_clear_success else R.string.cookie_clear_success)
                     }
                 }, { _ ->
-                    if (!isFinishing && !isDestroyed) { createTab(false); notice(R.string.settings_operation_failed) }
+                    if (!isFinishing && !isDestroyed) { createTab(false); settingsServices.finishClear(R.string.settings_operation_failed) }
                 })
             }.show()
     }
@@ -1556,17 +1586,19 @@ class MainActivity : ComponentActivity() {
     private fun translateCurrentPage() {
         val tab = activeTab?.takeIf { !it.home && verifiedHost(it.url) != null }
         if (tab == null) { notice(R.string.invalid_address); return }
+        val translation = tab.gecko.sessionTranslation
+        if (translation == null) { notice(R.string.translation_failed); return }
         AlertDialog.Builder(this).setTitle(R.string.translation_title)
             .setItems(arrayOf(getString(R.string.translation_en_tr), getString(R.string.translation_tr_en), getString(R.string.translation_original))) { _, which ->
                 if (which == 2) {
-                    tab.gecko.sessionTranslation.restoreOriginalPage().accept({ _ -> Unit }, { _ -> notice(R.string.translation_failed) })
+                    translation.restoreOriginalPage().accept({ _ -> Unit }, { _ -> notice(R.string.translation_failed) })
                 } else {
                     AlertDialog.Builder(this).setTitle(R.string.translation_pair).setMessage(R.string.translation_download)
                         .setNegativeButton(android.R.string.cancel, null).setPositiveButton(android.R.string.ok) { _, _ ->
                             val from = if (which == 0) "en" else "tr"
                             val to = if (which == 0) "tr" else "en"
                             val options = TranslationsController.SessionTranslation.TranslationOptions.Builder().downloadModel(true).build()
-                            tab.gecko.sessionTranslation.translate(from, to, options).accept(
+                            translation.translate(from, to, options).accept(
                                 { _ -> notice(R.string.translation_started) }, { _ -> notice(R.string.translation_failed) })
                         }.show()
                 }
@@ -1782,6 +1814,12 @@ class MainActivity : ComponentActivity() {
             MenuAction.DOWNLOADS -> showDownloads()
             MenuAction.PRIVATE -> createTab(privateMode = true)
             MenuAction.FIND -> showFindDialog()
+            MenuAction.TRANSLATE -> translateCurrentPage()
+            MenuAction.READER -> toggleReaderMode()
+            MenuAction.QR -> qrScanner.start()
+            MenuAction.SEND_TO_DEVICE -> shareCurrentPage()
+            MenuAction.EXTENSIONS -> { showSettings(); handleSettingsAction(SettingsAction.EXTENSIONS) }
+            MenuAction.TOOLS -> { showSettings(); handleSettingsAction(SettingsAction.TOOLS) }
             MenuAction.PDF -> saveCurrentPageAsPdf()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
@@ -1794,8 +1832,21 @@ class MainActivity : ComponentActivity() {
                 updateChromeMargins()
             }
             MenuAction.SETTINGS -> showSettings()
-            else -> Unit // T07 unavailable actions are non-clickable.
         }
+    }
+
+    private fun toggleReaderMode() {
+        val tab = activeTab ?: return
+        val url = tab.url
+        if (url.startsWith("about:reader?")) {
+            val original = Uri.parse(url).getQueryParameter("url")
+            if (original != null) openUrl(original)
+            return
+        }
+        val https = GeckoMotorDenemesi.verifiedHttpsUrl(url)?.takeIf { it == url && !tab.home }
+        if (https == null) { notice(R.string.invalid_address); return }
+        notice(R.string.reader_note)
+        tab.gecko.loadUri("about:reader?url=" + URLEncoder.encode(https, "UTF-8"))
     }
 
     private fun showBookmarks() {
@@ -2078,6 +2129,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        webPrompts.toList().forEach { it.dismiss() }
+        webPrompts.clear()
         if (::settingsServices.isInitialized) settingsServices.stop()
         if (::addons.isInitialized) addons.stop()
         if (::childMode.isInitialized) childMode.stop()

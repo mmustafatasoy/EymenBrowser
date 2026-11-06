@@ -15,16 +15,16 @@ assert 'tiles.chunked(4)' in menu, "menu must remain in four columns"
 assert 'private val tiles = listOf(' in menu
 assert 'EymenPaths.' in menu
 assert 'tile.supported' in menu and '.clickable(enabled = allowed)' in menu
-assert 'MenuAction.TRANSLATE, false' in menu
-assert 'MenuAction.READER, false' in menu
+assert 'MenuAction.TRANSLATE -> translateCurrentPage()' in main
+assert 'MenuAction.READER -> toggleReaderMode()' in main
 assert 'MenuAction.PDF)' in menu
 assert 'MenuAction.PDF -> saveCurrentPageAsPdf()' in main
 assert 'tab.gecko.saveAsPdf().accept(' in main
 assert 'downloads.savePdfStream(stream)' in main
 assert 'private fun offerDownload(request: Pending)' in (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt").read_text()
-assert 'MenuAction.SEND_TO_DEVICE, false' in menu
-assert 'MenuAction.QR, false' in menu
-assert 'MenuZoomPlaceholder' in menu
+assert 'MenuAction.SEND_TO_DEVICE -> shareCurrentPage()' in main
+assert 'MenuAction.QR -> qrScanner.start()' in main
+assert 'MenuZoomButton' in menu and 'onTextSize(textPercent + 10)' in menu
 assert 'GeckoView' in main
 assert 'BrowserMenu(' in main and 'menuLayer.visibility = View.GONE' in main
 assert 'MenuAction.BOOKMARKS -> showBookmarks()' in main

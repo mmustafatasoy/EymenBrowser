@@ -64,6 +64,8 @@ dependencies {
     implementation(project(":core-motor"))
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.core:core:1.16.0")
+    // Offline QR decode; Apache-2.0, pinned in versions.toml, no hosted scanner SDK.
+    implementation("com.google.zxing:core:3.5.4")
     // Official WireGuard userspace GoBackend; Android's VpnService is merged
     // from this library's manifest. No VPN server or keys are embedded.
     implementation("com.wireguard.android:tunnel:1.0.20260102")
