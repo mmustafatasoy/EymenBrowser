@@ -51,6 +51,31 @@ assert ".windowInsetsPadding(" not in tabs, "T06 would apply status inset twice"
 assert ".navigationBarsPadding()" not in tabs, "T06 must not reserve root navigation inset twice"
 assert "Column(Modifier.fillMaxSize().background(background).padding(top = 24.dp))" not in tabs
 
+# v1.0.7: real, mutable normal-tab groups + session-safe undo. Never
+# materialize a private tab's URL in any restore slot or group membership.
+assert 'var groupId by mutableStateOf<Long?>(null)' in main
+assert 'private val tabGroups = mutableStateListOf<TabGroupPreview>()' in main
+assert 'tab.privateMode' in main
+assert 'if (!tab.privateMode) {' in main
+assert 'lastClosedNormalTab = ClosedNormalTab(' in main
+assert 'GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)' in main
+assert 'private fun restoreLastClosedNormalTab()' in main
+assert 'createTab(privateMode = false, initialUrl = closed.safeUrl)' in main
+assert 'activeTab?.groupId = closed.groupId?.takeIf' in main
+assert 'tabs.firstOrNull { it.id == tabId && !it.privateMode }' in main
+assert 'onNewGroup = ::promptNewTabGroup' in main
+assert 'onAssignGroup = ::promptTabGroupSelection' in main
+assert 'onUndoClose = ::restoreLastClosedNormalTab' in main
+assert 'groups: List<TabGroupPreview>' in tabs
+assert 'undoAvailable: Boolean' in tabs
+assert 'selectedGroupId == null || tab.groupId == selectedGroupId' in tabs
+assert 'onAssignGroup(tab.id)' in tabs
+assert 'onUndoClose' in tabs
+assert 'onOpen(visible[(activeIndex - 1 + visible.size) % visible.size].id)' in tabs
+assert 'onOpen(visible[(activeIndex + 1) % visible.size].id)' in tabs
+assert 'selectedGroupId == null)' in tabs
+assert 'groups.none { it.id == selectedGroupId }' in tabs
+
 assert (ROOT / "design/ekranlar/T06-Sekmeler.png").exists(), "T06 approved asset missing"
 assert (ROOT / "design/ekranlar/T09-Gizli.png").exists(), "T09 approved asset missing"
 print("T06/T09 static regression checks passed; real-device validation remains required.")
