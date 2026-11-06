@@ -13,7 +13,7 @@ import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
-import kotlin.math.abs
+import java.util.concurrent.atomic.AtomicLong
 
 internal enum class EymenVpnStatus {
     NO_CONFIGURATION, READY, CONNECTING, TUNNEL_UNVERIFIED,
@@ -46,13 +46,43 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         Thread(work, "EymenVpnTunnel").apply { isDaemon = true }
     }
     private var backend: GoBackend? = null
+    // Reject results from operations that were superseded by Disconnect
+    // or a later user action. The worker is serial; UI callbacks are not.
+    private val operationEpoch = AtomicLong(0)
+    private var monitoring = false
+    private val monitorTick = object : Runnable {
+        override fun run() {
+            if (!monitoring) return
+            refreshState()
+            main.postDelayed(this, 15_000L)
+        }
+    }
+
+    /** UI-only polling: never assume an old handshake stays fresh forever. */
+    fun startUiMonitoring() {
+        if (monitoring) return
+        monitoring = true
+        refreshState()
+        main.postDelayed(monitorTick, 15_000L)
+    }
+
+    fun stopUiMonitoring() {
+        monitoring = false
+        main.removeCallbacks(monitorTick)
+    }
     private val tunnel = object : Tunnel {
         override fun getName(): String = "EymenBrowser"
         override fun onStateChange(newState: Tunnel.State) {
             if (newState == Tunnel.State.DOWN) main.post {
-                // Android can revoke the VPN separately from our UI.
-                status = if (configStore.exists())
-                    EymenVpnStatus.DISCONNECTED else EymenVpnStatus.NO_CONFIGURATION
+                // Ignore expected DOWN when an explicit action is still in
+                // progress; otherwise report an unexpected Android revoke.
+                if (status == EymenVpnStatus.TUNNEL_UNVERIFIED ||
+                    status == EymenVpnStatus.HANDSHAKE_CONFIRMED
+                ) {
+                    status = if (configStore.exists())
+                        EymenVpnStatus.DISCONNECTED else EymenVpnStatus.NO_CONFIGURATION
+                    message = "Android VPN tüneli kapandı. Koruma artık doğrulanmıyor."
+                }
             }
         }
     }
@@ -64,13 +94,22 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         private set
     var configPresent by mutableStateOf(configStore.exists())
         private set
+    var importing by mutableStateOf(false)
+        private set
 
     /** No secret text is stored in state, included in errors or printed. */
     var message by mutableStateOf("")
         private set
 
-    private fun show(state: EymenVpnStatus, description: String = "") {
+    private fun show(
+        state: EymenVpnStatus,
+        description: String = "",
+        expectedEpoch: Long = operationEpoch.get()
+    ) {
         main.post {
+            // Prevent stale statistics or a late UP callback from undoing
+            // an explicit disconnect/delete that was requested later.
+            if (operationEpoch.get() != expectedEpoch) return@post
             status = state
             message = description
             configPresent = configStore.exists()
@@ -82,6 +121,7 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
      * copied to cache, external storage, SharedPreferences or a log file.
      */
     fun importConfig(uri: Uri) {
+        if (importing) return
         if (status !in listOf(
                 EymenVpnStatus.NO_CONFIGURATION,
                 EymenVpnStatus.READY,
@@ -91,6 +131,8 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
             message = "Önce açık VPN tünelini kapat."
             return
         }
+        importing = true
+        val epoch = operationEpoch.incrementAndGet()
         worker.execute {
             var bytes = byteArrayOf()
             try {
@@ -113,16 +155,19 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
                 configStore.importBytes(bytes)
                 show(
                     EymenVpnStatus.READY,
-                    "Şifreli WireGuard yapılandırması içe aktarıldı. Sadece EYMEN Browser kullanılacak."
+                    "Şifreli WireGuard yapılandırması içe aktarıldı. Sadece EYMEN Browser kullanılacak.",
+                    epoch
                 )
             } catch (_: Exception) {
                 show(
                     if (configStore.exists()) EymenVpnStatus.READY
                     else EymenVpnStatus.NO_CONFIGURATION,
-                    "Dosya okunamadı veya güvenli çift yığınlı VPN yapılandırması geçersiz."
+                    "Dosya okunamadı veya güvenli çift yığınlı VPN yapılandırması geçersiz.",
+                    epoch
                 )
             } finally {
                 bytes.fill(0)
+                main.post { if (operationEpoch.get() == epoch) importing = false }
             }
         }
     }
@@ -134,11 +179,13 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
             message = "Önce kendi WireGuard sunucu dosyanı içe aktar."
             return
         }
-        if (status == EymenVpnStatus.CONNECTING ||
-            status == EymenVpnStatus.TUNNEL_UNVERIFIED ||
-            status == EymenVpnStatus.HANDSHAKE_CONFIRMED
+        if (importing || status !in listOf(
+                EymenVpnStatus.READY, EymenVpnStatus.DISCONNECTED
+            )
         ) return
-        show(EymenVpnStatus.CONNECTING)
+        val epoch = operationEpoch.incrementAndGet()
+        status = EymenVpnStatus.CONNECTING
+        message = ""
         worker.execute {
             try {
                 check(VpnService.prepare(app) == null) {
@@ -152,15 +199,17 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
                     // peer is offline. Never claim "connected" yet.
                     show(
                         EymenVpnStatus.TUNNEL_UNVERIFIED,
-                        "Tünel açıldı; sunucunun yanıtı henüz doğrulanmadı."
+                        "Tünel açıldı; sunucunun yanıtı henüz doğrulanmadı.",
+                        epoch
                     )
                 } else {
-                    show(EymenVpnStatus.ERROR, "VPN tüneli açılamadı.")
+                    show(EymenVpnStatus.ERROR, "VPN tüneli açılamadı.", epoch)
                 }
             } catch (_: Exception) {
                 show(
                     EymenVpnStatus.ERROR,
-                    "VPN kurulamadı. Android iznini, sunucu erişimini ve .conf dosyasını kontrol et."
+                    "VPN kurulamadı. Android iznini, sunucu erişimini ve .conf dosyasını kontrol et.",
+                    epoch
                 )
             }
         }
@@ -170,59 +219,70 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
         if (status != EymenVpnStatus.TUNNEL_UNVERIFIED &&
             status != EymenVpnStatus.HANDSHAKE_CONFIRMED
         ) return
+        val epoch = operationEpoch.get()
         worker.execute {
             try {
                 val activeBackend = backend ?: return@execute
                 if (activeBackend.getState(tunnel) != Tunnel.State.UP ||
                     VpnService.prepare(app) != null
                 ) {
-                    show(EymenVpnStatus.DISCONNECTED, "VPN artık etkin değil.")
+                    show(EymenVpnStatus.DISCONNECTED, "VPN artık etkin değil.", epoch)
                     return@execute
                 }
                 val config = configStore.load()
                 val peerKey = config.peers.single().publicKey
                 val handshake = activeBackend.getStatistics(tunnel)
                     .peer(peerKey)?.latestHandshakeEpochMillis() ?: 0L
-                val recent = handshake > 0L &&
-                    abs(System.currentTimeMillis() - handshake) < 3 * 60 * 1000L
+                // A clock-skewed handshake in the future must NOT count.
+                val ageMillis = System.currentTimeMillis() - handshake
+                val recent = handshake > 0L && ageMillis in 0L..179_999L
                 if (recent) {
                     show(EymenVpnStatus.HANDSHAKE_CONFIRMED,
-                        "WireGuard sunucusundan yakın zamanda gerçek yanıt alındı.")
+                        "WireGuard sunucusundan yakın zamanda gerçek yanıt alındı.", epoch)
                 } else {
                     show(EymenVpnStatus.TUNNEL_UNVERIFIED,
-                        "Tünel açık; güncel sunucu el sıkışması doğrulanmadı.")
+                        "Tünel açık; güncel sunucu el sıkışması doğrulanmadı.", epoch)
                 }
             } catch (_: Exception) {
-                show(EymenVpnStatus.ERROR, "VPN durumu doğrulanamıyor.")
+                show(EymenVpnStatus.ERROR, "VPN durumu doğrulanamıyor.", epoch)
             }
         }
     }
 
     fun disconnect() {
-        show(EymenVpnStatus.DISCONNECTING)
+        if (status == EymenVpnStatus.DISCONNECTING) return
+        val epoch = operationEpoch.incrementAndGet()
+        status = EymenVpnStatus.DISCONNECTING
+        message = ""
         worker.execute {
             try {
                 backend?.setState(tunnel, Tunnel.State.DOWN, null)
                 show(
                     if (configStore.exists()) EymenVpnStatus.DISCONNECTED
-                    else EymenVpnStatus.NO_CONFIGURATION
+                    else EymenVpnStatus.NO_CONFIGURATION,
+                    expectedEpoch = epoch
                 )
             } catch (_: Exception) {
-                show(EymenVpnStatus.ERROR, "VPN kapatılamadı; Android VPN ayarlarından kontrol et.")
+                show(EymenVpnStatus.ERROR,
+                    "VPN kapatılamadı; Android VPN ayarlarından kontrol et.", epoch)
             }
         }
     }
 
     fun deleteConfiguration() {
-        show(EymenVpnStatus.DISCONNECTING)
+        if (importing || status == EymenVpnStatus.DISCONNECTING) return
+        val epoch = operationEpoch.incrementAndGet()
+        status = EymenVpnStatus.DISCONNECTING
+        message = ""
         worker.execute {
             try {
                 backend?.setState(tunnel, Tunnel.State.DOWN, null)
                 configStore.clear()
-                show(EymenVpnStatus.NO_CONFIGURATION, "Şifreli sunucu yapılandırması silindi.")
+                show(EymenVpnStatus.NO_CONFIGURATION, "Şifreli sunucu yapılandırması silindi.",
+                    epoch)
             } catch (_: Exception) {
                 show(EymenVpnStatus.ERROR,
-                    "VPN yapılandırması silinemedi. Önce Android VPN bağlantısını kapat.")
+                    "VPN yapılandırması silinemedi. Önce Android VPN bağlantısını kapat.", epoch)
             }
         }
     }
