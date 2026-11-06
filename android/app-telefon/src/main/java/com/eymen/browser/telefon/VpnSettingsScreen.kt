@@ -83,6 +83,11 @@ internal fun VpnSettingsScreen(
         status == EymenVpnStatus.HANDSHAKE_CONFIRMED
     val busy = status == EymenVpnStatus.CONNECTING ||
         status == EymenVpnStatus.DISCONNECTING
+    // ERROR can happen after Android created the TUN; always allow a
+    // disconnect/recovery path before changing or deleting credentials.
+    val mayNeedDisconnect = tunnelActive ||
+        status == EymenVpnStatus.CONNECTING ||
+        status == EymenVpnStatus.ERROR
 
     Column(
         Modifier.fillMaxSize().background(T.gece_zemin)
@@ -135,17 +140,17 @@ internal fun VpnSettingsScreen(
         }
         VpnAction(
             stringResource(R.string.vpn_import),
-            enabled = !busy && !tunnelActive,
+            enabled = !busy && !mayNeedDisconnect,
             prominent = !configPresent,
             onClick = onImport
         )
         VpnAction(
             stringResource(R.string.vpn_connect),
-            enabled = configPresent && !busy && !tunnelActive,
+            enabled = configPresent && !busy && !mayNeedDisconnect,
             prominent = configPresent && !tunnelActive,
             onClick = onConnect
         )
-        if (tunnelActive || status == EymenVpnStatus.CONNECTING) {
+        if (mayNeedDisconnect) {
             VpnAction(
                 stringResource(R.string.vpn_disconnect),
                 enabled = status != EymenVpnStatus.DISCONNECTING,
@@ -159,7 +164,7 @@ internal fun VpnSettingsScreen(
         }
         VpnAction(
             stringResource(R.string.vpn_remove),
-            enabled = configPresent && !busy && !tunnelActive,
+            enabled = configPresent && !busy && !mayNeedDisconnect,
             prominent = false, onClick = onDelete
         )
         Column(
