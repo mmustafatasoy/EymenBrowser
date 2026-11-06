@@ -6,13 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.13"
-  # One-shot signed mobile-banking compatibility release; verification gates
-  # remain mandatory. Normal commits never trigger production signing.
-  push:
-    branches: [main]
-    paths:
-      - '.github/release-requests/v1.0.13.txt'
+        default: "1.0.14"
 permissions:
   contents: write
 concurrency:
@@ -47,7 +41,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.13' }}
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
