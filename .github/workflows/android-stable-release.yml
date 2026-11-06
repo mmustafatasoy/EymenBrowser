@@ -1,5 +1,8 @@
 name: EymenBrowser Android signed stable release
 on:
+  push:
+    branches: [main]
+    paths: ['.github/release-requests/android-v1.0.16.json']
   workflow_dispatch:
     inputs:
       version:
@@ -16,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   signed-phone-release:
+    if: "github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'release(android): request signed v1.0.16'"
     name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -39,9 +43,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.3.1"
+      - name: Verify the reviewed one-shot v1.0.16 request and its successful CI
+        if: github.event_name == 'push'
+        run: |
+          python3 - <<'PYCODE'
+          import json, subprocess
+          from pathlib import Path
+          expected = "4433298e6dfe9fa053cacd9dc47c8c0765bf887b"
+          request = json.loads(Path(".github/release-requests/android-v1.0.16.json").read_text())
+          assert request == {"version": "1.0.16", "verified_source_sha": expected}
+          subprocess.run(["git", "fetch", "--depth=1", "origin", expected], check=True)
+          subprocess.run(["git", "diff", "--exit-code", expected, "HEAD", "--",
+                          "android", "shared", "design", "tools", "versions.toml"], check=True)
+          runs = json.loads(subprocess.check_output([
+              "gh", "api", f"repos/{__import__('os').environ['GITHUB_REPOSITORY']}/actions/runs?head_sha={expected}&per_page=30"
+          ]))["workflow_runs"]
+          for workflow in (".github/workflows/phase0.yml", ".github/workflows/android-visual-audit.yml",
+                           ".github/workflows/android-download-audit.yml"):
+              matches = [r for r in runs if r["path"] == workflow]
+              assert matches and matches[0]["conclusion"] == "success", f"Successful CI required: {workflow}"
+          PYCODE
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ inputs.version || '1.0.16' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -362,6 +386,31 @@ jobs:
             sureci sonlandirilinca arka planda devam garantisi yoktur.
           - Bilinen/bilinmeyen buyukluk yuzdeleri icin JVM sinir
             testleri vardir, fiziksel indirme testleri ayridir.
+          - v1.0.16: Onaylanan dosyalar bir aktif ve en fazla uc bekleyen
+            dosya olacak sekilde sinirli FIFO kuyruguna alinir.
+          - GeckoView orijinal yanit akisi Activity yerine uygulama kapsamli
+            yonetici ve Android dataSync foreground service tarafindan tutulur.
+          - Uygulama normal bicimde arka plana alindiginda aktarim surer;
+            tamamlanan dosyalar geri donuldugunde listeye yenilenir.
+          - Gercek indirme bildirimi, kilit ekraninda dosya adi gizleme,
+            bildirime dokunarak Indirilenler, tumunu iptal et ve siradaki
+            dosyalari ayri iptal etme eklendi.
+          - Android 13+ bildirim izni ilk indirmede bir kez istenir.
+            Izin reddedilse de foreground service kullanilabilir;
+            bildirim cekmecesinde gorunum Android iznine baglidir.
+          - Android 15/16 dataSync zaman asiminda servis hemen durur;
+            ag akisinin kapatilmasi UI is parcacigini engellemez.
+          - Kuyruk yalniz bellektedir: islem tamamen oldurulurse veya
+            cihaz yeniden baslarsa kaldigi yerden surdurme yoktur.
+            Baglanti kuyrukta zaman asimina ugrarsa yeniden indirme gerekir.
+          - Dokuz yeni JVM testi: FIFO, kuyruk kapasitesi, eszamanli kabul,
+            gecikmis tamamlanma, gercek bayt kopyasi ve iptal/IO hatalari.
+          - Android 15 gercek servis kabulunde Activity.onStop sonrasi
+            FIFO kayit, dosya SHA-256, aktif/siradaki iptal, kapasite,
+            MediaStore temizligi ve bosta kapanma dogrulandi.
+            Bu test yerel deterministik veri akisiyladir, uzak VPN/ag testi degildir.
+          - Fiziksel cihazda ekran kapali buyuk dosya, VPN ile dosya
+            aktarimi ve Android 8/9 SAF saglayici testleri ayri kabul isidir.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
