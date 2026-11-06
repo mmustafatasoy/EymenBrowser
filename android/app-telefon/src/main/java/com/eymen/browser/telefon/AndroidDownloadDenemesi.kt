@@ -55,11 +55,16 @@ internal class AndroidDownloadDenemesi(
 
     /** Cancel the current transfer; never show a fake successful download. */
     fun cancelActive() {
-        if (lastProgress == null) return
-        cancelled.set(true)
+        if (lastProgress == null || !cancelled.compareAndSet(false, true)) return
         lastProgress?.let { publishProgress(it.copy(cancelling = true)) }
-        // Closing the GeckoView stream can wake a blocked network read.
-        activeBody?.closeSafely()
+        // Never block Android's UI thread on a remote/network stream close.
+        val current = activeBody
+        if (current != null) {
+            Thread({ current.closeSafely() }, "EymenDownloadCancel").apply {
+                isDaemon = true
+                start()
+            }
+        }
     }
 
     private fun publishProgress(progress: ActiveDownload?) {
@@ -211,6 +216,7 @@ internal class AndroidDownloadDenemesi(
         worker.execute {
             var createdDownload: Uri? = null
             var cancelledByUser = false
+            var partialSafFileCouldRemain = false
             activeBody = request.body
             publishProgress(ActiveDownload(request.fileName, 0L, request.expectedBytes))
             try {
@@ -248,6 +254,7 @@ internal class AndroidDownloadDenemesi(
                     }
                     check(resolver.update(downloadUri, publish, null, null) > 0)
                 }
+                if (cancelled.get()) throw CancellationException("User cancelled")
 
                 val completed = SavedDownload(
                     uri = destination.toString(),
@@ -278,13 +285,16 @@ internal class AndroidDownloadDenemesi(
                     // ACTION_CREATE_DOCUMENT creates a user-chosen new document.
                     // Best-effort removal of incomplete output; provider may
                     // reject deletion, so never claim it was always removed.
-                    try { DocumentsContract.deleteDocument(resolver, userPickedUri) }
-                    catch (_: Exception) {}
+                    partialSafFileCouldRemain = try {
+                        !DocumentsContract.deleteDocument(resolver, userPickedUri)
+                    } catch (_: Exception) { true }
                 }
                 activity.runOnUiThread {
                     if (!activity.isFinishing && !activity.isDestroyed) {
                         message(
-                            if (cancelledByUser) R.string.download_cancelled
+                            if (partialSafFileCouldRemain)
+                                R.string.download_incomplete_saf
+                            else if (cancelledByUser) R.string.download_cancelled
                             else R.string.download_failed
                         )
                     }
