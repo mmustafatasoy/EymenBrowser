@@ -5,6 +5,8 @@ on:
       - '.github/workflows/android-visual-audit.yml'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/MainActivity.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/AndroidDownloadDenemesi.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/DownloadsScreen.kt'
+      - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/ActiveDownload.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/OnboardingScreens.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChrome.kt'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt'
