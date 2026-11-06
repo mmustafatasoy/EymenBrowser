@@ -231,5 +231,16 @@
   "vpn_last_handshake": "Son sunucu yanıtı",
   "vpn_seconds_ago": "saniye önce",
   "vpn_never": "Henüz yok",
-  "vpn_stats_note": "Bu sayılar WireGuard tünelinin gerçek sayaçlarından okunur; tek başlarına DNS veya IP sızıntısının olmadığını kanıtlamaz."
+  "vpn_stats_note": "Bu sayılar WireGuard tünelinin gerçek sayaçlarından okunur; tek başlarına DNS veya IP sızıntısının olmadığını kanıtlamaz.",
+  "menu_open_official_app": "Mobil uygulamada aç",
+  "menu_open_official_app_hint": "Yüklüyse",
+  "bank_external_title": "Dış uygulamaya geçiş",
+  "bank_external_prompt": "Bu web sitesi telefonundaki başka bir uygulamayı açmak istiyor. Hedefi doğrulayıp devam et.",
+  "bank_external_missing": "Bu bağlantıyı açabilen uygulama yüklü değil veya bu bağlantı desteklenmiyor.",
+  "bank_external_origin": "İstek yapan site",
+  "bank_external_target": "Uygulama bağlantısı",
+  "bank_external_confirm": "Uygulamayı aç",
+  "bank_https_handoff_prompt": "Yalnızca bankanın resmî uygulaması yüklüyse seç. Şifre, SMS kodu veya hesap bilgilerini bu tarayıcıya ait olmayan bir ekranda girmeden önce uygulamayı doğrula.",
+  "bank_js_prompt_title": "Web sitesinin mesajı",
+  "bank_js_cancel": "İptal"
 }
