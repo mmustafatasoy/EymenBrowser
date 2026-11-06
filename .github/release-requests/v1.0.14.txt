@@ -1,9 +1,0 @@
-v1.0.14 — EYMEN Browser safe bank login interoperability.
-- User-clicked HTTPS window.open() / target=_blank supported through newly created GeckoSession via NavigationDelegate.onNewSession; no manual loadUri in popup callback.
-- HTTPS top-level source only, tab capacity enforced, private mode preserved. User-gesture requirement blocks unattended script popups.
-- Added "Başka tarayıcıda aç / Open in another browser" menu row to hand user-confirmed official HTTPS URL to Android chooser. Only URL transferred; browser cookies, passwords and tokens not copied.
-- Prior v1.0.13 native bank app deep-link confirmation, JS dialogs and warning that app authenticity cannot be inferred are retained.
-- No bank security bypass, no guarantee of real banking login; bank/platform-specific account flows must be tested on the physical device.
-- Security tests: python tools/check_banking_compat.py plus Android Gradle JVM tests. Android 15/16 emulator audit separate from real bank login.
-- Production gate: original signing certificate, package metadata, 3 ABI APKs, checksum and signed upgrade compatibility with v1.0.13.
-Docs: docs/ANDROID_BANK_COMPAT_V114.md
