@@ -48,9 +48,14 @@ internal fun ShieldPanel(
     enabled: Boolean,
     pageBlocked: Int,
     tabBlocked: Int,
+    adTrackerBlocked: Int,
+    analyticsBlocked: Int,
+    otherTrackerBlocked: Int,
+    strictMode: Boolean,
     canToggle: Boolean,
     onDismiss: () -> Unit,
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    onModeChange: (Boolean) -> Unit
 ) {
     Box(Modifier.fillMaxSize().background(Color(0x993E4350))) {
         val close = stringResource(R.string.shield_close)
@@ -133,7 +138,7 @@ internal fun ShieldPanel(
                 listOf(
                     Triple(pageBlocked.toString(), R.string.shield_page_blocks, true),
                     Triple(tabBlocked.toString(), R.string.shield_tab_blocks, true),
-                    Triple("—", R.string.shield_cookie_pending, false)
+                    Triple(adTrackerBlocked.toString(), R.string.shield_ads_trackers, true)
                 ).forEach { (number, label, available) ->
                     Column(
                         Modifier.weight(1f)
@@ -152,6 +157,67 @@ internal fun ShieldPanel(
                     }
                 }
             }
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                ShieldText(
+                    stringResource(R.string.shield_profile_title),
+                    16, T.gece_yazi, strong = true
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    listOf(
+                        false to R.string.shield_profile_standard,
+                        true to R.string.shield_profile_strict
+                    ).forEach { (isStrict, label) ->
+                        Box(
+                            Modifier.weight(1f).heightIn(min = 44.dp)
+                                .background(
+                                    if (strictMode == isStrict) T.gece_vurgu
+                                    else T.gece_yuzey2,
+                                    RoundedCornerShape(14.dp)
+                                )
+                                .clickable { onModeChange(isStrict) }
+                                .padding(horizontal = 10.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ShieldText(
+                                stringResource(label), 14,
+                                if (strictMode == isStrict) T.gece_vurguUstu
+                                else T.gece_yazi,
+                                strong = strictMode == isStrict
+                            )
+                        }
+                    }
+                }
+                ShieldText(
+                    stringResource(
+                        if (strictMode) R.string.shield_profile_strict_desc
+                        else R.string.shield_profile_standard_desc
+                    ), 12, T.gece_yaziIkincil
+                )
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    analyticsBlocked to R.string.shield_analytics_trackers,
+                    otherTrackerBlocked to R.string.shield_other_trackers
+                ).forEach { (count, label) ->
+                    Column(
+                        Modifier.weight(1f)
+                            .background(T.gece_yuzey2, RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        ShieldText(count.toString(), 22, T.gece_yazi, strong = true)
+                        ShieldText(stringResource(label), 12, T.gece_yaziIkincil)
+                    }
+                }
+            }
+            ShieldText(
+                stringResource(R.string.shield_count_scope), 12, T.gece_yaziIkincil
+            )
             Column {
                 listOf(
                     R.string.shield_cookie_dialog to R.string.shield_cookie_dialog_desc,
