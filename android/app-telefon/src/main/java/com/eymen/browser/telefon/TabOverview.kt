@@ -70,7 +70,7 @@ internal fun TabOverview(
     onOpen: (Long) -> Unit,
     onClose: (Long) -> Unit,
     onCloseAll: (Boolean) -> Unit,
-    onNew: (Boolean) -> Unit,
+    onNew: (Boolean, Long?) -> Unit,
     onNewGroup: () -> Unit,
     onRenameGroup: (Long) -> Unit,
     onRemoveGroup: (Long) -> Unit,
@@ -438,7 +438,10 @@ internal fun TabOverview(
                 Modifier.height(48.dp)
                     .background(selected, RoundedCornerShape(24.dp))
                     .clickable(enabled = section != TabSection.DEVICES) {
-                        onNew(section == TabSection.PRIVATE)
+                        onNew(
+                            section == TabSection.PRIVATE,
+                            if (section == TabSection.NORMAL) selectedGroupId else null
+                        )
                     }
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
