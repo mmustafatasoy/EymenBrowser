@@ -212,7 +212,8 @@ with Image.open("visual-captures/T07-Acik-Menu.png") as current:
 # The approved menu is narrow (~154px on this 390px density-160 fixture),
 # top-right aligned, and leaves the center-left home UNDIMMED.
 right_box = (228, 90, 389, 359)
-left_box = (125, 100, 205, 335)
+# Logo/search intentionally reposition, so examine an unchanged shortcut strip.
+left_box = (15, 368, 155, 438)
 right_before = full_home.crop(right_box)
 right_after = full_menu.crop(right_box)
 right_diff = ImageChops.difference(right_before, right_after)
@@ -235,7 +236,14 @@ print(
     f"Actual T07 compact popup: right delta={right_fraction:.3f}, "
     f"left scrim delta={left_fraction:.3f}, highlighted pixels={blue}"
 )
-if right_fraction < 0.12 or blue < 3000 or left_fraction > 0.07:
+# The menu-open logo should shift left, no longer hiding under the menu.
+logo_shift_region = full_menu.crop((103, 130, 139, 218))
+left_brand_blues = sum(
+    r < 115 and 50 < g < 180 and b > 185
+    for r, g, b in logo_shift_region.getdata()
+)
+print(f"Menu-open branding left blue pixels={left_brand_blues}")
+if right_fraction < 0.12 or blue < 3000 or left_fraction > 0.07 or left_brand_blues < 300:
     raise SystemExit(
         "Approved narrow/no-scrim three-dot menu failed its screenshot geometry"
     )
