@@ -44,8 +44,8 @@ internal class TabWorkspaceStore(context: Context) {
         return try {
             val parsed = URI(candidate)
             if (!parsed.scheme.equals("https", ignoreCase = true) ||
-                parsed.host.isNullOrBlank() ||
-                parsed.userInfo != null
+                parsed.host.isNullOrBlank() || parsed.host.length > 253 ||
+                parsed.port !in -1..65535 || parsed.userInfo != null
             ) null else candidate
         } catch (_: Exception) {
             null
