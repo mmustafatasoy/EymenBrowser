@@ -2,6 +2,16 @@
 
 Son güncelleme: 2026-11-06
 
+## Güncel çalışma — adres düzenleme ve özel ekranlar (v1.0.17 hazırlığı)
+
+- Son talep: Adres/arama çubuğuna dokununca Chrome benzeri tüm adres seçimi; uygulamaya özel İndirmeler ve Ayarlar. Bu üç iş tek imzalı güncellemede yayımlanacak, bileşenler ayrı doğrulanacak.
+- Açık, koyu ve gizli araç çubukları ortak `AddressEditor` kullanır. İlk dokunuşun imleç olayı seçimi bozamaz; normal imleç düzenleme, Türkçe/IME bileşimi, odaktayken yönlendirme ve temizle düğmesi korunur. Gönderimde odak bırakılır ve klavye kapanır.
+- İndirmeler: seçili temayla uyumlu özel başlık, gerçek aktif/sırada/kaydedilen sayıları, dosya arama/tür filtreleri, kaydırılabilir aktif transfer ve kuyruk, dosya açma ve yalnız geçmişi temizleyen özel onay penceresi. Motor/servis/iptal ve tamamlanan dosya sicili korunur.
+- Ayarlar: kategori kartları, arama, aynı A logosu; arama motoru, görünüm/adres konumu ve hakkında/güncelleme için uygulama içi alt sayfalar. Değişiklikler mevcut tercihlere kaydedilir; henüz geliştirilmemiş seçenekler `Yakında` olarak devre dışı kalır. Gizli/pasif Compose katmanlarında geri tuşu yakalanmaz.
+- Yeni renk eklenmedi; ortak gece/gündüz renkleri kullanılır. Yeni ekran ölçüleri ve temizle/klasör/çöp yolları `design/tokens.json` üzerinden üretilir. Ana sayfa tasarımı korunur.
+- Doğrulama: mevcut 11 kaynak/uyumluluk kontrolü geçti. Beş odak/seçim/IME JVM regresyon testi eklendi. Derleme, gerçek dokunma-yazma, özel ekran gezinmesi, açık/koyu görünüm ve v1.0.16 indirme servisi regresyonlarının sonuçları bekleniyor.
+- Son imzalı sürüm halen v1.0.16. Tüm ilgili testler ve aynı sertifikayla üstüne güncelleme kapısı geçmeden v1.0.17 tamamlanmış sayılmaz. Fiziksel Tecno testi yapılmadı. VPN/banka ve diğer büyük modüller önceki sırada kalır; bu çalışma onların tamamlandığı anlamına gelmez.
+
 ## Güncel devam noktası — Android indirme kuyruğu (2026-11-06)
 
 - GitHub'da doğrulanan son imzalı sürüm: **[v1.0.16](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.16)** — 2026-11-06 18:24 Türkiye saati. Önceki aşağıdaki günlük bölümleri tarihseldir; güncel durum için bu bölümü esas al.

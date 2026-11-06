@@ -13,6 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -293,9 +296,12 @@ internal fun BrowserToolbar(
     onShield: () -> Unit
 ) {
     val p = colors(day, privateMode)
-    var input by remember(currentUrl, home) {
-        mutableStateOf(if (home) "" else currentUrl)
-    }
+    val editor = rememberAddressEditor(if (home) "" else currentUrl)
+    val input = editor.value
+    val focus = LocalFocusManager.current
+    val requester = remember { FocusRequester() }
+    val addressLabel = stringResource(R.string.address_edit_label)
+    val clearLabel = stringResource(R.string.address_clear)
     val keyboard = LocalSoftwareKeyboardController.current
     val tabLabel = stringResource(R.string.tabs)
     val privateHint = stringResource(R.string.private_address_hint)
@@ -321,18 +327,22 @@ internal fun BrowserToolbar(
             Spacer(Modifier.width(4.dp))
             BasicTextField(
                 value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+                onValueChange = editor::update,
+                modifier = Modifier.weight(1f).focusRequester(requester)
+                    .onFocusChanged { editor.focusChanged(it.isFocused) }
+                    .semantics { contentDescription = addressLabel }.padding(vertical = 10.dp),
                 textStyle = TextStyle(color = p.text, fontSize = 16.sp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
-                    onGo(input)
+                    val entered = input.text
+                    focus.clearFocus()
+                    onGo(entered)
                     keyboard?.hide()
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.isBlank()) {
+                        if (input.text.isBlank()) {
                             ChromeText(
                                 if (privateMode) privateHint else stringResource(R.string.address_hint), 16, p.muted
                             )
@@ -342,15 +352,22 @@ internal fun BrowserToolbar(
                 }
             )
             Box(
-                Modifier.size(44.dp).clickable {
-                    if (home) {
-                        onGo(input)
+                Modifier.size(44.dp).semantics {
+                    contentDescription = if (editor.focused && input.text.isNotEmpty()) clearLabel else addressLabel
+                }.clickable {
+                    if (editor.focused && input.text.isNotEmpty()) {
+                        editor.clear(); requester.requestFocus(); keyboard?.show()
+                    } else if (home) {
+                        val entered = input.text
+                        focus.clearFocus()
+                        onGo(entered)
                         keyboard?.hide()
                     } else onReload()
                 }, contentAlignment = Alignment.Center
             ) {
                 EymenVector(
-                    if (home) EymenPaths.ara else EymenPaths.yenile,
+                    if (editor.focused && input.text.isNotEmpty()) EymenPaths.temizle
+                    else if (home) EymenPaths.ara else EymenPaths.yenile,
                     color = p.muted, iconSize = 20.dp
                 )
             }

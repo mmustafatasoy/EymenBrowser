@@ -1,23 +1,25 @@
 package com.eymen.browser.telefon
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.eymen.browser.tema.EymenPaths
 import com.eymen.browser.tema.EymenTokens as T
 
@@ -25,159 +27,164 @@ internal enum class SettingsAction {
     SHIELD, VPN, PASSWORDS, SEARCH_ENGINE, APPEARANCE, EXTENSIONS,
     SITE_PERMISSIONS, DOWNLOADS, LANGUAGE, CHILD_MODE, ABOUT
 }
-private data class SettingRow(
-    val title: Int, val icon: String, val action: SettingsAction,
-    val implemented: Boolean = false
-)
+internal enum class BrowserSettingsPage { MAIN, SEARCH, APPEARANCE, ABOUT }
+private data class SettingRow(val title: Int, val icon: String, val action: SettingsAction,
+    val section: Int, val implemented: Boolean = false)
 private val settingsRows = listOf(
-    SettingRow(R.string.settings_shield, EymenPaths.kalkan, SettingsAction.SHIELD, true),
-    SettingRow(R.string.vpn_title, EymenPaths.kalkan, SettingsAction.VPN, true),
-    SettingRow(R.string.settings_passwords, EymenPaths.kilit, SettingsAction.PASSWORDS),
-    SettingRow(R.string.menu_settings_search, EymenPaths.ara, SettingsAction.SEARCH_ENGINE, true),
-    SettingRow(R.string.settings_appearance, EymenPaths.ay, SettingsAction.APPEARANCE, true),
-    SettingRow(R.string.menu_extensions, EymenPaths.eklenti, SettingsAction.EXTENSIONS),
-    SettingRow(R.string.settings_site_permissions, EymenPaths.site, SettingsAction.SITE_PERMISSIONS),
-    SettingRow(R.string.downloads, EymenPaths.indir, SettingsAction.DOWNLOADS, true),
-    SettingRow(R.string.settings_language, EymenPaths.cevir, SettingsAction.LANGUAGE),
-    SettingRow(R.string.settings_child_mode, EymenPaths.cocuk, SettingsAction.CHILD_MODE),
-    SettingRow(R.string.settings_about_update, EymenPaths.bilgi, SettingsAction.ABOUT, true)
+    SettingRow(R.string.settings_shield, EymenPaths.kalkan, SettingsAction.SHIELD, R.string.settings_group_privacy, true),
+    SettingRow(R.string.vpn_title, EymenPaths.kalkan, SettingsAction.VPN, R.string.settings_group_privacy, true),
+    SettingRow(R.string.settings_passwords, EymenPaths.kilit, SettingsAction.PASSWORDS, R.string.settings_group_privacy),
+    SettingRow(R.string.settings_site_permissions, EymenPaths.site, SettingsAction.SITE_PERMISSIONS, R.string.settings_group_privacy),
+    SettingRow(R.string.menu_settings_search, EymenPaths.ara, SettingsAction.SEARCH_ENGINE, R.string.settings_group_browsing, true),
+    SettingRow(R.string.settings_appearance, EymenPaths.ay, SettingsAction.APPEARANCE, R.string.settings_group_browsing, true),
+    SettingRow(R.string.settings_language, EymenPaths.cevir, SettingsAction.LANGUAGE, R.string.settings_group_browsing),
+    SettingRow(R.string.downloads, EymenPaths.indir, SettingsAction.DOWNLOADS, R.string.settings_group_tools, true),
+    SettingRow(R.string.menu_extensions, EymenPaths.eklenti, SettingsAction.EXTENSIONS, R.string.settings_group_tools),
+    SettingRow(R.string.settings_child_mode, EymenPaths.cocuk, SettingsAction.CHILD_MODE, R.string.settings_group_tools),
+    SettingRow(R.string.settings_about_update, EymenPaths.bilgi, SettingsAction.ABOUT, R.string.settings_group_app, true)
 )
+
 @Composable
-private fun SettingsText(
-    value: String, size: Int, color: Color, modifier: Modifier = Modifier,
-    strong: Boolean = false
-) {
-    BasicText(
-        value, modifier, maxLines = 2, overflow = TextOverflow.Ellipsis,
-        style = TextStyle(
-            color = color, fontSize = size.sp,
-            lineHeight = (size * 1.3f).sp,
-            fontWeight = if (strong) FontWeight.SemiBold else FontWeight.Normal
-        )
-    )
+private fun ChoiceRow(label: String, chosen: Boolean, p: BrowserScreenPalette, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = T.telefon_dokunma_standart.dp)
+        .semantics { selected = chosen }.clickable(role = Role.RadioButton, onClick = onClick)
+        .padding(T.telefon_ekran_kenar.dp), verticalAlignment = Alignment.CenterVertically) {
+        ScreenText(label, p.text, modifier = Modifier.weight(1f), strong = chosen)
+        Box(Modifier.size(T.telefon_ekran_simge.dp)
+            .border(T.telefon_ekran_cizgi.dp, if (chosen) p.accent else p.line, CircleShape)
+            .padding(T.telefon_ekran_cizgi.dp * 4)
+            .background(if (chosen) p.accent else p.surface, CircleShape))
+    }
 }
 
-/** T10 approved list layout, with real settings only and explicit sync limits. */
+/** Branded settings with actual persisted choices; unavailable features stay labelled. */
 @Composable
 internal fun SettingsScreen(
-    globalShield: Boolean,
-    searchEngine: String,
-    dayMode: Boolean,
-    onBack: () -> Unit,
-    onAction: (SettingsAction) -> Unit
+    globalShield: Boolean, searchEngine: String, dayMode: Boolean, addressBottom: Boolean,
+    visible: Boolean, initialPage: BrowserSettingsPage,
+    onBack: () -> Unit, onAction: (SettingsAction) -> Unit,
+    onSearchEngine: (String) -> Unit, onDayMode: (Boolean) -> Unit, onAddressBottom: (Boolean) -> Unit
 ) {
-    var query by remember { mutableStateOf("") }
-    val filtered = settingsRows.filter { row ->
-        query.isBlank() || stringResource(row.title).contains(query, ignoreCase = true)
+    val p = browserScreenPalette(dayMode)
+    var query by remember(visible) { mutableStateOf("") }
+    var page by remember(visible, initialPage) { mutableStateOf(initialPage) }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val back: () -> Unit = {
+        focus.clearFocus(); keyboard?.hide()
+        if (page == BrowserSettingsPage.MAIN) onBack() else page = BrowserSettingsPage.MAIN
     }
-    Column(
-        Modifier.fillMaxSize().background(T.gece_zemin)
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(48.dp).clickable(onClick = onBack),
-                contentAlignment = Alignment.Center
-            ) {
-                EymenVector(EymenPaths.geri, color = T.gece_yazi)
-            }
-            SettingsText(stringResource(R.string.settings), 24, T.gece_yazi, strong = true)
+    BackHandler(enabled = visible && page != BrowserSettingsPage.MAIN) { back() }
+    val title = stringResource(when (page) {
+        BrowserSettingsPage.MAIN -> R.string.settings
+        BrowserSettingsPage.SEARCH -> R.string.menu_settings_search
+        BrowserSettingsPage.APPEARANCE -> R.string.settings_appearance
+        BrowserSettingsPage.ABOUT -> R.string.settings_about_update
+    })
+    val filtered = settingsRows.filter { row ->
+        query.isBlank() || stringResource(row.title).contains(query.trim(), ignoreCase = true)
+    }
+    Column(Modifier.fillMaxSize().screenBackground(p).padding(T.telefon_ekran_kenar.dp),
+        verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+        ScreenHeader(title, stringResource(R.string.settings_personal_subtitle), p, back)
+        if (page == BrowserSettingsPage.MAIN) {
+            ScreenSearch(query, stringResource(R.string.settings_search_hint), p) { query = it }
         }
-        Row(
-            Modifier.fillMaxWidth().height(48.dp)
-                .background(T.gece_yuzey2, RoundedCornerShape(24.dp))
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            EymenVector(EymenPaths.ara, color = T.gece_yaziIkincil, iconSize = 20.dp)
-            Spacer(Modifier.width(10.dp))
-            BasicTextField(
-                value = query, onValueChange = { query = it },
-                singleLine = true, modifier = Modifier.weight(1f),
-                textStyle = TextStyle(color = T.gece_yazi, fontSize = 16.sp),
-                decorationBox = { inner ->
-                    Box {
-                        if (query.isBlank()) {
-                            SettingsText(
-                                stringResource(R.string.settings_search_hint),
-                                16, T.gece_yaziIkincil
-                            )
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_kenar.dp)) {
+            when (page) {
+                BrowserSettingsPage.MAIN -> {
+                    if (query.isBlank()) {
+                        Row(Modifier.fillMaxWidth().background(p.accent, RoundedCornerShape(T.telefon_kose_panel.dp))
+                            .padding(T.telefon_ekran_kenar.dp), verticalAlignment = Alignment.CenterVertically) {
+                            EymenVector(EymenPaths.ayarlar, color = p.onAccent, iconSize = T.telefon_dokunma_standart.dp)
+                            Spacer(Modifier.width(T.telefon_ekran_bosluk.dp))
+                            Column(Modifier.weight(1f)) {
+                                ScreenText(stringResource(R.string.browser_display_name), p.onAccent,
+                                    T.telefon_yazi_bolumBasligi, strong = true)
+                                ScreenText(stringResource(R.string.settings_personal_hint), p.onAccent, T.telefon_yazi_ikincil)
+                            }
                         }
-                        inner()
+                    }
+                    filtered.groupBy { it.section }.forEach { (section, rows) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
+                            ScreenText(stringResource(section), p.muted, T.telefon_yazi_ikincil, strong = true)
+                            Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))) {
+                                rows.forEach { row ->
+                                    val note = when (row.action) {
+                                        SettingsAction.VPN -> stringResource(R.string.settings_vpn_note)
+                                        SettingsAction.SHIELD -> stringResource(if (globalShield) R.string.settings_enabled else R.string.settings_disabled)
+                                        SettingsAction.SEARCH_ENGINE -> searchEngine
+                                        SettingsAction.APPEARANCE -> stringResource(if (dayMode) R.string.theme_day else R.string.theme_night)
+                                        SettingsAction.ABOUT -> stringResource(R.string.settings_updates_note)
+                                        else -> if (row.implemented) "" else stringResource(R.string.settings_coming_soon)
+                                    }
+                                    Row(Modifier.fillMaxWidth().heightIn(min = T.telefon_dokunma_standart.dp)
+                                        .clickable(enabled = row.implemented, role = Role.Button) {
+                                            focus.clearFocus(); keyboard?.hide()
+                                            when (row.action) {
+                                                SettingsAction.SEARCH_ENGINE -> page = BrowserSettingsPage.SEARCH
+                                                SettingsAction.APPEARANCE -> page = BrowserSettingsPage.APPEARANCE
+                                                SettingsAction.ABOUT -> page = BrowserSettingsPage.ABOUT
+                                                else -> onAction(row.action)
+                                            }
+                                        }.padding(T.telefon_ekran_bosluk.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(T.telefon_ekran_rozet.dp)
+                                            .background(p.soft, RoundedCornerShape(T.telefon_kose_kucuk.dp)),
+                                            contentAlignment = Alignment.Center) {
+                                            EymenVector(row.icon, color = if (row.implemented) p.accent else p.disabled,
+                                                iconSize = T.telefon_ekran_simge.dp)
+                                        }
+                                        Spacer(Modifier.width(T.telefon_ekran_bosluk.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            ScreenText(stringResource(row.title), if (row.implemented) p.text else p.disabled, strong = true)
+                                            if (note.isNotEmpty()) ScreenText(note, p.muted, T.telefon_yazi_ikincil)
+                                        }
+                                        if (row.implemented) EymenVector(EymenPaths.ileri, color = p.muted,
+                                            iconSize = T.telefon_ekran_simge.dp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (filtered.isEmpty()) ScreenText(stringResource(R.string.settings_no_results), p.muted)
+                }
+                BrowserSettingsPage.SEARCH -> {
+                    ScreenText(stringResource(R.string.settings_search_explanation), p.muted)
+                    Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))) {
+                        listOf("Google", "DuckDuckGo", "Bing", "Yandex").forEach { engine ->
+                            ChoiceRow(engine, searchEngine == engine, p) { onSearchEngine(engine) }
+                        }
                     }
                 }
-            )
-        }
-        Row(
-            Modifier.fillMaxWidth()
-                .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier.size(44.dp).background(
-                    T.gece_yuzey3, RoundedCornerShape(22.dp)
-                ), contentAlignment = Alignment.Center
-            ) {
-                SettingsText("E", 18, T.gece_yazi, strong = true)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                SettingsText(
-                    stringResource(R.string.settings_sync_off),
-                    15, T.gece_yazi, strong = true
-                )
-                SettingsText(
-                    stringResource(R.string.settings_sync_pending),
-                    13, T.gece_yaziIkincil
-                )
-            }
-        }
-        Column(
-            Modifier.weight(1f)
-                .background(T.gece_yuzey1, RoundedCornerShape(16.dp))
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 2.dp)
-        ) {
-            filtered.forEach { row ->
-                val note = when (row.action) {
-                    SettingsAction.VPN -> stringResource(R.string.vpn_subtitle)
-                    SettingsAction.SHIELD -> stringResource(
-                        if (globalShield) R.string.settings_enabled else R.string.settings_disabled
-                    )
-                    SettingsAction.SEARCH_ENGINE -> searchEngine
-                    SettingsAction.APPEARANCE -> stringResource(
-                        if (dayMode) R.string.theme_day else R.string.theme_night
-                    )
-                    SettingsAction.ABOUT -> stringResource(R.string.update_manual_check)
-                    else -> if (row.implemented) "" else stringResource(R.string.menu_not_available)
+                BrowserSettingsPage.APPEARANCE -> {
+                    ScreenText(stringResource(R.string.settings_change_theme), p.muted, strong = true)
+                    Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))) {
+                        ChoiceRow(stringResource(R.string.theme_day), dayMode, p) { onDayMode(true) }
+                        ChoiceRow(stringResource(R.string.theme_night), !dayMode, p) { onDayMode(false) }
+                    }
+                    if (!dayMode) {
+                        ScreenText(stringResource(R.string.settings_change_address), p.muted, strong = true)
+                        Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))) {
+                            ChoiceRow(stringResource(R.string.onboarding_top), !addressBottom, p) { onAddressBottom(false) }
+                            ChoiceRow(stringResource(R.string.onboarding_bottom), addressBottom, p) { onAddressBottom(true) }
+                        }
+                    }
                 }
-                Row(
-                    Modifier.fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .clickable(enabled = row.implemented) {
-                            onAction(row.action)
-                        },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    EymenVector(
-                        row.icon, color = T.gece_yaziIkincil, iconSize = 22.dp
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    SettingsText(
-                        stringResource(row.title), 15,
-                        if (row.implemented) T.gece_yazi else T.gece_yaziPasif,
-                        modifier = Modifier.weight(1f), strong = true
-                    )
-                    SettingsText(note, 13, T.gece_yaziIkincil)
+                BrowserSettingsPage.ABOUT -> {
+                    val context = LocalContext.current
+                    val version = remember { try {
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
+                    } catch (_: Exception) { "" } }
+                    Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_panel.dp))
+                        .padding(T.telefon_ekran_kenar.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+                        AtasoySiteLogo(Modifier.size(T.telefon_dokunma_standart.dp * 2))
+                        ScreenText(stringResource(R.string.browser_display_name), p.text, T.telefon_yazi_sayfaBasligi, strong = true)
+                        ScreenText(stringResource(R.string.settings_app_version, version), p.muted)
+                    }
+                    ScreenButton(stringResource(R.string.update_manual_check), p, { onAction(SettingsAction.ABOUT) }, primary = true)
                 }
-            }
-            if (filtered.isEmpty()) {
-                SettingsText(
-                    stringResource(R.string.settings_no_results),
-                    14, T.gece_yaziIkincil, modifier = Modifier.padding(16.dp)
-                )
             }
         }
     }

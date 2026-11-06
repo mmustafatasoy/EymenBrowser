@@ -73,18 +73,18 @@ assert 'private val registry = DownloadRegistry(activity.applicationContext)' no
 assert 'if (!file.uri.startsWith("content://")' in registry
 assert 'fun clearListOnly()' in registry
 assert 'prefs.edit().remove("completed").apply()' in registry
-assert 'visible.forEach { file ->' in downloads
+assert 'visibleFiles.forEach { file ->' in downloads
 assert 'files.sumOf { it.bytes }' in downloads
 assert 'onOpen(file)' in downloads
 assert 'onClear: () -> Unit' in downloads
 assert 'setDataAndType(Uri.parse(file.uri), file.mimeType)' in main
 assert 'Intent.FLAG_GRANT_READ_URI_PERMISSION' in main
 assert 'downloadRegistry.clearListOnly()' in main
-assert 'download_clear_confirm' in main
+assert 'download_clear_confirm' in downloads
 
 assert 'settingsRows.filter' in settings
 assert 'SettingRow(R.string.settings_shield' in settings
-assert 'settings_sync_off' in settings
+assert 'settings_coming_soon' in settings
 assert 'SettingRow(R.string.settings_about_update' in settings
 assert 'SettingsAction.SHIELD ->' in main
 assert 'SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()' in main

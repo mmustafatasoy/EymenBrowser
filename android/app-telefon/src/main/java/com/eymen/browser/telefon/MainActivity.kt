@@ -153,8 +153,9 @@ class MainActivity : ComponentActivity() {
     // Compose observes this so only the home logo/search reflow when popup opens.
     private var menuShowing by mutableStateOf(false)
     private var shieldShowing = false
-    private var downloadsShowing = false
-    private var settingsShowing = false
+    private var downloadsShowing by mutableStateOf(false)
+    private var settingsShowing by mutableStateOf(false)
+    private var settingsInitialPage by mutableStateOf(BrowserSettingsPage.MAIN)
     private var vpnScreenVisible by mutableStateOf(false)
     private val globalShieldWanted = mutableStateOf(true)
     private val strictShieldWanted = mutableStateOf(false)
@@ -465,11 +466,13 @@ class MainActivity : ComponentActivity() {
                 files = savedFiles,
                 active = activeDownload,
                 queued = queuedDownloads,
+                dayMode = dayMode.value,
+                visible = downloadsShowing,
                 onBack = ::hideDownloads,
                 onOpen = ::openDownloadedFile,
                 onCancelActive = downloads::cancelActive,
                 onCancelQueued = downloads::cancelQueued,
-                onClear = ::confirmClearDownloadedFiles
+                onClear = ::clearDownloadedFileRecords
             )
         }
         downloadsLayer.visibility = View.GONE
@@ -505,6 +508,12 @@ class MainActivity : ComponentActivity() {
                     globalShield = globalShieldWanted.value,
                     searchEngine = searchEngine,
                     dayMode = dayMode.value,
+                    addressBottom = addressBottom,
+                    visible = settingsShowing,
+                    initialPage = settingsInitialPage,
+                    onSearchEngine = ::setSearchEngine,
+                    onDayMode = ::setDayMode,
+                    onAddressBottom = ::setAddressBottom,
                     onBack = ::hideSettings,
                     onAction = ::handleSettingsAction
                 )
@@ -1329,7 +1338,11 @@ class MainActivity : ComponentActivity() {
         if (::shieldLayer.isInitialized) shieldLayer.visibility = View.GONE
     }
 
-    private fun showSettings() {
+    private fun showSettings() = openSettingsPage(BrowserSettingsPage.MAIN)
+
+    private fun openSettingsPage(page: BrowserSettingsPage) {
+        settingsInitialPage = page
+        hideBrowserKeyboard()
         if (!::settingsLayer.isInitialized || videoFullScreen) return
         if (menuShowing) hideBrowserMenu()
         if (downloadsShowing) hideDownloads()
@@ -1490,57 +1503,37 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showSearchEngineSelection() {
-        val engines = arrayOf("Google", "DuckDuckGo", "Bing", "Yandex")
-        AlertDialog.Builder(this)
-            .setTitle(R.string.menu_change_search)
-            .setSingleChoiceItems(
-                engines, engines.indexOf(searchEngine).coerceAtLeast(0)
-            ) { dialog, index ->
-                searchEngine = engines[index]
-                prefs.edit().putString("search_engine", searchEngine).apply()
-                dialog.dismiss()
-            }.show()
+    private fun setSearchEngine(engine: String) {
+        if (engine !in listOf("Google", "DuckDuckGo", "Bing", "Yandex")) return
+        searchEngine = engine
+        prefs.edit().putString("search_engine", engine).apply()
     }
 
-    private fun showAddressPositionSelection() {
-        val options = arrayOf(
-            getString(R.string.onboarding_bottom),
-            getString(R.string.onboarding_top)
-        )
-        AlertDialog.Builder(this)
-            .setTitle(R.string.menu_change_address)
-            .setSingleChoiceItems(
-                options, if (addressBottom) 0 else 1
-            ) { dialog, index ->
-                addressBottom = index == 0
-                prefs.edit().putBoolean("address_at_bottom", addressBottom).apply()
-                updateChromeMargins()
-                dialog.dismiss()
-            }.show()
+    private fun setDayMode(day: Boolean) {
+        dayMode.value = day
+        prefs.edit().putBoolean("day_theme", day).apply()
+        updateSystemBarsAppearance()
+        updateChromeMargins()
     }
 
-    private fun showAppearanceOptions() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.settings_appearance)
-            .setItems(arrayOf(
-                getString(R.string.theme_day),
-                getString(R.string.theme_night),
-                getString(R.string.menu_change_address)
-            )) { _, index ->
-                when (index) {
-                    0, 1 -> {
-                        dayMode.value = index == 0
-                        prefs.edit().putBoolean("day_theme", dayMode.value).apply()
-                        updateSystemBarsAppearance()
-                        updateChromeMargins()
-                    }
-                    2 -> showAddressPositionSelection()
-                }
-            }.show()
+    private fun setAddressBottom(bottom: Boolean) {
+        addressBottom = bottom
+        prefs.edit().putBoolean("address_at_bottom", bottom).apply()
+        updateChromeMargins()
+    }
+
+    private fun showSearchEngineSelection() = openSettingsPage(BrowserSettingsPage.SEARCH)
+    private fun showAddressPositionSelection() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
+    private fun showAppearanceOptions() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
+
+    private fun hideBrowserKeyboard() {
+        currentFocus?.clearFocus()
+        (getSystemService(INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)
+            ?.hideSoftInputFromWindow(root.windowToken, 0)
     }
 
     private fun showDownloads() {
+        hideBrowserKeyboard()
         if (!::downloadsLayer.isInitialized || videoFullScreen) return
         if (menuShowing) hideBrowserMenu()
         if (shieldShowing) hideShield()
@@ -1569,17 +1562,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun confirmClearDownloadedFiles() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.download_clear_records)
-            .setMessage(R.string.download_clear_confirm)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                downloadRegistry.clearListOnly()
-                savedFiles.clear()
-                notice(R.string.download_clear_done)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+    private fun clearDownloadedFileRecords() {
+        downloadRegistry.clearListOnly()
+        savedFiles.clear()
+        notice(R.string.download_clear_done)
     }
 
     private fun showBrowserMenu() {

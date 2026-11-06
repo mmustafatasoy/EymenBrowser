@@ -14,6 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -212,9 +216,12 @@ internal fun LightBrowserToolbar(
     onTabs: () -> Unit,
     onMenu: () -> Unit
 ) {
-    var input by remember(currentUrl, atHome) {
-        mutableStateOf(if (atHome) "" else currentUrl)
-    }
+    val editor = rememberAddressEditor(if (atHome) "" else currentUrl)
+    val input = editor.value
+    val focus = LocalFocusManager.current
+    val requester = remember { FocusRequester() }
+    val addressLabel = stringResource(R.string.address_edit_label)
+    val clearLabel = stringResource(R.string.address_clear)
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
         Modifier.fillMaxWidth()
@@ -236,28 +243,40 @@ internal fun LightBrowserToolbar(
             Spacer(Modifier.width(6.dp))
             BasicTextField(
                 value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.weight(1f),
+                onValueChange = editor::update,
+                modifier = Modifier.weight(1f).focusRequester(requester)
+                    .onFocusChanged { editor.focusChanged(it.isFocused) }
+                    .semantics { contentDescription = addressLabel },
                 singleLine = true,
                 textStyle = TextStyle(color = ink, fontSize = 13.sp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
-                    onGo(input)
+                    val entered = input.text
+                    focus.clearFocus()
+                    onGo(entered)
                     keyboard?.hide()
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.isBlank()) LightText("Arama yapın veya URL girin", 12, secondary)
+                        if (input.text.isBlank()) LightText("Arama yapın veya URL girin", 12, secondary)
                         field()
                     }
                 }
             )
+            if (editor.focused && input.text.isNotEmpty()) {
+                Box(Modifier.size(31.dp).semantics { contentDescription = clearLabel; role = Role.Button }
+                    .clickable { editor.clear(); requester.requestFocus(); keyboard?.show() },
+                    contentAlignment = Alignment.Center) {
+                    EymenVector(EymenPaths.temizle, color = ink, iconSize = 21.dp)
+                }
+            } else {
             Box(
                 Modifier.size(31.dp)
                     .semantics { contentDescription = "Sesli arama"; role = Role.Button }
                     .clickable(onClick = onVoiceSearch),
                 contentAlignment = Alignment.Center
             ) { MicrophoneIcon(Modifier.size(21.dp)) }
+            }
         }
         Box(
             Modifier.size(35.dp)

@@ -53,7 +53,7 @@ assert "ACTION_INSTALL_PACKAGE" not in updater
 assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
 assert 'updater.onResumed()' in main
 assert "updater.dispose()" in main
-assert 'SettingsAction.ABOUT -> stringResource(R.string.update_manual_check)' in settings
+assert 'ScreenButton(stringResource(R.string.update_manual_check)' in settings
 
 # Signing is isolated in protected Actions secrets and pinned to a public digest.
 assert 'signingConfigs {' in gradle
