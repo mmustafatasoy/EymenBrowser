@@ -242,5 +242,6 @@
   "bank_external_confirm": "Open app",
   "bank_https_handoff_prompt": "Select the bank's official installed app only. Verify it before entering passwords, SMS codes, or account information outside this browser.",
   "bank_js_prompt_title": "Website message",
-  "bank_js_cancel": "Cancel"
+  "bank_js_cancel": "Cancel",
+  "bank_external_security_warning": "Warning: EYMEN Browser has NOT verified that the target app belongs to this bank. Do not proceed unless it is the official app."
 }
