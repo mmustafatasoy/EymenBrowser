@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         default: "1.0.13"
+  # One-shot signed mobile-banking compatibility release; verification gates
+  # remain mandatory. Normal commits never trigger production signing.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.13.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +47,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.13' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -82,6 +88,7 @@ jobs:
           python tools/check_menu_actions.py
           python tools/check_stage2_features.py
           python tools/check_vpn_contract.py
+          python tools/check_banking_compat.py
           python tools/check_update_contract.py
       - name: Verify that the original production signing identity is available
         run: |
@@ -324,6 +331,20 @@ jobs:
             icin Android Her zaman acik VPN bu surumde devre disidir.
           - Bu bir sistem kill-switch degildir; sunucu veya tunel
             kopunca dogrudan internet erisimi mumkundur.
+          - v1.0.13: GeckoView bankalarin mobil uygulamalarina
+            yonlendirebilen intent ve ozel URI tiklamalarini destekler.
+          - Harici uygulama otomatik acilmaz: HTTPS kaynak ve gercek
+            kullanici tiklamasi aranir, ayrica Android onayi gosterilir.
+          - Web sayfasi kaynakli Intent bileşen, flag ve extras
+            izinleri aktarilmaz; yalniz temiz ACTION_VIEW kullanilir.
+          - Menuye Mobil uygulamada ac eklendi; kurulu bankanin
+            ilgili HTTPS baglantisini desteklemesi gerekir.
+          - JavaScript alert, confirm ve prompt pencereleri gercek
+            site hostuyla goruntulenir; girilen sifre/kodlar kaydedilmez.
+          - Banka mobil uygulamalari tarayicinin icinde calistirilmaz;
+            resmi uygulama sahipligi, banka cihaz guvenligi,
+            Play Integrity, biyometri ve bankaya ozel giris islemeleri
+            atlatilmaz. Tum banka girislerinin calistigi iddia edilmez.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
