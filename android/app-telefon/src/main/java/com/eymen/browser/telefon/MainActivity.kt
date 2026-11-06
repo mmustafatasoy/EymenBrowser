@@ -554,6 +554,7 @@ class MainActivity : ComponentActivity() {
 
     private fun closeTab(id: Long) {
         val tab = tabs.firstOrNull { it.id == id } ?: return
+        val wasOverviewOpen = overviewShowing
         val active = activeId.value == id
         if (active) {
             if (videoFullScreen) setVideoFullScreen(false)
@@ -580,6 +581,11 @@ class MainActivity : ComponentActivity() {
                 activeId.value = -1L
                 activateTab(tabs.last().id)
             }
+        }
+        // activateTab/createTab normally dismiss the overview. When closing
+        // from a tab card, keep it visible so the undo row can be used at once.
+        if (wasOverviewOpen && ::tabsLayer.isInitialized) {
+            openTabOverview(false)
         }
     }
 
