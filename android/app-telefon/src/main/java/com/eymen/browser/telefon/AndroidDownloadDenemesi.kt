@@ -210,7 +210,6 @@ internal class AndroidDownloadDenemesi(
         cancelled.set(false)
         worker.execute {
             var createdDownload: Uri? = null
-            var completed: SavedDownload? = null
             var cancelledByUser = false
             activeBody = request.body
             publishProgress(ActiveDownload(request.fileName, 0L, request.expectedBytes))
@@ -250,7 +249,7 @@ internal class AndroidDownloadDenemesi(
                     check(resolver.update(downloadUri, publish, null, null) > 0)
                 }
 
-                completed = SavedDownload(
+                val completed = SavedDownload(
                     uri = destination.toString(),
                     name = request.fileName,
                     mimeType = request.mimeType,
@@ -292,9 +291,10 @@ internal class AndroidDownloadDenemesi(
                 }
             } finally {
                 activeBody = null
+                lastProgress = null
                 activity.runOnUiThread {
                     busy = false
-                    onProgress(null)
+                    if (!activity.isFinishing && !activity.isDestroyed) onProgress(null)
                 }
             }
         }
