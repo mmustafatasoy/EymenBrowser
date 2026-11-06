@@ -1,5 +1,8 @@
 name: EymenBrowser Android signed stable release
 on:
+  push:
+    branches: [main]
+    paths: ['.github/release-requests/android-v1.0.18.json']
   workflow_dispatch:
     inputs:
       version:
@@ -9,6 +12,7 @@ on:
         default: "1.0.18"
 permissions:
   contents: write
+  actions: read
 concurrency:
   # v1 held by a stuck GitHub emulator job and blocked later runs. This v2
   # group safely isolates recovery from the stale v1 queue.
@@ -16,6 +20,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   signed-phone-release:
+    if: "github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'release(android): request signed v1.0.18'"
     name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -28,6 +33,45 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify v1.0.18 source has passed all Android acceptance workflows
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+          request = json.loads(Path('.github/release-requests/android-v1.0.18.json').read_text())
+          assert request['version'] == '1.0.18'
+          source = request['verified_source_sha']
+          assert re.fullmatch(r'[0-9a-f]{40}', source)
+          subprocess.run(['git', 'fetch', '--depth=1', 'origin', source], check=True)
+          # Release metadata may change; all application and audit inputs must
+          # be identical to the exact source which passed the device tests.
+          subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--',
+              'android', 'shared', 'design', 'tools', 'versions.toml',
+              '.github/workflows/phase0.yml', '.github/workflows/android-download-audit.yml',
+              '.github/workflows/android-browser-ui-audit.yml', '.github/workflows/android-visual-audit.yml'], check=True)
+          repo = os.environ['GITHUB_REPOSITORY']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/{path}']))
+          runs = api(f'actions/runs?head_sha={source}&per_page=100')['workflow_runs']
+          required = ('phase0.yml', 'android-download-audit.yml',
+              'android-browser-ui-audit.yml', 'android-visual-audit.yml')
+          for file in required:
+              matching = [r for r in runs if r['path'] == f'.github/workflows/{file}']
+              assert matching, f'Missing acceptance workflow: {file}'
+              run = max(matching, key=lambda r: (r['id'], r['run_attempt']))
+              assert run['head_sha'] == source and run['status'] == 'completed' and run['conclusion'] == 'success', file
+              if file in ('android-browser-ui-audit.yml', 'android-visual-audit.yml'):
+                  jobs = api(f"actions/runs/{run['id']}/jobs?filter=all&per_page=100")['jobs']
+                  prefix = 'address-custom-screens' if file == 'android-browser-ui-audit.yml' else 'emulator-visual-audit'
+                  for level in (35, 36):
+                      matching_jobs = [j for j in jobs if j['name'] == f'{prefix} ({level})' and j['head_sha'] == source]
+                      assert matching_jobs, f'{file}: API {level} missing'
+                      latest_job = max(matching_jobs, key=lambda j: j['id'])
+                      assert latest_job['status'] == 'completed' and latest_job['conclusion'] == 'success', f'{file}: API {level}'
+              print(f"Verified {file}: {run['id']} at {source}")
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -41,7 +85,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ inputs.version || '1.0.18' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -249,175 +293,55 @@ jobs:
       - name: Write versioned release notes without claiming unfinished features
         run: |
           cat > release-staging/RELEASE_NOTES.md <<EOF
-          EYMEN Browser Android Telefon $RELEASE_TAG
+          EYMEN Browser Android Telefon v$RELEASE_VERSION
 
-          - Telefon icin GeckoView tabanli tarayici ve asama-2 arayuzleri.
-          - Durum cubugu, on kamera/delik/centik ve yatay ekran kesimi icin tum tarayici ekranlarinda Android WindowInsets guvenli alan duzenlemesi.
-          - Android 8-16 boyunca ayni edge-to-edge pencere yapisi; tam ekran video bu kisitlamadan bilincli olarak haric.
-          - Gece/gunduz temasi icin telefon durum cubugu simge kontrasti.
-          - Kullanici onayli acik renkli Eymen Browser ana sayfasi, atasoyyazilim.com sitesindeki ozgun mavi A logosu.
-          - Tek ust adres/arama cubugu, yeni sekme, sekme sayaci ve sagdaki uc nokta menusunde geri/ileri/yenile.
-          - YouTube, Google, Facebook, X, Instagram, WhatsApp kisayollari ve arama/baglantiya giden kategori kartlari; promosyon/reklam paneli yok.
-          - Eski kurulumda koyu tema ayari kaydedilmis olsa dahi onayli acik arayuz bir kez etkinlestirilir, sonraki kullanici secimleri korunur.
-          - Sag ust uc nokta menusunun boyutlari onaylanan tasarima gore kucultuldu;
-            menudeki simgeler yazitipindan bagimsiz vektor haline getirildi.
-          - Eymen Browser basliginda lacivert/mavi iki ton ve kavisli alt cizgi eklendi.
-          - Normal Gecko sekmelerinde gercek grup olusturma, ad degistirme,
-            gruba tasima ve grup silme; grup silinince sekmeler acik kalir.
-          - v1.0.8: En fazla 32 normal sekmenin dogrulanmis HTTPS adresi, grup
-            uyelikleri, secili sekme ve sirasi uygulama kapanip acilinca geri yuklenir.
-          - Arka plan normal sekmeleri ilk secildiklerinde yuklenir; baslangicta
-            tum sitelerin ayni anda acilmasi onlenir.
-          - Sekme kartlarinda dogrudan GeckoView ekranindan alinmis, bellek-ici
-            gercek kucuk resimler; hazir olmayan sayfalar icin notr yer tutucu.
-          - Son kapatilan on normal sekmeyi art arda yeniden acma ve
-            sekme kartlarindan siralama degisikligi.
-          - Gizli sekmelerin URL ve kucuk resimleri kalici depoya, normal
-            gruplara veya geri alma listesine aktarilmaz.
-          - Kalici kayit yalnizca normal HTTPS adresleri ve gruplar icindir:
-            formlar, video pozisyonlari ve Gecko geri/ileri agaci saklanmaz.
-          - v1.0.9: GeckoView Standart/Siki takipci koruma listeleri ve
-            kullaniciya acik koruma profili ayari; secilen profil saklanir.
-          - Siteye ozel koruma istisnalari korunur; gizli oturumlardaki
-            istisnalar yalniz bellek icindedir.
-          - Yalnizca gercek GeckoView engelleme olaylarindan hesaplanan
-            reklam takipcisi, analiz takipcisi ve diger engelleme sayilari.
-          - Bilinen takipci listeleri kaynak engeller, tum reklamlarin
-            engellendigi iddia edilmez.
-          - v1.0.10: GeckoView'a APK icindeki EYMEN kozmetik WebExtension
-            guvenli ve hataya dayanikli bicimde kaydedilir.
-          - Koruma panelindeki istege bagli Beta secenegi, bilinen reklam
-            kutularini yalniz CSS ile gizler; ag isteklerini durdurmaz.
-          - Filtre varsayilan olarak kapalidir; modul kullanilamazsa
-            dugme etkinlesmez. Site korumasi kapaliysa o siteye uygulanmaz.
-          - Yerli politika: Mesajlar Gecko oturumuna, ust cerceveye ve
-            dogrulanmis HTTPS siteye baglanir; gizli oturumun adresi veya
-            cerez bilgileri eklentiye gonderilmez.
-          - Harici reklam listesi indirme, tum reklamlari engelleme veya
-            YouTube reklamlarini kaldirma bu surumde sunulmaz.
-          - v1.0.11: Resmi WireGuard GoBackend ile gercek Android
-            VpnService tüneli kullaniciya ait .conf ile baslatilabilir.
-          - Android'in gercek VPN izin ekrani kullanilir; APK icinde VPN
-            sunucusu, kullanici anahtari veya sunucu hesabi yoktur.
-          - Yalniz EYMEN Browser paketine izin veren uygulama listesi,
-            tam IPv4/IPv6 rotalari ve VPN DNS zorunlu kisilir.
-          - Kullanici konfigurasyonu Android Keystore AES-256-GCM ile
-            yedek disi ozel uygulama dosyasinda sifrelenir.
-          - TUN arayuzunun acilmasi ile sunucudan alinan yakin tarihli
-            WireGuard el sikismasi ayri gosterilir; sahte baglanti yoktur.
-          - VPN ayarlarinda ice aktarma, baglanma, baglantiyi kesme,
-            durumu yenileme ve sifreli dosyayi silme mevcuttur.
-          - Dahili VPN sunucusu, otomatik yeniden baglanma ve sistem
-            kill-switch saglanmaz. Fiziksel cihaz DNS/IPv6/WebRTC
-            sizinti testleri henuz tamamlanmamistir.
-          - v1.0.12: WireGuard sunucu handshake durumu VPN ayarlari
-            acikken yaklasik 15 saniyede bir yeniden dogrulanir.
-          - El sikisma 3 dakikadan eskiyse veya gelecekte gorunuyorsa
-            baglanti dogrulanmis olarak gosterilmez. JVM sinir
-            testleri otomatik olarak calistirilir.
-          - Gercek WireGuard gelen/giden bayt sayilari ve son yanitin
-            yasi gosterilir; kimlik bilgisi veya ziyaret sayfasi yoktur.
-          - Baglantiyi kesme veya profili silme sonrasi gecikmeli
-            eski yanitlar ekrani yanlislikla bagli yapamaz.
-          - VPN profili silinince Android Keystore sifreleme anahtari
-            da temizlenir; cozme hatalarinda hassas bellek sifirlanir.
-          - Sistem acilisindan otomatik VPN yeniden kurma eksik oldugu
-            icin Android Her zaman acik VPN bu surumde devre disidir.
-          - Bu bir sistem kill-switch degildir; sunucu veya tunel
-            kopunca dogrudan internet erisimi mumkundur.
-          - v1.0.13: GeckoView bankalarin mobil uygulamalarina
-            yonlendirebilen intent ve ozel URI tiklamalarini destekler.
-          - Harici uygulama otomatik acilmaz: HTTPS kaynak ve gercek
-            kullanici tiklamasi aranir, ayrica Android onayi gosterilir.
-          - Web sayfasi kaynakli Intent bileşen, flag ve extras
-            izinleri aktarilmaz; yalniz temiz ACTION_VIEW kullanilir.
-          - Menuye Mobil uygulamada ac eklendi; kurulu bankanin
-            ilgili HTTPS baglantisini desteklemesi gerekir.
-          - JavaScript alert, confirm ve prompt pencereleri gercek
-            site hostuyla goruntulenir; girilen sifre/kodlar kaydedilmez.
-          - Banka mobil uygulamalari tarayicinin icinde calistirilmaz;
-            resmi uygulama sahipligi, banka cihaz guvenligi,
-            Play Integrity, biyometri ve bankaya ozel giris islemeleri
-            atlatilmaz. Tum banka girislerinin calistigi iddia edilmez.
-          - v1.0.14: Kullanici tiklamasiyla acilan guvenli HTTPS
-            kimlik dogrulama pencereleri icin yeni GeckoSession olusturulur;
-            window.open ve target blank akisi bos sekmede takilmaz.
-          - Otomatik acilir pencereler reddedilir. Gizli sekmenin
-            gizlilik modu korunur; normal sekme sayisi sinirlidir.
-          - Baska tarayicida ac secenegi Android uygulama secicisini
-            acarak resmi HTTPS web bankaciligi sayfasina gecis saglar.
-          - Tarayicilar arasi sifre/cerez/oturum bilgileri aktarilmaz.
-          - Banka uygulamalarinin kendi cihaz kaydi, biyometri,
-            FIDO ve cihaz guvenligi testleri atlatilmaz.
-            Tum bankalarin girisinin duzeldigi iddia edilmez.
-          - v1.0.15: Indirilenler ekraninda GeckoView dosya akisindan
-            gercek yazilan bayt sayisi ve Content-Length varsa yuzde.
-          - Dosya boyutu bilinmiyorsa sahte yuzde veya sure yok.
-            Devam eden indirmenin kullanici tarafindan iptali eklendi.
-          - Iptal/hata durumunda yarim kalmis MediaStore kaydi silinir.
-            Android 8-9 SAF dosyasinin silinmesi saglayiciya bagli.
-          - Kaydedilmis dosya acik Indirilenler ekranina aninda eklenir;
-            yalniz gercek tamamlanmis dosyalar gecmise girer.
-          - Bir seferde tek aktif dosya aktarimi vardir; uygulama
-            sureci sonlandirilinca arka planda devam garantisi yoktur.
-          - Bilinen/bilinmeyen buyukluk yuzdeleri icin JVM sinir
-            testleri vardir, fiziksel indirme testleri ayridir.
-          - v1.0.16: Onaylanan dosyalar bir aktif ve en fazla uc bekleyen
-            dosya olacak sekilde sinirli FIFO kuyruguna alinir.
-          - GeckoView orijinal yanit akisi Activity yerine uygulama kapsamli
-            yonetici ve Android dataSync foreground service tarafindan tutulur.
-          - Uygulama normal bicimde arka plana alindiginda aktarim surer;
-            tamamlanan dosyalar geri donuldugunde listeye yenilenir.
-          - Gercek indirme bildirimi, kilit ekraninda dosya adi gizleme,
-            bildirime dokunarak Indirilenler, tumunu iptal et ve siradaki
-            dosyalari ayri iptal etme eklendi.
-          - Android 13+ bildirim izni ilk indirmede bir kez istenir.
-            Izin reddedilse de foreground service kullanilabilir;
-            bildirim cekmecesinde gorunum Android iznine baglidir.
-          - Android 15/16 dataSync zaman asiminda servis hemen durur;
-            ag akisinin kapatilmasi UI is parcacigini engellemez.
-          - Kuyruk yalniz bellektedir: islem tamamen oldurulurse veya
-            cihaz yeniden baslarsa kaldigi yerden surdurme yoktur.
-            Baglanti kuyrukta zaman asimina ugrarsa yeniden indirme gerekir.
-          - Dokuz yeni JVM testi: FIFO, kuyruk kapasitesi, eszamanli kabul,
-            gecikmis tamamlanma, gercek bayt kopyasi ve iptal/IO hatalari.
-          - Android 15 gercek servis kabulunde Activity.onStop sonrasi
-            FIFO kayit, dosya SHA-256, aktif/siradaki iptal, kapasite,
-            MediaStore temizligi ve bosta kapanma dogrulandi.
-            Bu test yerel deterministik veri akisiyladir, uzak VPN/ag testi degildir.
-          - Fiziksel cihazda ekran kapali buyuk dosya, VPN ile dosya
-            aktarimi ve Android 8/9 SAF saglayici testleri ayri kabul isidir.
-          - v1.0.17: Adres/arama cubuguna ilk dokunusta mevcut adresin
-            tamami secilir; yeni yazmaya baslamak eski adresi degistirir.
-            Normal imlec duzenleme ve temizle dugmesi korunur.
-          - Acik/koyu arac cubuklari ortak, IME bilesimini koruyan
-            adres duzenleme durumunu kullanir. Sekme ve ekran gecislerinde
-            eski duzenleme baska sekmeye tasinmaz.
-          - Indirmeler icin uygulamaya ozel acik/koyu ekran, gercek
-            ozetler, dosya arama, tur filtreleri, kaydirilabilir aktarim
-            kartlari ve dosyalari silmeyen ozel gecmis temizleme onayi.
-          - Ayarlar icin kategoriler, arama ve uygulama ici arama motoru,
-            gorunum/adres konumu ve hakkinda/guncelleme alt sayfalari.
-            Secilen motor ve tema tercihlere kaydedilir. VPN ayarlari
-            da secili gorunumu izler; tunel davranisi degismedi.
-          - Henuz gelistirilmemis ayarlar Yakinda olarak devre disidir.
-            Sifre yoneticisi, ceviri veya esitleme bu surumde eklendi denmez.
-          - Bes yeni JVM odak/secim/IME testi; Android 15/16 gercek dokunma,
-            eski adresi silmeden yeni metin yazma, imlec duzenleme,
-            ayar kaliciligi, gercek dosya arama/filtreleme ve temizleme
-            onayi kabul testleri ayri is akisinda yurutulur.
-          - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
-          - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
-          - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
-          - Imza anahtari ayni kaldikca sonraki imzali surumler mevcut kurulum ustune guncellenebilir.
-          - Harici eklenti magazasi ve iOS/TV/PC bu Android telefon
-            surumunun kapsaminda degildir. VPN icin kullanici sunucusu gerekir.
+          - Banka/OAuth girişinde yeni pencere açılırken tarayıcıyı kapatan
+            GeckoSession hatası düzeltildi. Pencerenin açılması, yazılması,
+            window.opener ve kapanınca önceki sekmeye dönüşü korunur.
+          - Çerez reddetme modülünün native yanıt bağlantısı düzeltildi.
+            Yalnız desteklenen çerez yöneticilerinin açık reddet düğmesi
+            kullanılır; tüm siteler için otomatik ret garantisi verilmez.
+          - Gerçek çerez politikası, site verisi/oturum ve önbellek temizleme,
+            HTTPS-only, parmak izi ve sesli otomatik oynatma ayarları.
+          - Site izinleri ve siteye özel açılır pencere izni yönetimi.
+            Kamera, mikrofon ve konum Android/site onaylarıyla kullanılır.
+          - Android'in seçilen şifre/otomatik doldurma hizmeti, Türkçe/İngilizce
+            dil seçimi ve dil değişiminde ayar sayfasını koruma.
+          - Mozilla imzalı uyumlu eklenti kurma, izin onayı, açma/kapama,
+            seçenekler ve kaldırma. Eklentiler gizli modda otomatik açılmaz.
+          - Ebeveyn PIN'i ve HTTPS site izin listeli çocuk modu. Çocuk
+            sekmeleri gizlidir; dış uygulama, kamera ve paylaşım geçişi engellenir.
+          - Gecko sayfa çevirisi, makaleler için okuma modu, metin boyutu,
+            Android kamera fotoğrafından yerel QR çözme ve HTTPS açma onayı.
+          - Cihazlar bölümü Android paylaşım ekranıyla normal sekmeleri
+            gönderir. Ayrı bulut eşitleme ya da tarayıcı parola kasası sunulmaz.
+          - Chrome benzeri adres seçimi, özel İndirmeler ve Ayarlar,
+            onaylı açık ana sayfa/A logosu ve çentik uyumu korunur.
 
-          Bu surumde statik kaynak kontrolu, derleme, orijinal uretim imzasi,
-          onceki yayinlanan APK ile paket/surum/imza uyumu ve dosya checksum testleri gecilir.
-          Android 15/16 emulasyon ve ekran goruntusu testleri AYRI is akisinda yapilir;
-          bu yayin is akisinda emulasyon testi yapildigi iddia edilmez.
-          Fiziksel cihaz regresyonu ve tum T01-T11 piksel-eslesme kabulu ayrica gereklidir.
+          Doğrulama: kaynak kontrolleri, JVM testleri, üç ABI derlemesi,
+          Android 15/16 gerçek dokunma ve görsel kabulü; çerez reddi ve gerçek
+          çerez/DOM verisi temizliği, motor ayarları, otomatik doldurma,
+          imzalı eklenti kurma/açma/kapama/kaldırma, PIN, yerel QR ve dil
+          değişimi testleri. Arka plan indirme testi gerçek Android servisinde
+          deterministik yerel akış kullanır; uzak VPN ağı testi değildir.
+          İmzalı yayın aynı üretim sertifikası, APK hizalama, SHA-256 ve önceki
+          APK ile paket/sürüm/imza metadata uyumu kapılarından geçer.
+
+          Banka adı/bağlantısı verilmediği için belirli bir bankada hesap girişi
+          doğrulanmadı. Fiziksel Tecno kamera/klavye/şifre hizmeti ve gerçek
+          banka oturumu cihaz kabulüdür. Çeviri Mozilla modelinin bulunmasına
+          ve indirilmesine, okuma modu makalenin desteklenmesine bağlıdır.
+          Gerçek çeviri modeli ve fiziksel kamera akışı bu emülatör kabulünde
+          sınanmadı. Bankanın kendi güvenlik/biometri kontrolleri atlatılmaz.
+          VPN, kullanıcıya ait WireGuard sunucusu/yapılandırması gerektirir.
+          Android 8/9 SAF ve fiziksel DNS/IPv6/WebRTC sızıntı kabulü ayrıdır.
+
+          ARM64 telefon: EymenBrowser-Android-Phone-arm64-v8a.apk
+          32-bit ARM: EymenBrowser-Android-Phone-armeabi-v7a.apk
+          Emülatör/x86: EymenBrowser-Android-Phone-x86_64.apk
+          Mevcut uygulamayı silmeden aynı imzalı APK ile güncelleyebilirsiniz.
+          Uygulama içi denetleyici yeni kararlı yayını bildirir; indirmede
+          SHA-256, paket, sürüm ve imza doğrulanır, son kurulum onayı Android'dedir.
           EOF
       - name: Publish stable GitHub Release ONLY if all previous gates succeeded
         run: |
