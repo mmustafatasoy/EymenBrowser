@@ -12,7 +12,27 @@ assert "override fun onExternalResponse" in engine
 assert "onDownload(response)" in engine
 assert "onDownload = downloads::handleResponse" in phone
 assert "response.body" in handler
-assert "source.copyTo(output" in handler
+assert "copyWithProgress(source, output, request)" in handler
+assert "source.read(buffer)" in handler
+assert "output.write(buffer, 0, count)" in handler
+assert "written += count" in handler
+assert 'header(response, "content-length")' in handler
+assert 'DownloadProgressMath.percent(' in (ROOT / "android/app-telefon/src/main/java/com/eymen/browser/telefon/DownloadsScreen.kt").read_text()
+assert 'fun cancelActive()' in handler
+assert 'cancelled.compareAndSet(false, true)' in handler
+assert 'if (cancelled.get()) throw CancellationException' in handler
+assert 'DocumentsContract.deleteDocument(resolver, userPickedUri)' in handler
+assert 'Thread({ current.closeSafely() }, "EymenDownloadCancel")' in handler
+assert 'onProgress: (ActiveDownload?) -> Unit' in handler
+assert 'onCompleted: (SavedDownload) -> Unit' in handler
+assert 'onCompleted(completed)' in handler
+assert 'active = activeDownload' in phone
+assert 'onCancelActive = downloads::cancelActive' in phone
+assert 'savedFiles.add(0, file)' in phone
+jvm_tests = (ROOT / "android/app-telefon/src/test/java/com/eymen/browser/telefon/DownloadProgressMathTest.kt").read_text()
+assert 'unknownSizeNeverClaimsPercentage' in jvm_tests
+assert 'neverDisplaysMoreThanOneHundredPercent' in jvm_tests
+assert 'avoidsOverflowForLargeFiles' in jvm_tests
 assert "MediaStore.Downloads.getContentUri" in handler
 assert "MediaStore.MediaColumns.IS_PENDING, 1" in handler
 assert "MediaStore.MediaColumns.IS_PENDING, 0" in handler
