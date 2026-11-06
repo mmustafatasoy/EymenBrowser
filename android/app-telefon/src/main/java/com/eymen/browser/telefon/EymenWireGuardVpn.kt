@@ -246,15 +246,15 @@ internal class EymenWireGuardVpn private constructor(context: Context) {
                 val peerKey = config.peers.single().publicKey
                 val statistics = activeBackend.getStatistics(tunnel).peer(peerKey)
                 val handshake = statistics?.latestHandshakeEpochMillis() ?: 0L
-                // A clock-skewed handshake in the future must NOT count.
-                val ageMillis = System.currentTimeMillis() - handshake
-                val recent = handshake > 0L && ageMillis in 0L..179_999L
+                // Shared, unit-tested policy rejects stale and future values.
+                val currentTime = System.currentTimeMillis()
+                val recent = EymenHandshakePolicy.isRecent(handshake, currentTime)
                 val diagnostics = EymenVpnPeerStats(
                     receivedBytes = (statistics?.rxBytes() ?: 0L).coerceAtLeast(0L),
                     sentBytes = (statistics?.txBytes() ?: 0L).coerceAtLeast(0L),
-                    lastHandshakeAgeSeconds = ageMillis.takeIf {
-                        handshake > 0L && it >= 0L
-                    }?.div(1000L)
+                    lastHandshakeAgeSeconds = EymenHandshakePolicy.ageSeconds(
+                        handshake, currentTime
+                    )
                 )
                 if (recent) {
                     show(EymenVpnStatus.HANDSHAKE_CONFIRMED,
