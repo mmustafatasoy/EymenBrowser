@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         default: "1.0.12"
+  # One-shot reviewed request only; ordinary code pushes never release.
+  push:
+    branches: [main]
+    paths:
+      - '.github/release-requests/v1.0.12.txt'
 permissions:
   contents: write
 concurrency:
@@ -41,7 +46,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '1.0.12' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -309,6 +314,21 @@ jobs:
           - Dahili VPN sunucusu, otomatik yeniden baglanma ve sistem
             kill-switch saglanmaz. Fiziksel cihaz DNS/IPv6/WebRTC
             sizinti testleri henuz tamamlanmamistir.
+          - v1.0.12: WireGuard sunucu handshake durumu VPN ayarlari
+            acikken yaklasik 15 saniyede bir yeniden dogrulanir.
+          - El sikisma 3 dakikadan eskiyse veya gelecekte gorunuyorsa
+            baglanti dogrulanmis olarak gosterilmez. JVM sinir
+            testleri otomatik olarak calistirilir.
+          - Gercek WireGuard gelen/giden bayt sayilari ve son yanitin
+            yasi gosterilir; kimlik bilgisi veya ziyaret sayfasi yoktur.
+          - Baglantiyi kesme veya profili silme sonrasi gecikmeli
+            eski yanitlar ekrani yanlislikla bagli yapamaz.
+          - VPN profili silinince Android Keystore sifreleme anahtari
+            da temizlenir; cozme hatalarinda hassas bellek sifirlanir.
+          - Sistem acilisindan otomatik VPN yeniden kurma eksik oldugu
+            icin Android Her zaman acik VPN bu surumde devre disidir.
+          - Bu bir sistem kill-switch degildir; sunucu veya tunel
+            kopunca dogrudan internet erisimi mumkundur.
           - Uygulama icinden 6 saatte bir / her acilista kontrol edilen yeni kararlı sürüm.
           - Her indirilen APK icin SHA-256, paket adi, surum kodu ve imza dogrulamasi.
           - Android kurulum izni ve son kullanici onayi gerekir; sessiz kurulum yoktur.
