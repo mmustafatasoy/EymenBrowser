@@ -317,7 +317,14 @@ class MainActivity : ComponentActivity() {
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
                 onCloseAll = ::closeAllOfType,
-                onNew = { privateMode -> createTab(privateMode) },
+                onNew = { privateMode, groupId ->
+                    createTab(privateMode)
+                    if (!privateMode) {
+                        activeTab?.groupId = groupId?.takeIf { id ->
+                            tabGroups.any { it.id == id }
+                        }
+                    }
+                },
                 onNewGroup = ::promptNewTabGroup,
                 onRenameGroup = ::promptRenameTabGroup,
                 onRemoveGroup = ::confirmRemoveTabGroup,
