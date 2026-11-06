@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
+import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.provider.Settings
@@ -29,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.GeckoSession
@@ -57,6 +59,8 @@ private class BrowserTab(
     var groupId by mutableStateOf<Long?>(null)
     // Restored background tabs open their saved HTTPS URL only when selected.
     var pendingRestoreUrl: String? = null
+    // Captured Gecko page pixels live only in RAM, never stored or synced.
+    var thumbnail by mutableStateOf<Bitmap?>(null)
 }
 
 private data class ClosedNormalTab(val safeUrl: String?, val groupId: Long?)
@@ -312,7 +316,9 @@ class MainActivity : ComponentActivity() {
                         url = tab.url,
                         privateMode = tab.privateMode,
                         selected = tab.id == activeId.value,
-                        groupId = if (tab.privateMode) null else tab.groupId
+                        groupId = if (tab.privateMode) null else tab.groupId,
+                        thumbnail = if (tab.privateMode) null
+                            else tab.thumbnail?.asImageBitmap()
                     )
                 },
                 activePrivate = activeTab?.privateMode == true,
@@ -562,6 +568,7 @@ class MainActivity : ComponentActivity() {
     private fun activateTab(id: Long) {
         val tab = tabs.firstOrNull { it.id == id } ?: return
         if (activeId.value != id) {
+            captureActiveTabThumbnail()
             if (videoFullScreen) setVideoFullScreen(false)
             view.releaseSession()
             view.setSession(tab.gecko)
@@ -602,6 +609,7 @@ class MainActivity : ComponentActivity() {
             while (recentlyClosedNormal.size > 10) recentlyClosedNormal.removeAt(0)
         }
         tab.gecko.close()
+        tab.thumbnail = null
         tabs.remove(tab)
         if (tab.privateMode && tabs.none { it.privateMode }) privateShieldOverrides.clear()
         if (active) {
@@ -763,8 +771,50 @@ class MainActivity : ComponentActivity() {
 
     private fun showDevices() = openTabOverview(true)
 
+    /**
+     * GeckoView returns real rendered web pixels. Keep only a small, capped
+     * in-memory preview per normal tab; private mode and home are excluded.
+     * No screenshots are written to disk or included in Android backups.
+     */
+    private fun captureActiveTabThumbnail() {
+        val tab = activeTab ?: return
+        if (tab.privateMode || tab.home || tab.pendingRestoreUrl != null ||
+            videoFullScreen || !::view.isInitialized
+        ) return
+        try {
+            view.capturePixels().accept(
+                { pixels ->
+                    if (pixels == null) return@accept
+                    runOnUiThread {
+                        if (tabs.none { it.id == tab.id } || tab.privateMode) return@runOnUiThread
+                        try {
+                            if (pixels.width < 1 || pixels.height < 1) return@runOnUiThread
+                            val cropHeight = minOf(
+                                pixels.height, (pixels.width * 1.32f).roundToInt()
+                            )
+                            val crop = Bitmap.createBitmap(
+                                pixels, 0, 0, pixels.width, cropHeight
+                            )
+                            val targetHeight = (220f * cropHeight / pixels.width)
+                                .roundToInt().coerceAtLeast(1)
+                            tab.thumbnail = Bitmap.createScaledBitmap(
+                                crop, 220, targetHeight, true
+                            )
+                        } catch (_: RuntimeException) {
+                            // Compositor shutdown or allocation failure: placeholder.
+                        }
+                    }
+                },
+                { _ -> Unit }
+            )
+        } catch (_: RuntimeException) {
+            // The compositor may not yet be ready: no fake preview.
+        }
+    }
+
     private fun openTabOverview(devices: Boolean) {
         if (!::tabsLayer.isInitialized || videoFullScreen) return
+        if (!devices) captureActiveTabThumbnail()
         devicesRequested.value = devices
         overviewShowing = true
         tabsLayer.visibility = View.VISIBLE
