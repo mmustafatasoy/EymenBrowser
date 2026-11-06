@@ -1116,10 +1116,13 @@ class MainActivity : ComponentActivity() {
                         sender.session === tab.gecko &&
                         sender.webExtension.id == extension.id &&
                         tabs.any { it.id == tab.id && it.gecko === tab.gecko } &&
-                        !tab.home &&
                         verifiedHost(sender.url) != null &&
-                        verifiedHost(sender.url) == verifiedHost(tab.url) &&
-                        cosmeticFilterWanted.value && tab.shieldEnabled
+                        cosmeticFilterWanted.value &&
+                        // Gecko supplies the real top-level frame URL. Using
+                        // tab.url here races the first onPageStart callback.
+                        // Native per-site policy uses this trusted frame URL
+                        // and the owning GeckoSession's privacy mode.
+                        protectionFor(sender.url, tab.privateMode)
                     return GeckoResult.fromValue(
                         JSONObject().put("enabled", allowed) as Any
                     )
