@@ -158,9 +158,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         // Inspect our installed filter independently of Android's current default browser.
         Intent ownWebIntent=new Intent(webIntent).setPackage(getTargetContext().getPackageName());
         java.util.List<android.content.pm.ResolveInfo> handlers=getTargetContext().getPackageManager().queryIntentActivities(
-            ownWebIntent,android.content.pm.PackageManager.MATCH_ALL|android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            ownWebIntent,android.content.pm.PackageManager.MATCH_ALL|android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
+                |android.content.pm.PackageManager.GET_RESOLVED_FILTER);
         require(handlers.stream().anyMatch(info->getTargetContext().getPackageName().equals(info.activityInfo.packageName)
-            &&info.handlesAllWebDataURI),"installed HTTP filter handles all web hosts: "+handlers);
+            &&info.filter!=null&&info.filter.hasDataScheme("http")&&info.filter.countDataAuthorities()==0
+            &&info.filter.countDataPaths()==0),"installed HTTP filter handles all web hosts: "+handlers);
         require("http://example.com/?eymen-browser-role=1".equals(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(webIntent)),"safe external HTTP link reaches browser routing without being dropped");
         require(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(new Intent(Intent.ACTION_VIEW,Uri.parse("javascript:alert(1)")))==null,"non-web external intent cannot enter browser routing");
 
