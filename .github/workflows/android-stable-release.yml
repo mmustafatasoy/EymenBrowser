@@ -1,18 +1,14 @@
 name: EymenBrowser Android signed stable release
 on:
-  push:
-    branches: [main]
-    paths: ['.github/release-requests/android-v1.0.19.json']
   workflow_dispatch:
     inputs:
       version:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.19"
+        default: "1.0.20"
 permissions:
   contents: write
-  actions: read
 concurrency:
   # v1 held by a stuck GitHub emulator job and blocked later runs. This v2
   # group safely isolates recovery from the stale v1 queue.
@@ -20,7 +16,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   signed-phone-release:
-    if: "github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'release(android): request signed v1.0.19'"
     name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -33,41 +28,6 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-      - name: Verify v1.0.19 source has passed all Android acceptance workflows
-        if: github.event_name == 'push'
-        run: |
-          set -euo pipefail
-          python3 - <<'PYTHON'
-          import json, os, re, subprocess
-          from pathlib import Path
-          request = json.loads(Path('.github/release-requests/android-v1.0.19.json').read_text())
-          assert request['version'] == '1.0.19'
-          source = request['verified_source_sha']
-          assert re.fullmatch(r'[0-9a-f]{40}', source)
-          subprocess.run(['git','fetch','--depth=1','origin',source],check=True)
-          subprocess.run(['git','diff','--exit-code',source,'HEAD','--',
-              'android','shared','design','tools','versions.toml',
-              '.github/workflows/phase0.yml','.github/workflows/android-download-audit.yml',
-              '.github/workflows/android-browser-ui-audit.yml','.github/workflows/android-visual-audit.yml'],check=True)
-          repo=os.environ['GITHUB_REPOSITORY']
-          def api(path):
-              return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/{path}']))
-          runs=api(f'actions/runs?head_sha={source}&per_page=100')['workflow_runs']
-          for file in ('phase0.yml','android-download-audit.yml','android-browser-ui-audit.yml','android-visual-audit.yml'):
-              matching=[r for r in runs if r['path']==f'.github/workflows/{file}']
-              assert matching, f'Missing workflow: {file}'
-              run=max(matching,key=lambda r:(r['id'],r['run_attempt']))
-              assert run['head_sha']==source and run['status']=='completed' and run['conclusion']=='success',file
-              if file in ('android-browser-ui-audit.yml','android-visual-audit.yml'):
-                  jobs=api(f"actions/runs/{run['id']}/jobs?filter=all&per_page=100")['jobs']
-                  prefix='address-custom-screens' if file=='android-browser-ui-audit.yml' else 'emulator-visual-audit'
-                  for level in (35,36):
-                      same=[j for j in jobs if j['name']==f'{prefix} ({level})' and j['head_sha']==source]
-                      assert same, f'{file}: API {level} missing'
-                      latest=max(same,key=lambda j:j['id'])
-                      assert latest['status']=='completed' and latest['conclusion']=='success',f'{file}: API {level}'
-              print(f"Verified {file}: {run['id']} at {source}")
-          PYTHON
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -81,7 +41,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version || '1.0.19' }}
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then

@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-11-07
 
-## Doğrulanan yayın adayı — v1.0.19
+## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
 - **Başarılı kaynak/JVM/üç ABI:** [#42336828268](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828268). Dokuz yeni geçmiş/kaydırma politika testi ve önceki JVM testleri dahil.
@@ -10,7 +10,10 @@ Son güncelleme: 2026-11-07
 - **Başarılı iki Android sürümü görsel/sistem alanı kabulü:** [#42336828299](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828299). Açık/koyu yeni liste ekranları, gizli/açık çubuk ve alt yerleşimde sayfa düğmesi PNG'leri ayrıca incelendi; onaylı ana sayfa/A logosu korunur. Sistem uygulama simgesi de aynı A geometrisidir.
 - **Başarılı arka plan indirme kabulü:** [#42336828308](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828308). Önceki popup/opener/kapatma, çerez reddi ve gerçek çerez/DOM temizliği, motor gizlilik seçenekleri, otomatik doldurma katılımı, imzalı eklenti kur/aç/kapat/kaldır, çocuk PIN/izin listesi, QR çözümü ve dil yenilemesi bu yeni UI koşusunda yeniden geçti.
 - Yalnız Android telefon emülatör kabulüdür; fiziksel Tecno ve gerçek banka hesabı/uzak VPN/model indirme kabulleri tamamlandı denmez. Google hizmeti, bulut eşitleme veya ayrı parola kasası eklenmedi. Önceki sürümün kaydetmediği eski ziyaretler oluşturulmaz.
-- Aynı üretim sertifikasıyla v1.0.19 yayını hazırlanıyor. Yayın iş akışı bu kaynakla üretim kaynaklarının birebir aynı olduğunu ve dört başarılı kabulü doğrulamadan imzalama/yayınlamaya geçmez. Son yayımlanmış kararlı sürüm şu aşamada v1.0.18'dir.
+- **[v1.0.19 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.19)** — 2026-11-07 04:16:54 UTC (07:16 Türkiye). [İmzalı üretim işi #42337417271](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42337417271) başarılı. Yayın kapısı dört başarılı kaynak kabulünü, API 35/36 UI ve görsel işlerini ve üretim/denetim kodlarının birebir eşitliğini doğruladı. Yayın etiketi `ff2db986a9a96906f27f4ae00354c73aa5730caa` commit'ine bağlıdır.
+- Üç ABI için orijinal üretim sertifikası, 16 KiB hizalama, 500 MiB üst sınırı ve SHA-256 geçti. Gerçek önceki v1.0.18 ve yeni v1.0.19 APK dosyalarında aynı paket/sertifika ve artan versionCode (`10018 → 10019`) doğrulandı; bu dosya/metadata kontrolüdür, fiziksel telefonda üstüne kurulum testi değildir.
+- ARM64 APK **205336487 bayt**, SHA-256 `66e55958d98ee617b9b6009b53c61556b1ad7564b70564e4b530f1a7f9052908`. ARMv7 **165912193 bayt**, x86_64 **225193188 bayt** ve `SHA256SUMS.txt` yayımlandı. Kamuya açık varlık durumu/digest'leri ve etiket kaynağı doğrulandı.
+- Tüketilmiş tek kullanımlık yayın isteği/tetikleyicisi kaldırıldı. Korumalı manuel üretim yayını, orijinal imza ve tüm imza/uyumluluk kontrolleri korunur; varsayılan sonraki sürüm **1.0.20**.
 
 ## Geliştirme kaydı — v1.0.19 (tarihsel hazırlık adımları)
 
@@ -33,7 +36,7 @@ Son güncelleme: 2026-11-07
 - Rol-adayı testindeki SDK dışı ResolveInfo alanı derlemede reddedildi; doğrulama belgelenmiş GET_RESOLVED_FILTER ve IntentFilter HTTP/host/path alanlarıyla yapılır. Üretim kodunda SDK dışı API kullanılmaz; gerçek sistem rol penceresi kabulü korunur.
 - `a022952` üzerinde kaynak/JVM/üç ABI #42334321871, görsel Android 15/16 #42334321825 ve arka plan indirme #42334321813 geçti. Genişletilmiş UI #42334321824, Android'in varsayılan bağlantı çözümlemesini tüm adayları sayan sorguyla karıştıran testte durdu. Filtre denetimi kendi paketi + MATCH_ALL ile ayrıldı; ayrıca gerçek sistem rol penceresinde uygulama seçeneği kontrol ediliyor. Rol isteği Activity Result API ile gönderilir, dönüşte gerçek sistem tercihi yenilenir. Kaydırma kabulü bu koşunun sonraki adımıdır, henüz geçtiği iddia edilmez.
 
-## Güncel yayın — v1.0.18
+## Önceki yayın — v1.0.18
 
 - **[v1.0.18 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.18)** — 2026-11-06 21:34 UTC. ARM64, ARMv7, x86_64 ve SHA256SUMS yayın varlıkları doğrulandı. Aynı üretim imzasıyla mevcut kurulum üzerine güncellenebilir. Bu yayın isteklerinin tek APK güncellemesidir.
 - **Banka/OAuth penceresi:** Gecko’ya kapalı yeni oturum döndürülür, motor açınca ekrana bağlanır. Gerçek HTTPS sayfasında dokunma, about:blank/document.write, window.opener ve window.close ile önceki sekmeye dönüş doğrulandı. Otomatik popup varsayılan kapalı; kullanıcı siteye özel izin verebilir. Banka adı/bağlantısı verilmedi, gerçek hesap girişi yapılmadı.

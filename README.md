@@ -5,7 +5,7 @@ Bu depo **docs/SARTNAME.md** şartnamesiyle ve **docs/DURUM.md** ilerleme kaydı
 Aşama 0: Boş Android/TV Compose, SwiftUI (iOS) ve React + castLabs Electron (masaüstü) iskeletleri,
 `design/tokens.json` kaynaklı tema/simge üretimi, `shared/i18n` çevirileri ve GitHub Actions denetimleri.
 
-> **2026-11-04 güncel durum:** Kullanıcının S-001 kapsam onayıyla yalnız Android telefonda Aşama 2 geliştiriliyor. T01–T04, **T05 gerçek GeckoView izleyici engelleme**, **T06 çoklu sekme**, **T07 menü**, **T08 gerçek kaydedilen dosyalar**, **T09 gizli sekme**, **T10 ayarlar** ve **T11 tema** için çalışan başlangıç kodları eklendi. Üç ABI debug APK için derleme/statik kontroller [başarılı](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/41850087552). Emülatör PNG fark denetimi başlatıldı; fiziki cihaz kabulü ve tüm ekranların onaylı PNG ile birebir eşleşmesi henüz doğrulanmadı. **VPN tüneli, Kalkan'ın gelişmiş paketleri ve üretim imzalı kararlı APK hazır değil.** Genel Kapı 1 açık; TV, bilgisayar ve iOS duraklatıldı.
+> **2026-11-07 güncel durum:** S-001/S-002 kapsamında yalnız Android telefon geliştiriliyor. Son kararlı imzalı sürüm **[v1.0.19](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.19)**. Chrome referanslı Ayarlar/menü, gerçek yerel geçmiş ve kaydırmayla gizlenip küçük ters harekette dönen adres çubuğu; önceki indirme, çerez, eklenti ve çocuk modu işlemleri Android 15/16 emülatör kabulünü geçti. Üç ABI orijinal üretim imzasıyla yayımlandı. Fiziksel telefon, gerçek banka/uzak VPN ve diğer açık kabuller için **[güncel durum kaydını](docs/DURUM.md)** esas al. TV, bilgisayar ve Apple çalışmaları beklemededir.
 
 ## Klasörler
 
