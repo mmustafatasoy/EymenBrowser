@@ -2,7 +2,17 @@
 
 Son güncelleme: 2026-11-07
 
-## Yeni çalışma — v1.0.19 hazırlığı
+## Doğrulanan yayın adayı — v1.0.19
+
+- Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
+- **Başarılı kaynak/JVM/üç ABI:** [#42336828268](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828268). Dokuz yeni geçmiş/kaydırma politika testi ve önceki JVM testleri dahil.
+- **Başarılı Android 15/16 etkileşim kabulü:** [#42336828356](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828356); API 35 iş #128295516971 ve API 36 iş #128295517194. Gerçek HTTPS başlık/zamanının SQLite'da tutulması, geçmiş arama/silme/açma/temizleme, gizli URL'nin DB'de bulunmaması; normal/gizli gerçek oturum ayrımı; üst/alt çubuğun aşağı kaydırmada tamamen kaybolması ve 8 fiziksel piksel ters harekette dönmesi; motor yüksekliğinin sabit kalması ve sabit alt sayfa düğmesine doğru dokunma geçti. Gerçek sistem tarayıcı rol penceresi ve iptal dönüşü de geçti.
+- **Başarılı iki Android sürümü görsel/sistem alanı kabulü:** [#42336828299](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828299). Açık/koyu yeni liste ekranları, gizli/açık çubuk ve alt yerleşimde sayfa düğmesi PNG'leri ayrıca incelendi; onaylı ana sayfa/A logosu korunur. Sistem uygulama simgesi de aynı A geometrisidir.
+- **Başarılı arka plan indirme kabulü:** [#42336828308](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828308). Önceki popup/opener/kapatma, çerez reddi ve gerçek çerez/DOM temizliği, motor gizlilik seçenekleri, otomatik doldurma katılımı, imzalı eklenti kur/aç/kapat/kaldır, çocuk PIN/izin listesi, QR çözümü ve dil yenilemesi bu yeni UI koşusunda yeniden geçti.
+- Yalnız Android telefon emülatör kabulüdür; fiziksel Tecno ve gerçek banka hesabı/uzak VPN/model indirme kabulleri tamamlandı denmez. Google hizmeti, bulut eşitleme veya ayrı parola kasası eklenmedi. Önceki sürümün kaydetmediği eski ziyaretler oluşturulmaz.
+- Aynı üretim sertifikasıyla v1.0.19 yayını hazırlanıyor. Yayın iş akışı bu kaynakla üretim kaynaklarının birebir aynı olduğunu ve dört başarılı kabulü doğrulamadan imzalama/yayınlamaya geçmez. Son yayımlanmış kararlı sürüm şu aşamada v1.0.18'dir.
+
+## Geliştirme kaydı — v1.0.19 (tarihsel hazırlık adımları)
 
 - Kullanıcı 7 Kasım’da Chrome ekran görüntülerindeki düz satırlı Ayarlar/üç nokta menüsünü, gerçek ziyaret Geçmişi ve kaydırmayla gizlenen adres/menü çubuğunu istedi (onay S-002).
 - İlk adım: yerel SQLite geçmişi; yalnız tamamlanan normal HTTP(S) ziyaretleri, gerçek başlık ve zaman. Gün bazında aynı URL yenilenir; 90 gün/10.000 kayıt sınırı ve arama/silme altyapısı. Gizli/çocuk ziyaretleri kayda girmez; başarısız yükler ve iç motor adresleri dışarıda kalır.
