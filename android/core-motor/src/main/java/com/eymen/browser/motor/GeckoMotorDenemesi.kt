@@ -95,6 +95,14 @@ object GeckoMotorDenemesi {
         }
     }
 
+    /** General web input for Android's browser role. HTTPS origin checks remain separate. */
+    fun verifiedWebUrl(value: String?): String? {
+        verifiedHttpsUrl(value)?.let { return it }
+        val raw=value?.trim() ?: return null
+        if(!raw.startsWith("http://",true))return null
+        return verifiedHttpsUrl("https://"+raw.substring(7))?.let { "http://"+it.substring(8) }
+    }
+
     fun urlFromIntent(intent: Intent?): String? {
         if (intent == null) return null
         val candidate = when (intent.action) {
@@ -104,7 +112,7 @@ object GeckoMotorDenemesi {
             Intent.ACTION_MAIN, null -> intent.getStringExtra("test_url")
             else -> null
         }
-        return verifiedHttpsUrl(candidate)
+        return verifiedWebUrl(candidate)
     }
 
     /**

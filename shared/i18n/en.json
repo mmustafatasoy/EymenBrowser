@@ -365,7 +365,7 @@
   "menu_tools": "More tools",
   "menu_requires_page": "Open a page first",
   "menu_text_size": "Page text size",
-  "menu_text_size_value": "%1$d%% · Pinch to zoom images",
+  "menu_text_size_value": "%1$d%%",
   "menu_devices_share_note": "Send to device uses the Android share sheet. Choose available targets such as Nearby Share/Quick Share. It does not provide account-based device sync.",
   "reader_note": "Reader mode is intended for articles. Use Back to return to the original page.",
   "qr_open": "Open QR link",

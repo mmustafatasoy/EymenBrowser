@@ -154,6 +154,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private void realHistoryAndScrolling() throws Exception {
         BrowserHistory history=(BrowserHistory)controller("history");
+        Intent webIntent=new Intent(Intent.ACTION_VIEW,Uri.parse("http://example.com/?eymen-browser-role=1")).addCategory(Intent.CATEGORY_BROWSABLE);
+        require(getTargetContext().getPackageManager().queryIntentActivities(webIntent,android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).stream()
+            .anyMatch(info->getTargetContext().getPackageName().equals(info.activityInfo.packageName)),"Android recognizes the app as a real HTTP browser-role candidate");
+        require("http://example.com/?eymen-browser-role=1".equals(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(webIntent)),"safe external HTTP link reaches browser routing without being dropped");
+        require(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(new Intent(Intent.ACTION_VIEW,Uri.parse("javascript:alert(1)")))==null,"non-web external intent cannot enter browser routing");
+
         String first="https://example.com/?eymen-history=a";
         String second="https://example.com/?eymen-history=b";
         org.mozilla.geckoview.GeckoSession session=currentSession();

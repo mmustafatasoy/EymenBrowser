@@ -212,14 +212,24 @@ diff=ImageChops.difference(home,menu)
 # must remain visible; the new reference does not shift the homepage logo.
 left=diff.crop((0,368,90,438))
 left_fraction=sum(max(p)>=24 for p in left.getdata())/(left.width*left.height)
-right=diff.crop((140,100,380,700))
-right_fraction=sum(max(p)>=24 for p in right.getdata())/(right.width*right.height)
-print(f'S-002 native list overflow: left delta={left_fraction:.3f}, panel delta={right_fraction:.3f}')
+import json
+from pathlib import Path
+value=json.loads(Path('design/tokens.json').read_text())['renk']['listeGunduz']['yuzey']
+expected=tuple(int(value[i:i+2],16) for i in (1,3,5))
+right=menu.crop((140,100,380,700))
+def surface_fraction(image):
+    return sum(max(abs(c-e) for c,e in zip(pixel,expected))<=3 for pixel in image.getdata())/(image.width*image.height)
+right_fraction=surface_fraction(right)
+# Native light surfaces intentionally differ only slightly from the light
+# homepage. Verify the actual shared surface color and rendered text instead
+# of requiring a high contrast against that homepage.
+text_pixels=sum(max(pixel)-min(pixel)<24 and max(pixel)<150 for pixel in right.getdata())
+wide_fraction=surface_fraction(menu.crop((140,200,215,650)))
+print(f'S-002 native list overflow: left delta={left_fraction:.3f}, surface={right_fraction:.3f}, wider surface={wide_fraction:.3f}, text={text_pixels}')
 assert left_fraction<0.08,'overflow moved/dimmed content outside the panel'
-assert right_fraction>0.20,'real full-height overflow panel did not open'
-# Require the newly wider list to occupy the area the old 148dp popup left free.
-wide=diff.crop((140,200,215,650))
-assert sum(max(p)>=24 for p in wide.getdata())/(wide.width*wide.height)>0.25,'obsolete narrow menu still present'
+assert right_fraction>0.75 and text_pixels>500,'real filled/text list panel did not open'
+assert wide_fraction>0.75,'obsolete narrow menu still present'
+
 CHECK
 adb shell input keyevent 4
 sleep 1

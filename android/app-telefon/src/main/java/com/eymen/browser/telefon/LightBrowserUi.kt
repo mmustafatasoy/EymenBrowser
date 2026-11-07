@@ -217,10 +217,12 @@ internal fun LightBrowserToolbar(
     onTabs: () -> Unit,
     onMenu: () -> Unit,
     dayMode: Boolean = true,
-    homeButtonEnabled: Boolean = true
+    homeButtonEnabled: Boolean = true,
+    privateMode: Boolean = false
 ) {
     val palette=browserListPalette(dayMode)
-    val toolbarInk=if(dayMode)ink else palette.text
+    val privateLabel=stringResource(R.string.private_tab)
+    val toolbarInk=if(privateMode)T.gizli_yazi else if(dayMode)ink else palette.text
     val editor = rememberAddressEditor(if (atHome) "" else currentUrl)
     val input = editor.value
     val focus = LocalFocusManager.current
@@ -234,7 +236,7 @@ internal fun LightBrowserToolbar(
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
         Modifier.fillMaxWidth()
-            .background(if(dayMode)Color(0xFFF3F7FD) else palette.background)
+            .background(if(privateMode)T.gizli_yuzey1 else if(dayMode)Color(0xFFF3F7FD) else palette.background)
             .padding(start = 3.dp, end = 6.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -243,12 +245,14 @@ internal fun LightBrowserToolbar(
         Row(
             Modifier.weight(1f).height(47.dp)
                 .shadow(2.dp, RoundedCornerShape(26.dp))
-                .border(1.dp, if(dayMode)outline else palette.surface, RoundedCornerShape(26.dp))
-                .background(if(dayMode)Color(0xFFEAF1FB) else palette.surface, RoundedCornerShape(26.dp))
+                .border(1.dp, if(privateMode)T.gizli_yuzey2 else if(dayMode)outline else palette.surface, RoundedCornerShape(26.dp))
+                .background(if(privateMode)T.gizli_yuzey2 else if(dayMode)Color(0xFFEAF1FB) else palette.surface, RoundedCornerShape(26.dp))
                 .padding(start = 9.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            GoogleLetter(Modifier.size(23.dp))
+            if(privateMode)Box(Modifier.size(23.dp).semantics{contentDescription=privateLabel}) {
+                EymenVector(EymenPaths.gizli,color=toolbarInk,iconSize=23.dp)
+            } else GoogleLetter(Modifier.size(23.dp))
             Spacer(Modifier.width(6.dp))
             BasicTextField(
                 value = input,
@@ -267,7 +271,7 @@ internal fun LightBrowserToolbar(
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, if(dayMode)secondary else palette.muted)
+                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, if(privateMode)T.gizli_yaziIkincil else if(dayMode)secondary else palette.muted)
                         field()
                     }
                 }
@@ -306,7 +310,7 @@ internal fun LightBrowserToolbar(
             ) { LightText(tabCount.toString(), 12, toolbarInk, bold = true) }
         }
         Box(
-            Modifier.size(35.dp).background(if(dayMode)Color(0xFFB1D6FF) else palette.surface, RoundedCornerShape(13.dp))
+            Modifier.size(35.dp).background(if(privateMode)T.gizli_yuzey2 else if(dayMode)Color(0xFFB1D6FF) else palette.surface, RoundedCornerShape(13.dp))
                 .semantics { contentDescription = menuLabel; role = Role.Button }
                 .clickable(onClick = onMenu),
             contentAlignment = Alignment.Center

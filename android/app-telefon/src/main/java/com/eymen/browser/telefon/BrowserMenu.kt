@@ -87,8 +87,10 @@ internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,te
                         verticalAlignment=Alignment.CenterVertically) {
                         EymenVector(EymenPaths.yakinlastir,color=p.muted,iconSize=T.telefon_liste_menuSimge.dp)
                         Spacer(Modifier.width(T.telefon_ekran_kenar.dp))
-                        ScreenText(stringResource(R.string.menu_text_size_value,textPercent),p.text,
-                            T.telefon_liste_ikincil,Modifier.weight(1f))
+                        Column(Modifier.weight(1f)) {
+                            ScreenText(stringResource(R.string.menu_text_size),p.text,T.telefon_liste_ikincil,maxLines=1)
+                            ScreenText(stringResource(R.string.menu_text_size_value,textPercent),p.muted,T.telefon_liste_ikincil,maxLines=1)
+                        }
                         MenuZoomButton("−",p,textPercent>50){onTextSize(textPercent-10)}
                         MenuZoomButton("+",p,textPercent<300){onTextSize(textPercent + 10)}
                     }
@@ -103,7 +105,7 @@ internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,te
                         Spacer(Modifier.width(T.telefon_ekran_kenar.dp))
                         ScreenText(stringResource(row.title),if(allowed)p.text else p.disabled,T.telefon_liste_yazi,Modifier.weight(1f),maxLines=2)
                         if(row.action==MenuAction.DESKTOP && isDesktop)
-                            EymenVector(EymenPaths.kalkan,color=p.accent,iconSize=T.telefon_liste_menuSimge.dp)
+                            ListCheckMark(p)
                     }
                 }
             }

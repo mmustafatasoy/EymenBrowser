@@ -86,10 +86,11 @@ internal class BrowserChromeMotion(private val engine: GeckoView,private val too
         val visible=(height*(1f-fraction)).roundToInt().coerceIn(0,height)
         toolbar.translationY=if(bottom)(height-visible).toFloat() else -(height-visible).toFloat()
         toolbar.visibility=if(fullscreen)View.GONE else if(visible==0)View.INVISIBLE else View.VISIBLE
-        // Engine view retains its maximum measured height. Insets for sticky
-        // page footers and dynamic viewport units follow the visible toolbar.
+        // Gecko's dynamic-toolbar offset is 0 while shown, -maxHeight while
+        // hidden. Compute both from the same integer to keep sticky footers
+        // and APZ hit testing aligned at every density.
         engine.translationY=if(bottom)0f else visible.toFloat()
-        engine.setVerticalClipping(-visible)
+        engine.setVerticalClipping(-(height-visible))
     }
     fun dispose(){animation?.cancel()}
 }

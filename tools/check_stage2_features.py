@@ -120,7 +120,7 @@ assert 'quadraticBezierTo(' in light_ui
 assert 'LightBrowserToolbar(' in light_ui and 'onVoiceSearch' in light_ui
 assert 'BrowserChromeMotion' in main and 'session.setScrollDelegate' in main
 motion = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChromeMotion.kt").read_text()
-assert 'engine.setVerticalClipping(-visible)' in motion
+assert 'engine.setVerticalClipping(-(height-visible))' in motion
 assert 'engine.setDynamicToolbarMaxHeight(height)' in motion
 assert 'event.rawY' in motion and 'return super.dispatchTouchEvent(event)' in motion
 visual_check = (root / 'tools/capture_android_visual.sh').read_text()

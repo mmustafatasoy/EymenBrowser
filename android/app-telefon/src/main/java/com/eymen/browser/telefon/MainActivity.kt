@@ -378,6 +378,7 @@ class MainActivity : ComponentActivity() {
                 currentUrl=currentUrl.value,atHome=atHome.value,
                 tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
                 dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
+                privateMode=activeTab?.privateMode==true,
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
         }
@@ -449,7 +450,7 @@ class MainActivity : ComponentActivity() {
             )
         )
         menuLayer.setContent {
-            BrowserMenu(
+            if (menuShowing) BrowserMenu(
                 hasPage = !atHome.value && GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
                 isDesktop = activeTab?.desktop == true,dayMode = dayMode.value,
                 textPercent = settingsServices.textPercent,onTextSize = settingsServices::setTextSize,
@@ -1173,8 +1174,8 @@ class MainActivity : ComponentActivity() {
     private fun openAddress(text: String) {
         val raw = text.trim()
         if (raw.isEmpty()) return
-        val direct = if (raw.startsWith("https://", ignoreCase = true)) {
-            GeckoMotorDenemesi.verifiedHttpsUrl(raw)
+        val direct = if (raw.startsWith("https://",true) || raw.startsWith("http://",true)) {
+            GeckoMotorDenemesi.verifiedWebUrl(raw)
         } else if (raw.contains("://")) null
         else if ('.' in raw && raw.none { it.isWhitespace() }) {
             GeckoMotorDenemesi.verifiedHttpsUrl("https://$raw")

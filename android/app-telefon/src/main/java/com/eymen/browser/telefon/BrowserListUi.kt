@@ -123,3 +123,13 @@ internal fun ListToggleMark(chosen: Boolean,p: BrowserScreenPalette){
             center=Offset(if(chosen)size.width-size.height/2 else size.height/2,size.height/2))
     }
 }
+
+@Composable
+internal fun ListCheckMark(p: BrowserScreenPalette){
+    Canvas(Modifier.size(T.telefon_liste_menuSimge.dp)){
+        drawRoundRect(p.accent,cornerRadius=CornerRadius(T.telefon_liste_satirKose.dp.toPx()))
+        val line=T.telefon_ekran_cizgi.dp.toPx()*2
+        drawLine(p.surface,Offset(size.width*.22f,size.height*.5f),Offset(size.width*.43f,size.height*.72f),line)
+        drawLine(p.surface,Offset(size.width*.43f,size.height*.72f),Offset(size.width*.8f,size.height*.28f),line)
+    }
+}

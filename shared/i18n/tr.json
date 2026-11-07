@@ -365,7 +365,7 @@
   "menu_tools": "Diğer araçlar",
   "menu_requires_page": "Önce bir sayfa aç",
   "menu_text_size": "Sayfa metin boyutu",
-  "menu_text_size_value": "%1$d%% · Görseller için dokunarak yakınlaştır",
+  "menu_text_size_value": "%1$d%%",
   "menu_devices_share_note": "Cihaza gönder, Android paylaşım ekranını kullanır. Yakındaki Paylaşım/Quick Share gibi mevcut hedefleri seçebilirsin. Hesap tabanlı cihaz eşitlemesi değildir.",
   "reader_note": "Okuma modu makale sayfaları içindir. Geri tuşuyla özgün sayfaya dönebilirsin.",
   "qr_open": "QR bağlantısını aç",
