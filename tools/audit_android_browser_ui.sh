@@ -1,7 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p browser-ui-audit
-trap 'timeout 20 adb logcat -d -v threadtime > browser-ui-audit/logcat.txt || true' EXIT
+python3 -u - <<'PY' > browser-ui-audit/host-memory.txt &
+import json, os, time
+from pathlib import Path
+parent=os.getppid()
+while os.getppid()==parent:
+    memory={line.split(':')[0]:line.split(':',1)[1].strip() for line in Path('/proc/meminfo').read_text().splitlines()}
+    processes=[]
+    for path in Path('/proc').iterdir():
+        if not path.name.isdigit(): continue
+        try:
+            status={line.split(':')[0]:line.split(':',1)[1].strip() for line in (path/'status').read_text().splitlines() if ':' in line}
+            if status.get('Name') in ('java','qemu-system-x86','emulator'):
+                processes.append({'pid':int(path.name),'name':status['Name'],'rss':status.get('VmRSS','0 kB')})
+        except (OSError,ValueError): pass
+    print(json.dumps({'time':int(time.time()),'memory':{key:memory[key] for key in ('MemTotal','MemAvailable','SwapTotal','SwapFree')},'load':os.getloadavg(),'processes':processes}),flush=True)
+    time.sleep(5)
+PY
+RESOURCE_PID=$!
+trap 'kill "$RESOURCE_PID" 2>/dev/null || true; timeout 20 adb logcat -d -v threadtime > browser-ui-audit/logcat.txt || true' EXIT
 timeout 20 adb shell am force-stop com.android.launcher3 || true
 timeout 20 adb shell settings put secure show_ime_with_hard_keyboard 1
 timeout 90 adb install -r android/app-telefon/build/outputs/apk/debug/app-telefon-x86_64-debug.apk

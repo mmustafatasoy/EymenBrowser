@@ -845,8 +845,18 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         return best;
     }
     private void click(String label) throws Exception {
-        await(() -> clickTarget(label) != null, "clickable control: " + label);
-        tap(clickTarget(label));
+        java.util.concurrent.atomic.AtomicReference<Rect> hit = new java.util.concurrent.atomic.AtomicReference<>();
+        await(() -> {
+            AccessibilityNodeInfo node = clickTarget(label);
+            if (node == null) return false;
+            Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+            if (bounds.isEmpty()) return false;
+            hit.set(bounds); return true;
+        }, "clickable control: " + label);
+        // Keep the same ready hit target. A second tree lookup can race a
+        // Compose semantics update between the wait and physical touch.
+        Rect bounds = hit.get();
+        tapAt(bounds.centerX(), bounds.centerY());
         waitForIdleSync();
         SystemClock.sleep(100);
     }

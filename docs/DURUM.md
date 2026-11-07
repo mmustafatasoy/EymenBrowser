@@ -35,6 +35,10 @@ Son güncelleme: 2026-11-07
 
 - Son üretim isteği küçük ters kaydırma düzeltmesini içeren `478ecd22b61debdcdb3002d2a6214854068c1345` kaynağını bütün dört kabul için kullanır; önceki kaynaktaki kabuller bu ürünün yerine sayılmaz. Yerel 11 zorunlu kaynak/güvenlik kontrolü geçti. Android/JVM ve iki API etkileşim sonuçları beklenir.
 
+- `478ecd2` kaynak/JVM/üç ABI #42386828169, indirme #42386828167 ve iki API görsel #42386828189 geçti. API 36 UI #128445877950, menü tıklama yardımcısında bekledikten sonra erişilebilirlik ağacını ikinci kez okuyup null bulduğu için test NPE'siyle durdu. Gerçek PNG'de Yeni sekme dahil menü doğru görünür; üretim istisnası değildir. Yardımcı artık hazır kontrolün dolu dokunma dikdörtgenini tek arama anında saklar ve o konuma gerçek dokunma gönderir. Bekleme, dokunma ve bütün sonuç assertion'ları korunur; ürün kodu bu test düzeltmesinde değişmedi. Yeni test kaynağındaki dört kabul yayın öncesi yeniden doğrulanır.
+
+- Uzayan API 35 işi için UI testinden önce derleyici daemon'ları kapatılarak yalnız iş VM'sindeki derleme belleği serbest bırakılır. Test boyunca host MemAvailable/swap/yük ve yalnız Java/emülatör süreçlerinin RSS değerleri yerel CI kanıtına yazılır; URL, içerik veya kullanıcı verisi yoktur. Resmî Kotlin belgesinde daemon'un Gradle -Xmx değerini miras alabildiği doğrulandı; bu projede 3 GiB yapılandırma bulunur. Bu altyapı ölçümü uygulamaya veya APK'ya eklenmez; bir OOM kök nedeni henüz kanıtlanmış sayılmaz.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
