@@ -45,6 +45,8 @@ Son güncelleme: 2026-11-07
 
 - Aynı kaynağın API 36 UI iş #128448376329 ilk uzun belge dokunuşunda kaldı. Tanılamada gerçek motor kaydırması `lastY=0`, çubuk görünür ve geçerliydi; henüz kaymayan sayfada çubuğu gizlemek doğru olmaz. Testin title bildirimi DOM/APZ çiziminden önce gelebiliyor, dış Example Domain CSS'i de test belgesinin boyutunu etkiliyordu. Yalnız test HTML'si kendi normal belge akışına alınır; iki requestAnimationFrame ve gerçek başlık/footer erişilebilirliği beklenmeden dokunma gönderilmez. Gerçek kaydırma, 8 piksel ters hareket ve hit-test assertion'ları korunur. Ürün kodu bu hazırlık düzeltmesinde değişmez.
 
+- Yayın isteği, doğru ön pencere ve çizilmiş uzun belge beklemelerini içeren `4b240138deea276ec6cfe117a8f4ae259ca70bb3` kaynağına taşınır. Dört kabul, iki API UI/görsel ve ürün/araç/iş akışı eşitliği kapıları zorunlu kalır. Henüz v1.0.20 yayımlanmadı.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
