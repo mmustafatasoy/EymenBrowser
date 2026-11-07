@@ -119,7 +119,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             realHistoryAndScrolling();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
+            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -170,8 +170,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(()->systemBrowserChoice()!=null,"real Android browser-role dialog lists this app");
         // The system dialog follows Android's theme and dim amount, not the app palette.
         capture("default-browser-system.png",null);
-        require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK),true),"system back down");
-        require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK),true),"system back up");
+        await(()->systemCancelButton()!=null,"Android role dialog cancel button");
+        tap(systemCancelButton());waitForIdleSync();
         await(()->systemBrowserChoice()==null&&field(label(R.string.settings_search_hint))!=null,"cancel returns to settings without changing the default");
         click(label(R.string.back));
 
@@ -607,7 +607,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             AccessibilityNodeInfo node = queue.removeFirst();
             if (!node.refresh()) continue;
             Rect rect = new Rect(); node.getBoundsInScreen(rect);
-            tree.append(node.getClassName()).append(" visible=").append(node.isVisibleToUser())
+            tree.append(node.getClassName()).append(" id=").append(node.getViewIdResourceName()).append(" visible=").append(node.isVisibleToUser())
                 .append(" editable=").append(node.isEditable()).append(" focused=").append(node.isFocused())
                 .append(" desc=").append(node.getContentDescription()).append(" text=").append(text(node))
                 .append(" selection=").append(node.getTextSelectionStart()).append(":").append(node.getTextSelectionEnd())
@@ -620,6 +620,19 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         try (FileOutputStream out = new FileOutputStream(new File(directory, "hierarchy.txt"))) {
             out.write(tree.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
+    }
+    private AccessibilityNodeInfo systemCancelButton() {
+        String systemCancel=android.content.res.Resources.getSystem().getString(android.R.string.cancel);
+        String appCancel=getTargetContext().getString(android.R.string.cancel);
+        ArrayDeque<AccessibilityNodeInfo> queue=roots();
+        while(!queue.isEmpty()) {
+            AccessibilityNodeInfo node=queue.removeFirst();
+            if(!node.refresh())continue;
+            if(node.isVisibleToUser()&&node.isEnabled()&&!getTargetContext().getPackageName().contentEquals(String.valueOf(node.getPackageName()))
+                &&("android:id/button2".equals(node.getViewIdResourceName())||text(node).equalsIgnoreCase(systemCancel)||text(node).equalsIgnoreCase(appCancel)))return node;
+            for(int i=0;i<node.getChildCount();i++) {AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
+        }
+        return null;
     }
     private AccessibilityNodeInfo systemBrowserChoice() {
         String appName=getTargetContext().getApplicationInfo().loadLabel(getTargetContext().getPackageManager()).toString();

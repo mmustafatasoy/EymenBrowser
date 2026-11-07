@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same approved site A geometry and gradient as AtasoySiteLogo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="36" android:viewportHeight="36">
+    <path android:pathData="M9,0H27A9,9 0,0 1,36 9V27A9,9 0,0 1,27 36H9A9,9 0,0 1,0 27V9A9,9 0,0 1,9 0Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0"
+                android:endX="36" android:endY="36">
+                <item android:offset="0" android:color="#1983FF" />
+                <item android:offset="0.5" android:color="#005BFF" />
+                <item android:offset="1" android:color="#0751ED" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M10,27L18,8L26,27M12.9,20.3H23.1"
+        android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.15" android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

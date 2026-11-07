@@ -27,7 +27,7 @@ from pathlib import Path
 text = Path('browser-ui-audit/instrumentation.txt').read_text()
 assert 'INSTRUMENTATION_RESULT: eymen_browser_ui_audit=passed' in text, text
 assert 'INSTRUMENTATION_CODE: -1' in text, text
-for name in ('settings-light.png', 'appearance-night.png', 'downloads-light.png', 'history-light.png', 'history-dark.png', 'menu-native.png', 'scroll-hidden.png', 'scroll-visible.png', 'scroll-bottom.png'):
+for name in ('settings-light.png', 'appearance-night.png', 'downloads-light.png', 'history-light.png', 'history-dark.png', 'menu-native.png', 'scroll-hidden.png', 'scroll-visible.png', 'scroll-bottom.png', 'default-browser-system.png'):
     assert Path('browser-ui-audit',name).stat().st_size > 1000, name
 print('Real touch/type and custom settings/download screens passed.')
 PY
