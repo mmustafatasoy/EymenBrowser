@@ -116,8 +116,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> find(FIXTURE, false) != null, "clearing search restores the saved file");
             click(label(R.string.download_clear_records));
             click(label(R.string.download_confirm_deny));
+            await(() -> find(label(R.string.download_confirm_deny), false) == null, "cancel closes the actual confirmation window");
             require(!new DownloadRegistry(app).items().isEmpty(), "cancel clear keeps history");
             click(label(R.string.download_clear_records));
+            await(() -> find(label(R.string.download_clear_confirm), false) != null, "custom clear confirmation is visible before approval");
             click(label(R.string.download_clear_records));
             await(() -> new DownloadRegistry(app).items().isEmpty(), "custom confirmation clears history");
             try (java.io.InputStream input = app.getContentResolver().openInputStream(fixtureUri)) {
@@ -351,9 +353,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         });
         await(()->"Example Domain".equals(title.get())&&uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().contains("eymen-scroll=1"))),"completed real HTTPS document for native scrolling");
         String html="<main style='height:7000px;background:linear-gradient(white,lightgray)'><h1>Eymen scrolling test</h1><p>Real page movement</p></main><button id='footer' style='position:fixed;bottom:0;left:0;width:100%;height:48px'>Eymen footer action</button>";
-        String fixture="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";document.getElementById('footer').onclick=function(){document.title='Eymen footer tapped';};document.title='Eymen scroll ready';}())";
+        String fixture="javascript:void(function(){document.documentElement.style.cssText='overflow-y:auto;height:auto';document.body.style.cssText='display:block;width:100%;max-width:none;height:auto;min-height:0;margin:0;padding:0;overflow:visible';document.body.innerHTML="+org.json.JSONObject.quote(html)+";document.getElementById('footer').onclick=function(){document.title='Eymen footer tapped';};requestAnimationFrame(function(){requestAnimationFrame(function(){document.title='Eymen scroll ready';});});}())";
         runOnMainSync(()->longPage.loadUri(fixture));
         await(()->"Eymen scroll ready".equals(title.get()),"long web page injected only into the test document");
+        await(()->find("Eymen scrolling test",false)!=null&&find("Eymen footer action",false)!=null,"long test document is painted and accessible before touch scrolling");
         int engineHeight=uiInt(()->{try{return browserView().getHeight();}catch(Exception e){throw new RuntimeException(e);}});
         swipeUp();
         await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.INVISIBLE),"scrolling down hides the complete top address/menu bar");
@@ -801,7 +804,20 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         return null;
     }
     private AccessibilityNodeInfo clickTarget(String label) {
-        ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        java.util.List<AccessibilityWindowInfo> windows = new java.util.ArrayList<>(getUiAutomation().getWindows());
+        windows.sort((left, right) -> Integer.compare(right.getLayer(), left.getLayer()));
+        for (AccessibilityWindowInfo window : windows) {
+            if (window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) continue;
+            AccessibilityNodeInfo root = window.getRoot();
+            if (root != null && root.refresh() && root.isVisibleToUser()) return clickTarget(root, label);
+        }
+        return null;
+    }
+    private AccessibilityNodeInfo clickTarget(AccessibilityNodeInfo root, String label) {
+        // Labels and hit areas must belong to the same front window. A modal
+        // can cover an identically named background action or editor.
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        queue.add(root);
         java.util.List<AccessibilityNodeInfo> labels = new java.util.ArrayList<>();
         java.util.List<Rect> buttons = new java.util.ArrayList<>();
         java.util.List<Rect> editors = new java.util.ArrayList<>();

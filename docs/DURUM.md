@@ -41,6 +41,10 @@ Son güncelleme: 2026-11-07
 
 - `478ecd2` API 35 UI iş #128445878364 son çubuk düzeltmesiyle bütün kontrolleri ve PNG aktarımını geçti. Menü testindeki tek-snapshot düzeltmeli üretim isteği bütün dört kabul için `52948733fd36d632ef55d6b33d0ffa19781af2ec` kaynağına geçer; ürün davranışı önceki adayla aynıdır. API 36 test aracı NPE'si başarılı sayılmaz; yeni koşu zorunludur.
 
+- `5294873` API 35 UI iş #128448376110 indirme temizleme onayında durdu. İncelenen PNG'de onay kapanmış ama kayıt korunmuştu: test, farklı pencerelerdeki aynı adlı arka plan/onay kontrollerinin koordinatlarını karıştırabiliyordu. Tıklama araması artık yalnız katman sırası en yüksek gerçek uygulama penceresinde yapılır; onay iptalinin pencereyi kapatması ve yeni onay açıklamasının görünmesi ayrıca beklenir. Fiziksel tıklama, gerçek kayıt silme ve dosyanın korunması assertion'ları değişmez. Host kanıtında yaklaşık 12 GiB kullanılabilir bellek ve boş swap vardır; OOM iddiası desteklenmedi. Ürün davranışı değiştirilmedi.
+
+- Aynı kaynağın API 36 UI iş #128448376329 ilk uzun belge dokunuşunda kaldı. Tanılamada gerçek motor kaydırması `lastY=0`, çubuk görünür ve geçerliydi; henüz kaymayan sayfada çubuğu gizlemek doğru olmaz. Testin title bildirimi DOM/APZ çiziminden önce gelebiliyor, dış Example Domain CSS'i de test belgesinin boyutunu etkiliyordu. Yalnız test HTML'si kendi normal belge akışına alınır; iki requestAnimationFrame ve gerçek başlık/footer erişilebilirliği beklenmeden dokunma gönderilmez. Gerçek kaydırma, 8 piksel ters hareket ve hit-test assertion'ları korunur. Ürün kodu bu hazırlık düzeltmesinde değişmez.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
