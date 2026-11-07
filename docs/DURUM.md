@@ -2,6 +2,14 @@
 
 Son güncelleme: 2026-11-06
 
+## Yeni çalışma — v1.0.19 hazırlığı
+
+- Kullanıcı 7 Kasım’da Chrome ekran görüntülerindeki düz satırlı Ayarlar/üç nokta menüsünü, gerçek ziyaret Geçmişi ve kaydırmayla gizlenen adres/menü çubuğunu istedi (onay S-002).
+- İlk adım: yerel SQLite geçmişi; yalnız tamamlanan normal HTTP(S) ziyaretleri, gerçek başlık ve zaman. Gün bazında aynı URL yenilenir; 90 gün/10.000 kayıt sınırı ve arama/silme altyapısı. Gizli/çocuk ziyaretleri kayda girmez; başarısız yükler ve iç motor adresleri dışarıda kalır.
+- Liste sayfası, yer imleri/son kapatılan sekmeler ve normal geçmiş aynı düz satır altyapısına bağlandı. Native Gecko scroll delegate, dokunma yönü ve dinamik viewport clipping ile animasyonlu çubuk altyapısı eklendi. Sayfa betiği/telemetri yoktur; üst/alt ve video/klavye güvenli alanları korunacak.
+- Yeni geçmiş sınırları/tarihleri ve aşağı/yukarı kaydırma kararları için anlamlı JVM testleri eklendi. Henüz Android derlemesi/yeni gerçek UI kabulü geçmedi. Ayar ve menü görünümünün yeni referansa dönüşümü sonraki adımdır.
+- Son imzalı yayın v1.0.18; v1.0.19 henüz yayınlanmadı.
+
 ## Güncel yayın — v1.0.18
 
 - **[v1.0.18 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.18)** — 2026-11-06 21:34 UTC. ARM64, ARMv7, x86_64 ve SHA256SUMS yayın varlıkları doğrulandı. Aynı üretim imzasıyla mevcut kurulum üzerine güncellenebilir. Bu yayın isteklerinin tek APK güncellemesidir.

@@ -18,7 +18,7 @@ must_exist = {
     "session attached when activated": (main, "view.setSession(tab.gecko)"),
     "private tab session creation": (main, "privateMode = privateMode,"),
     "private history never enters normal recent list": (
-        main, 'if (!privateMode && url.startsWith("https://", true)'
+        main, 'if (success && !tab.privateMode && !childMode.enabled && !tab.home'
     ),
     "external links not silently routed to private mode": (
         main, "if (activeTab?.privateMode == true) createTab(false, url)"

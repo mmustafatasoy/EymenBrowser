@@ -132,6 +132,8 @@ object GeckoMotorDenemesi {
         onPopupBlocked: () -> Unit = {},
         onClose: () -> Unit = {},
         onTitle: (String?) -> Unit = {},
+        onCanGoBack: (Boolean) -> Unit = {},
+        onCanGoForward: (Boolean) -> Unit = {},
         trackingProtection: Boolean = false,
         onBlocked: (Int) -> Unit = { _ -> Unit },
         onExternalAppLink: (String, String?, Boolean) -> Boolean = { _, _, _ -> false },
@@ -149,6 +151,8 @@ object GeckoMotorDenemesi {
         // returns null and login can silently stop.
         session.navigationDelegate = object : GeckoSession.NavigationDelegate {
             private var userPopupUri: String? = null
+            override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) { onCanGoBack(canGoBack) }
+            override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) { onCanGoForward(canGoForward) }
             override fun onLoadRequest(
                 session: GeckoSession,
                 request: GeckoSession.NavigationDelegate.LoadRequest

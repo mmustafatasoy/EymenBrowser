@@ -21,3 +21,10 @@ Burada kayıt yoksa şartnameden sapma yoktur. Yazılım aracı onay almadan sap
 - Seçenek 1:
 - Seçenek 2:
 - Karar:
+
+## S-002 — Chrome benzeri ayarlar, geçmiş ve kaydırılan araç çubuğu
+
+- Tarih: 2026-11-07.
+- Karar: **Kullanıcı doğrudan ONAYLADI.** Dört telefon ekran görüntüsüyle ayarları ve üç nokta menüsünü sade liste olarak istedi; Geçmişte gerçek ziyaret bağlantıları, aşağı kaydırınca animasyonla gizlenen ve küçük yukarı harekette dönen adres/menü çubuğu istedi.
+- Yeni referans T07/T10 için önceki kart/ızgara ve 148 dp küçük menü kararının yerini alır. Ana sayfa/A logosu korunur; mevcut açık/koyu tema seçimi sürer. Google hesabı veya hizmeti varmış gibi gösterilmez. Yeni nötr liste renkleri/ölçüleri ortak tokens.json içindedir.
+- Yalnız Android telefon; TV/PC/Apple kapsamı açılmadı. Telemetri veya harici geçmiş hizmeti yoktur. Gizli ve çocuk gezinmesi geçmişe yazılmaz.
