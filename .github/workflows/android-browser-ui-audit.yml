@@ -52,7 +52,7 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 5X
-          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           emulator-boot-timeout: 240
           script: timeout 660 bash tools/audit_android_browser_ui.sh
