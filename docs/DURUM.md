@@ -2,7 +2,19 @@
 
 Son güncelleme: 2026-11-07
 
-## Yeni çalışma — v1.0.20
+## Güncel yayın — v1.0.20
+
+- **[v1.0.20 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.20)** — 2026-11-07 19:01:45 Türkiye (16:01:45 UTC). [İmzalı üretim #42388423055](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388423055) başarılı. Etiket `03104d0a16b1f866516133ecbd42189206525c36` yayın isteği commit'ine bağlıdır.
+- **Arama/adres:** ortak 16sp metin, kutu boyunca dokunma alanı; ilk fiziksel dokunuşta mevcut adresin tamamını seçme ve IME composition korunur. Arama için native Ara, URL için Git eylemi son editör değerini gönderir.
+- **Geri/İleri:** menü ve Android geri tuşu aynı gezinmeyi kullanır. Gerçek motor geçmişi, SPA/hash konumu, ilk sayfa/ana sayfa sınırı, yeni boş sekmeden önceki sekmeye dönüş ve popup'ta yalnız çocuk pencereyi kapatıp opener'a dönüş doğrulandı. Android Geri önce klavyeyi/adres düzenlemeyi kapatır.
+- **Küçük ters kaydırma:** çubuk göründükten sonra eski APZ/fling bildirimlerinin onu yeniden gizlemesi önlendi. Yeni gerçek aşağı kaydırma veya klavye/tekerlek kaydırma niyetiyle gizleme yeniden çalışır. Üst/alt konum, sabit motor yüksekliği ve sabit footer hit-test korunur.
+- **Doğrulanmış kaynak:** `4b240138deea276ec6cfe117a8f4ae259ca70bb3`. [Kaynak/JVM/üç ABI #42388404206](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388404206), [Android 15/16 UI #42388404321](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388404321), [iki API görsel/sistem alanı #42388405151](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388405151) ve [arka plan indirme #42388404329](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388404329) başarılı. API 35 UI iş #128450599425 ve API 36 UI iş #128450599203 tamamlandı; gerçek klavye/180ms dokunma, iki HTTPS belge, SPA, sekme/popup Geri, geçmiş, çerez/DOM temizliği, eklenti, PIN, dil ve üst/alt çubuk kabulleri birlikte geçti.
+- Üretim kapısı dört başarılı kabulü, her iki API'nin başarılı UI/görsel işlerini ve paketlenen ürün/araç/iş akışı eşitliğini doğruladı. Üç ABI orijinal üretim sertifikası, 16 KiB hizalama, 500 MiB sınırı ve SHA-256 kontrollerini geçti. Önceki v1.0.19 ile gerçek APK paket/sertifika ve artan versionCode (`10019 → 10020`) uyumu doğrulandı; bu metadata karşılaştırması fiziksel telefonda üstüne kurulum testi değildir.
+- ARM64 APK **205336487 bayt**, SHA-256 `777cac8aa428a8429932024328caf7a1599c072bfc77dd90291096484eb56516`. ARMv7, x86_64 ve SHA256SUMS.txt de yüklenmiş olarak doğrulandı. Onaylı ana sayfa/A logosu, Ayarlar/menü, yerel geçmiş ve banka güvenlik/izin davranışı korunur.
+- Kullanıcı önceki sürümde banka sitelerini ve ekran uyumunu onayladı. CI gerçek banka hesabına giriş yapmadı; fiziksel telefon/uzak VPN ve şartnamedeki tüm 64 özelliğin tamamlandığı iddia edilmez.
+- Tüketilmiş tek kullanımlık yayın tetikleyicisi/isteği kaldırıldı; korumalı manuel üretim yayını ve orijinal imza korunur. Sonraki manuel sürüm varsayılanı **1.0.21**.
+
+## v1.0.20 geliştirme süreci (tarihsel)
 
 - Kullanıcı v1.0.19'u cihazında denedi: banka sitelerinde sorun olmadığını ve ekran uyumunu beğendiğini bildirdi. Yeni açıklar: arama alanının davranışı/görünümü ve önceki sayfaya dönememe. Yalnız bu Android telefon düzeltmeleri ilerler (S-003); tüm 64 özelliğin bittiği iddia edilmez.
 - Geri/ileri aynı merkezden çalışır: gerçek Gecko geçmişi varsa motor gezintisi; ilk sayfadan Geri ile native ana sayfa ve İleri ile o sayfaya dönüş; açık ana sayfadan önceki belgeye Geri; geçmişi olmayan popup'ta yalnız çocuk pencereyi kapatıp gerçek opener'a dönüş. Android Geri önce adres düzenlemeyi/klavyeyi kapatır. Banka popup/izin/güvenlik akışları korunur.
@@ -47,7 +59,7 @@ Son güncelleme: 2026-11-07
 
 - Yayın isteği, doğru ön pencere ve çizilmiş uzun belge beklemelerini içeren `4b240138deea276ec6cfe117a8f4ae259ca70bb3` kaynağına taşınır. Dört kabul, iki API UI/görsel ve ürün/araç/iş akışı eşitliği kapıları zorunlu kalır. Henüz v1.0.20 yayımlanmadı.
 
-## Güncel yayın — v1.0.19
+## Önceki yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
 - **Başarılı kaynak/JVM/üç ABI:** [#42336828268](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42336828268). Dokuz yeni geçmiş/kaydırma politika testi ve önceki JVM testleri dahil.

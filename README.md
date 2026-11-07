@@ -5,7 +5,7 @@ Bu depo **docs/SARTNAME.md** şartnamesiyle ve **docs/DURUM.md** ilerleme kaydı
 Aşama 0: Boş Android/TV Compose, SwiftUI (iOS) ve React + castLabs Electron (masaüstü) iskeletleri,
 `design/tokens.json` kaynaklı tema/simge üretimi, `shared/i18n` çevirileri ve GitHub Actions denetimleri.
 
-> **2026-11-07 güncel durum:** S-001/S-002 kapsamında yalnız Android telefon geliştiriliyor. Son kararlı imzalı sürüm **[v1.0.19](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.19)**. Chrome referanslı Ayarlar/menü, gerçek yerel geçmiş ve kaydırmayla gizlenip küçük ters harekette dönen adres çubuğu; önceki indirme, çerez, eklenti ve çocuk modu işlemleri Android 15/16 emülatör kabulünü geçti. Üç ABI orijinal üretim imzasıyla yayımlandı. Fiziksel telefon, gerçek banka/uzak VPN ve diğer açık kabuller için **[güncel durum kaydını](docs/DURUM.md)** esas al. TV, bilgisayar ve Apple çalışmaları beklemededir.
+> **2026-11-07 güncel durum:** S-001/S-002/S-003 kapsamında yalnız Android telefon geliştiriliyor. Son kararlı imzalı sürüm **[v1.0.20](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.20)**. Adres seçimi/native Ara-Git, menü ve Android Geri/İleri, yeni sekmeden dönüş ve küçük ters harekette çubuğun açık kalması düzeltildi. Ayarlar, gerçek geçmiş, çerez, indirme, eklenti ve çocuk modu kabulleri Android 15/16 emülatörlerinde geçti. Üç ABI orijinal üretim imzasıyla yayımlandı. Fiziksel telefon, gerçek banka/uzak VPN ve diğer açık kabuller için **[güncel durum kaydını](docs/DURUM.md)** esas al. TV, bilgisayar ve Apple çalışmaları beklemededir.
 
 ## Klasörler
 
