@@ -133,9 +133,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
             navigationAndSearch();
             realHistoryAndScrolling();
+            polishedSharingAndInformation();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -379,7 +380,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_night));click(label(R.string.back));
         click(label(R.string.search_clear));capture("settings-native-dark.png",false);click(label(R.string.back));
         click(label(R.string.browser_menu));click(label(R.string.history));capture("history-dark.png",false);
-        click(label(R.string.history_clear));clickNativePositive();
+        click(label(R.string.history_clear));
+        await(()->nativePositive()!=null,"native styled history confirmation");capture("confirmation-dark.png",null);clickNativePositive();
         await(()->uiCheck(()->history.getEntries().isEmpty()&&!history.getLoading()),"clear history empties real persistent records");
         require(find(label(R.string.history_empty),false)!=null,"cleared history displays an honest empty list");
         click(label(R.string.back));
@@ -396,6 +398,95 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             event.setSource(InputDevice.SOURCE_TOUCHSCREEN);getUiAutomation().injectInputEvent(event,true);event.recycle();SystemClock.sleep(25);
         }
         waitForIdleSync();SystemClock.sleep(250);
+    }
+    private void polishedSharingAndInformation() throws Exception {
+        String expected="https://example.com/?eymen-share=1#section";
+        org.mozilla.geckoview.GeckoSession page=currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
+        runOnMainSync(()->{
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original=page.getContentDelegate();
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session,String value){title.set(value);original.onTitleChange(session,value);}
+            });page.loadUri(expected);
+        });
+        await(()->title.get()!=null&&title.get().contains("Example Domain")&&expected.equals(text(field(label(R.string.address_edit_label)))),"real HTTPS page ready for sharing");
+        BrowserShareController sharing=(BrowserShareController)controller("sharing");
+        openShare();
+        await(()->find(label(R.string.share_copy_link),false)!=null,"custom share actions visible");
+        require(uiCheck(()->sharing.getPage()!=null&&expected.equals(sharing.getPage().getUrl())&&!sharing.getPage().getPrivateMode()),"share preview captures the actual selected normal page");
+        require(find(expected,false)!=null,"exact URL is visible in share preview");
+        capture("share-light.png",null);
+        click(label(R.string.share_copy_link));
+        await(()->uiCheck(()->sharing.getPage()==null),"copy closes the share panel");
+        android.content.ClipboardManager clipboard=getTargetContext().getSystemService(android.content.ClipboardManager.class);
+        require(uiCheck(()->clipboard.getPrimaryClip()!=null&&expected.contentEquals(clipboard.getPrimaryClip().getItemAt(0).getText())),"copy preserves the complete real URL including query and fragment");
+        openShare();click(label(R.string.share_qr));
+        await(()->uiCheck(()->sharing.getQrBitmap()!=null),"offline QR generation completes");
+        capture("share-qr-light.png",null);
+        java.util.concurrent.atomic.AtomicReference<Intent> imageIntent=new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.atomic.AtomicReference<Intent> textIntent=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->{imageIntent.set(sharing.qrIntent(sharing.getPage()));textIntent.set(sharing.textIntent(sharing.getPage()));});
+        Intent image=imageIntent.get();Uri imageUri=image.getParcelableExtra(Intent.EXTRA_STREAM,Uri.class);
+        require(Intent.ACTION_SEND.equals(image.getAction())&&"image/png".equals(image.getType())&&imageUri!=null&&"content".equals(imageUri.getScheme()),"QR share uses an Android content URI with the correct image MIME type");
+        require((image.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION)!=0&&(image.getFlags()&Intent.FLAG_GRANT_WRITE_URI_PERMISSION)==0&&image.getClipData()!=null&&imageUri.equals(image.getClipData().getItemAt(0).getUri()),"QR shares grant only read access to the explicitly shared image");
+        File decoded=new File(getTargetContext().getCacheDir(),"share-qr-decode.png");
+        try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(imageUri);FileOutputStream output=new FileOutputStream(decoded)){
+            require(input!=null,"shared QR image is readable");byte[] buffer=new byte[8192];int count;while((count=input.read(buffer))!=-1)output.write(buffer,0,count);
+        }
+        try{require(expected.equals(BrowserQrScanner.decode(decoded)),"the actual shared PNG decodes to the exact browser URL");}finally{decoded.delete();}
+        require(Intent.ACTION_SEND.equals(textIntent.get().getAction())&&"text/plain".equals(textIntent.get().getType())&&expected.equals(textIntent.get().getStringExtra(Intent.EXTRA_TEXT)),"other-app text sharing sends the same complete URL");
+        click(label(R.string.share_qr_image));await(this::systemShareChooserVisible,"Android image sharesheet actually opens");systemBack();
+        await(()->field(label(R.string.address_edit_label))!=null,"closing image sharesheet restores the browser");
+        openShare();click(label(R.string.share_other_apps));await(this::systemShareChooserVisible,"Android link sharesheet actually opens");systemBack();
+        await(()->field(label(R.string.address_edit_label))!=null,"closing link sharesheet restores the browser");
+        openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_night));click(label(R.string.back));click(label(R.string.back));
+        openShare();capture("share-dark.png",null);systemBack();
+        require(uiCheck(()->sharing.getPage()==null),"Android Back dismisses the custom share panel");
+        openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_day));click(label(R.string.back));click(label(R.string.back));
+        click(label(R.string.browser_menu));scrollClick(label(R.string.private_tab));
+        runOnMainSync(()->{try{browserView().getSession().loadUri(expected);}catch(Exception error){throw new RuntimeException(error);}});
+        await(()->!homeVisible()&&expected.equals(text(field(label(R.string.address_edit_label)))),"real private tab navigates to the share page");
+        openShare();require(uiCheck(()->sharing.getPage()!=null&&sharing.getPage().getPrivateMode()),"private page remains explicitly marked in the custom share preview");
+        click(label(R.string.share_copy_link));
+        require(uiCheck(()->clipboard.getPrimaryClip()!=null&&clipboard.getPrimaryClip().getDescription().getExtras()!=null&&clipboard.getPrimaryClip().getDescription().getExtras().getBoolean("android.content.extra.IS_SENSITIVE")),"private link copy is marked sensitive for Android clipboard previews");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.menu_new_normal_tab_accessibility));
+        openSettingsItem(R.string.settings_about_update);
+        await(()->find(label(R.string.about_publisher),false)!=null,"About names the actual publisher");capture("about-light.png",true);
+        scrollClick(label(R.string.about_licenses));
+        await(()->field(label(R.string.license_search))!=null,"licenses open as their own full page");
+        search(label(R.string.license_search),"ZXing");
+        await(()->find(label(R.string.license_zxing),false)!=null&&find(label(R.string.license_gecko),false)==null,"license search filters the real bundled component list");
+        click(label(R.string.license_zxing));
+        await(()->find("Apache-2.0",false)!=null&&!softwareKeyboardVisible(),"full offline license detail opens and hides the keyboard");
+        capture("license-detail-light.png",true);
+        swipeUp();require(find(label(R.string.license_unavailable),false)==null,"license text remains readable while scrolling");
+        systemBack();await(()->field(label(R.string.license_search))!=null,"Back from a license restores its filtered list");
+        systemBack();await(()->find(label(R.string.update_manual_check),false)!=null,"Back from licenses restores About");
+        scrollClick(label(R.string.about_feedback));
+        await(()->find(label(R.string.feedback_email),false)!=null,"About opens the dedicated feedback page");capture("feedback-light.png",true);
+        java.util.concurrent.atomic.AtomicReference<Intent> email=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->{try{java.lang.reflect.Method m=MainActivity.class.getDeclaredMethod("feedbackEmailIntent");m.setAccessible(true);email.set((Intent)m.invoke(activity));}catch(Exception error){throw new RuntimeException(error);}});
+        require(Intent.ACTION_SENDTO.equals(email.get().getAction())&&"mailto".equals(email.get().getData().getScheme())&&email.get().getData().getSchemeSpecificPart().startsWith("destek@atasoyyazilim.com?"),"feedback prepares a draft addressed to the public support mailbox");
+        require(!Uri.decode(email.get().getDataString()).contains("eymen-share")&&email.get().getExtras()==null,"feedback never attaches browsing URLs, logs or VPN data automatically");
+        android.content.IntentFilter filter=new android.content.IntentFilter(Intent.ACTION_SENDTO);filter.addDataScheme("mailto");
+        ActivityMonitor monitor=addMonitor(filter,new ActivityResult(Activity.RESULT_CANCELED,null),true);
+        try{click(label(R.string.feedback_email));require(monitor.getHits()==1,"feedback button requests the email composer without sending a message");}finally{removeMonitor(monitor);}
+        systemBack();await(()->find(label(R.string.update_manual_check),false)!=null,"feedback Back returns to About");
+        scrollClick(label(R.string.about_website));
+        await(()->"https://atasoyyazilim.com/".equals(text(field(label(R.string.address_edit_label)))),"publisher website opens in a real browser tab");
+        openSettingsItem(R.string.settings_about_update);scrollClick(label(R.string.about_privacy));
+        await(()->"https://atasoyyazilim.com/gizlilik/".equals(text(field(label(R.string.address_edit_label)))),"privacy policy opens the publisher's real HTTPS page");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.settings_help));
+        await(()->find(label(R.string.feedback_support),false)!=null,"menu Help opens the real feedback page");
+        click(label(R.string.feedback_support));
+        await(()->"https://atasoyyazilim.com/destek/".equals(text(field(label(R.string.address_edit_label)))),"support action opens the publisher's real support center");
+    }
+    private void openShare() throws Exception {click(label(R.string.browser_menu));scrollClick(label(R.string.menu_share));}
+    private boolean systemShareChooserVisible(){
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();if(window.getType()!=AccessibilityWindowInfo.TYPE_APPLICATION||root==null||!root.refresh())continue;
+            String name=String.valueOf(root.getPackageName());if("android".equals(name)||"com.android.intentresolver".equals(name))return true;
+        }return false;
     }
     private void advancedSettings() throws Exception {
         BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");
@@ -448,6 +539,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         scrollClick(label(R.string.cookie_policy_partition));
         capture("privacy-settings.png", true);
         scrollClick(label(R.string.cookie_clear));
+        await(()->nativePositive()!=null,"native styled data confirmation");capture("confirmation-light.png",null);
         clickNativePositive();
         await(() -> !services.getClearing() && currentSession() != page, "clearing closes old Gecko sessions and finishes actual storage removal");
         click(label(R.string.back)); click(label(R.string.back));

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "gecko",
+    "version": "159.0.20261022150525",
+    "license": "MPL-2.0 / bundled third-party licenses",
+    "asset": "licenses/gecko.txt",
+    "sha256": "89563b9834af90814c895c5077968f48380308e1b8d70b7cf0febac8de278d27"
+  },
+  {
+    "id": "androidx",
+    "version": "Activity 1.10.1 · Core 1.16.0 · Compose BOM 2025.06.01",
+    "license": "Apache-2.0",
+    "asset": "licenses/androidx.txt",
+    "sha256": "9bfc5b0838829e26ca4e80352229699e7caa0cbf43d80347f768853997c378da"
+  },
+  {
+    "id": "kotlin",
+    "version": "2.4.20",
+    "license": "Apache-2.0",
+    "asset": "licenses/kotlin.txt",
+    "sha256": "3f234a36c84ff3901f0cc9977a38d890bb64d2edb0919b2278fca1da66d10052"
+  },
+  {
+    "id": "wireguard",
+    "version": "1.0.20260102",
+    "license": "Apache-2.0 / MIT / BSD-3-Clause",
+    "asset": "licenses/wireguard.txt",
+    "sha256": "39db1e2abc1f84df6b01ffbcf8afa89b2db95a39b868743bd0015c1cfd287a4f"
+  },
+  {
+    "id": "zxing",
+    "version": "3.5.4",
+    "license": "Apache-2.0",
+    "asset": "licenses/zxing.txt",
+    "sha256": "4a12776a2e5de2e07206349d95ffd3a042ec65bad5b12f02ae37ebf29d224b94"
+  },
+  {
+    "id": "desugar",
+    "version": "2.1.5",
+    "license": "GPL-2.0 with Classpath Exception",
+    "asset": "licenses/desugar.txt",
+    "sha256": "c4edd53ff2744e1073c895fdf3b5d9e49588cb53f4aa3cff4b50206dc14e2f06"
+  }
+]

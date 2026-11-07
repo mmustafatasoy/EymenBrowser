@@ -3,4 +3,5 @@
     <!-- Only verified APKs saved in this application's private update cache. -->
     <cache-path name="updates" path="updates/" />
     <cache-path name="qr" path="qr/" />
+    <cache-path name="shares" path="shares/" />
 </paths>

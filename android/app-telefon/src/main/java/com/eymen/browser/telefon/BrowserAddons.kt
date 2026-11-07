@@ -75,7 +75,7 @@ internal class BrowserAddons(private val activity: ComponentActivity) {
     }
 
     fun remove(extension: WebExtension) {
-        dialog = AlertDialog.Builder(activity).setTitle(R.string.addon_remove)
+        dialog = BrowserDialogs.builder(activity).setTitle(R.string.addon_remove)
             .setMessage((extension.metaData?.name ?: extension.id)).setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 controller.uninstall(extension).accept({ _ -> refresh() }, { _ -> message = activity.getString(R.string.addon_failed) })
@@ -89,7 +89,7 @@ internal class BrowserAddons(private val activity: ComponentActivity) {
         if (activity.isFinishing || activity.isDestroyed) { finish(false); return }
         dialog?.dismiss()
         val detail = (permissions.toList() + origins.toList() + data.toList()).take(50).joinToString("\n")
-        dialog = AlertDialog.Builder(activity).setTitle((extension.metaData?.name ?: extension.id))
+        dialog = BrowserDialogs.builder(activity).setTitle((extension.metaData?.name ?: extension.id))
             .setMessage(activity.getString(R.string.addon_permissions) + "\n\n" + detail + "\n\n" + activity.getString(R.string.addon_private_note))
             .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
             .setPositiveButton(R.string.addon_install) { _, _ -> finish(true) }

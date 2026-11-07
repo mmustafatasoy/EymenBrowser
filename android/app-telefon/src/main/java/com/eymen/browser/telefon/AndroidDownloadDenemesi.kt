@@ -174,7 +174,7 @@ internal class AndroidDownloadDenemesi(
         busy = true
         choosing = request
         try {
-            AlertDialog.Builder(activity)
+            BrowserDialogs.builder(activity)
                 .setTitle(R.string.download_confirm_title)
                 .setMessage(activity.getString(R.string.download_confirm_message, request.fileName))
                 .setPositiveButton(R.string.download_confirm_allow) { _, _ ->

@@ -42,7 +42,7 @@ internal class BrowserQrScanner(private val activity: ComponentActivity, private
                 if (activity.isFinishing || activity.isDestroyed) return@runOnUiThread
                 val url = GeckoMotorDenemesi.verifiedHttpsUrl(raw)?.takeIf { it == raw?.trim() }
                 if (url == null) notice(R.string.qr_not_https)
-                else AlertDialog.Builder(activity).setTitle(R.string.qr_open)
+                else BrowserDialogs.builder(activity).setTitle(R.string.qr_open)
                     .setMessage(url).setNegativeButton(android.R.string.cancel, null)
                     .setPositiveButton(android.R.string.ok) { _, _ -> onOpen(url) }.show()
             }

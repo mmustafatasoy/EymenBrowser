@@ -140,7 +140,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
 
     private fun showNewVersion(candidate: Candidate) {
         if (disposed) return
-        AlertDialog.Builder(activity)
+        BrowserDialogs.builder(activity)
             .setTitle(activity.getString(R.string.update_available_title, candidate.version))
             .setMessage(activity.getString(R.string.update_available_message,
                 candidate.version, candidate.bytes / (1024 * 1024)))
@@ -157,7 +157,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
             isIndeterminate = false
             max = 100
         }
-        val popup = AlertDialog.Builder(activity)
+        val popup = BrowserDialogs.builder(activity)
             .setTitle(activity.getString(R.string.update_downloading, candidate.version))
             .setView(progress)
             .setNegativeButton(android.R.string.cancel) { _, _ -> stop.set(true) }
@@ -257,7 +257,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
         if (disposed || !file.isFile) return
         if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
             pendingInstall = file
-            AlertDialog.Builder(activity)
+            BrowserDialogs.builder(activity)
                 .setTitle(R.string.update_install_permission_title)
                 .setMessage(R.string.update_install_permission_message)
                 .setPositiveButton(R.string.update_open_permissions) { _, _ ->
@@ -340,7 +340,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
     }
 
     private fun showInfo(message: Int, title: Int) {
-        AlertDialog.Builder(activity).setTitle(title).setMessage(message)
+        BrowserDialogs.builder(activity).setTitle(title).setMessage(message)
             .setPositiveButton(android.R.string.ok, null).show()
     }
 

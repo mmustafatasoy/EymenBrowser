@@ -44,6 +44,8 @@ jobs:
         run: python tools/check_vpn_contract.py
       - name: Mobil bankacilik uygulamaya yonlendirme ve GeckoView guvenlik uyumu
         run: python tools/check_banking_compat.py
+      - name: Offline license integrity and scoped share-file permissions
+        run: python tools/check_publishing_polish.py
       - name: Android imzali surum ve guncelleme guvenlik kontrati
         run: python tools/check_update_contract.py
       - uses: actions/upload-artifact@v4

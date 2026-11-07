@@ -33,3 +33,10 @@ Burada kayıt yoksa şartnameden sapma yoktur. Yazılım aracı onay almadan sap
 
 - Tarih: 2026-11-07. Kullanıcı doğrudan düzeltme istedi; arama alanı ekran görüntüsü ile önceki siteye geri dönemediğini bildirdi. Banka ve ekran uyumunu onayladı.
 - Mevcut S-002 arayüzünün adres girişini okunur ortak ölçüye getirme, native Ara/Git eylemi ve standart gerçek tarayıcı geri-ileri düzeltmesidir. Yeni hizmet, hesap, tema, telemetri veya platform eklenmez. Orijinal üretim imzası korunur; tek resmi APK güncellemesi hazırlanır.
+
+## S-004 — Paylaşım, Hakkında, lisanslar ve uyarıların ürün düzeni
+
+- Tarih: 2026-11-07. **Kullanıcı doğrudan ONAYLADI:** Chrome benzeri paylaş menüsü, biçimli uyarılar, gerçek açık kaynak lisansları, Hakkında/geri bildirimde yayıncı sitesi ve uygulamada GitHub tanıtımı olmaması istendi.
+- Yalnız Android telefonun mevcut paylaş/Hakkında akışları düzenlenir. Çevrimdışı QR oluşturma mevcut ZXing bağımlılığını kullanır; yeni motor, kitaplık, hesap, telemetri veya platform eklenmez. Chrome/Chromium tasarım referansıdır; Chromium motoru kullanıldığı veya Google ile bağlantı olduğu iddia edilmez.
+- E-posta yalnız kullanıcının düğmesiyle düzenlenebilir taslak olarak açılır; tarama geçmişi, site adresi, hata günlüğü ve VPN yapılandırması otomatik eklenmez. Destek/iletişim/gizlilik sayfaları ve destek@atasoyyazilim.com adresi yayıncının çalışan sitesinden doğrulandı.
+- Native izin/PIN/onay kararları ve orijinal üretim imzası korunur. Gerçek kullanılan dağıtımların lisans metinleri yerel dosyalardan okunur; zorunlu upstream kaynak/telif bildirimleri saklanır. Bu çalışma mağaza onayı veya tüm özelliklerin tamamlandığı anlamına gelmez.

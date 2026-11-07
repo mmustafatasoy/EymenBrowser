@@ -120,6 +120,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var childMode: BrowserChildMode
     private lateinit var addons: BrowserAddons
     private lateinit var qrScanner: BrowserQrScanner
+    private lateinit var sharing: BrowserShareController
     private var functionalSettingsPage by mutableStateOf<FunctionalSettingsPage?>(null)
 
     private val tabs = mutableStateListOf<BrowserTab>()
@@ -247,6 +248,7 @@ class MainActivity : ComponentActivity() {
         settingsServices.apply()
         addons = BrowserAddons(this)
         qrScanner = BrowserQrScanner(this, ::openUrl, ::notice)
+        sharing = BrowserShareController(this, { dayMode.value }, ::notice)
         addressBottom = prefs.getBoolean("address_at_bottom", true)
         searchEngine = prefs.getString("search_engine", "Google") ?: "Google"
         // v1.0.4 changed the default to light but old installs retain the legacy
@@ -1036,7 +1038,7 @@ class MainActivity : ComponentActivity() {
             setText(getString(R.string.tab_group_name_default) + " " + nextTabGroupId)
             selectAll()
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.tab_group_new)
             .setView(input)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1057,7 +1059,7 @@ class MainActivity : ComponentActivity() {
             setText(group.title)
             selectAll()
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.tab_group_rename)
             .setView(input)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1074,7 +1076,7 @@ class MainActivity : ComponentActivity() {
 
     private fun confirmRemoveTabGroup(groupId: Long) {
         if (tabGroups.none { it.id == groupId }) return
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.tab_group_remove)
             .setMessage(R.string.tab_group_remove_note)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1091,7 +1093,7 @@ class MainActivity : ComponentActivity() {
         val options = listOf(getString(R.string.tab_group_ungrouped)) +
             tabGroups.map { it.title } +
             getString(R.string.tab_group_new)
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.tab_group_assign)
             .setItems(options.toTypedArray()) { _, which ->
                 when {
@@ -1114,7 +1116,7 @@ class MainActivity : ComponentActivity() {
             setText(getString(R.string.tab_group_name_default) + " " + nextTabGroupId)
             selectAll()
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.tab_group_new)
             .setView(input)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1280,7 +1282,7 @@ class MainActivity : ComponentActivity() {
                 fun finish() {
                     if (done.compareAndSet(false, true)) result.complete(prompt.dismiss())
                 }
-                val builder = AlertDialog.Builder(this@MainActivity)
+                val builder = BrowserDialogs.builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
@@ -1308,7 +1310,7 @@ class MainActivity : ComponentActivity() {
                         ))
                     }
                 }
-                val builder = AlertDialog.Builder(this@MainActivity)
+                val builder = BrowserDialogs.builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setNegativeButton(android.R.string.cancel) { _, _ -> finish(false) }
@@ -1341,7 +1343,7 @@ class MainActivity : ComponentActivity() {
                         edit.text.clear()
                     }
                 }
-                val builder = AlertDialog.Builder(this@MainActivity)
+                val builder = BrowserDialogs.builder(this@MainActivity)
                     .setTitle(verifiedHost(tab.url) ?: getString(R.string.bank_js_prompt_title))
                     .setMessage(prompt.message.orEmpty().take(3000))
                     .setView(edit)
@@ -1383,7 +1385,7 @@ class MainActivity : ComponentActivity() {
             getString(R.string.bank_external_target) + ": " +
             (safe.packageName ?: safe.destinationScheme) + "\n\n" +
             getString(R.string.bank_external_security_warning)
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.bank_external_title)
             .setMessage(description)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1408,7 +1410,7 @@ class MainActivity : ComponentActivity() {
             notice(R.string.invalid_address)
             return
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.menu_open_official_app)
             .setMessage(R.string.bank_https_handoff_prompt)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1448,7 +1450,7 @@ class MainActivity : ComponentActivity() {
             notice(R.string.invalid_address)
             return
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.menu_open_other_browser)
             .setMessage(R.string.bank_browser_handoff_notice)
             .setNegativeButton(android.R.string.cancel, null)
@@ -1703,11 +1705,11 @@ class MainActivity : ComponentActivity() {
                 showDownloads()
             }
             SettingsAction.ABOUT -> updater.check(manual = true)
-            SettingsAction.LICENSES -> {
-                val text = assets.open("OPEN_SOURCE_NOTICES.txt").bufferedReader().use { it.readText() }
-                AlertDialog.Builder(this).setTitle(R.string.about_licenses).setMessage(text)
-                    .setPositiveButton(android.R.string.ok, null).show()
-            }
+            SettingsAction.LICENSES -> openSettingsPage(BrowserSettingsPage.LICENSES)
+            SettingsAction.WEBSITE -> openPublisherPage("https://atasoyyazilim.com/")
+            SettingsAction.SUPPORT -> openPublisherPage("https://atasoyyazilim.com/destek/")
+            SettingsAction.PRIVACY_POLICY -> openPublisherPage("https://atasoyyazilim.com/gizlilik/")
+            SettingsAction.FEEDBACK_EMAIL -> prepareFeedbackEmail()
         }
     }
 
@@ -1756,7 +1758,7 @@ class MainActivity : ComponentActivity() {
     private fun clearBrowsingData(cacheOnly: Boolean) {
         if (settingsServices.clearing) return
         val title = if (cacheOnly) R.string.cache_clear else R.string.cookie_clear
-        AlertDialog.Builder(this).setTitle(title)
+        BrowserDialogs.builder(this).setTitle(title)
             .setMessage(if (cacheOnly) R.string.cache_clear_confirm else R.string.cookie_clear_confirm)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -1793,12 +1795,12 @@ class MainActivity : ComponentActivity() {
         if (tab == null) { notice(R.string.invalid_address); return }
         val translation = tab.gecko.sessionTranslation
         if (translation == null) { notice(R.string.translation_failed); return }
-        AlertDialog.Builder(this).setTitle(R.string.translation_title)
+        BrowserDialogs.builder(this).setTitle(R.string.translation_title)
             .setItems(arrayOf(getString(R.string.translation_en_tr), getString(R.string.translation_tr_en), getString(R.string.translation_original))) { _, which ->
                 if (which == 2) {
                     translation.restoreOriginalPage().accept({ _ -> Unit }, { _ -> notice(R.string.translation_failed) })
                 } else {
-                    AlertDialog.Builder(this).setTitle(R.string.translation_pair).setMessage(R.string.translation_download)
+                    BrowserDialogs.builder(this).setTitle(R.string.translation_pair).setMessage(R.string.translation_download)
                         .setNegativeButton(android.R.string.cancel, null).setPositiveButton(android.R.string.ok) { _, _ ->
                             val from = if (which == 0) "en" else "tr"
                             val to = if (which == 0) "tr" else "en"
@@ -1829,7 +1831,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun confirmDeleteVpnConfiguration() {
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.vpn_remove)
             .setMessage(R.string.vpn_saved_crypt)
             .setNegativeButton(android.R.string.cancel, null)
@@ -2032,7 +2034,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.RECENT_TABS -> showLibrary(BrowserLibrary.RECENT_TABS)
             MenuAction.CLEAR_DATA -> { showSettings();handleSettingsAction(SettingsAction.CLEAR_DATA) }
             MenuAction.SITE_CONTROLS -> showShield()
-            MenuAction.HELP -> openSettingsPage(BrowserSettingsPage.ABOUT)
+            MenuAction.HELP -> openSettingsPage(BrowserSettingsPage.FEEDBACK)
             MenuAction.BOOKMARKS -> showBookmarks()
             MenuAction.HISTORY -> showRecentPages()
             MenuAction.DOWNLOADS -> showDownloads()
@@ -2107,7 +2109,7 @@ class MainActivity : ComponentActivity() {
         updateOverlayAccessibility()
     }
     private fun confirmClearHistory() {
-        AlertDialog.Builder(android.view.ContextThemeWrapper(this,if(dayMode.value)
+        BrowserDialogs.builder(android.view.ContextThemeWrapper(this,if(dayMode.value)
             android.R.style.Theme_Material_Light_Dialog_Alert else android.R.style.Theme_Material_Dialog_Alert))
             .setTitle(R.string.history_clear).setMessage(R.string.history_clear_confirm)
             .setNegativeButton(android.R.string.cancel,null)
@@ -2121,7 +2123,7 @@ class MainActivity : ComponentActivity() {
             hint = getString(R.string.menu_find_hint)
             isSingleLine = true
         }
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.menu_find)
             .setView(field)
             .setPositiveButton(R.string.menu_find_next) { _, _ ->
@@ -2180,15 +2182,28 @@ class MainActivity : ComponentActivity() {
             notice(R.string.menu_share_error)
             return
         }
-        val send = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, url)
-        }
-        try {
-            startActivity(Intent.createChooser(send, getString(R.string.menu_share)))
-        } catch (_: Exception) {
-            notice(R.string.menu_share_error)
-        }
+        sharing.show(SharedPage(shareTitle(activeTab?.title,url),url,activeTab?.privateMode==true))
+    }
+
+    private fun shareTitle(title: String?,url: String): String = title.orEmpty()
+        .replace(Regex("[\\p{Cntrl}]")," ").trim().take(160)
+        .ifBlank { try { URI(url).host.orEmpty() } catch(_:Exception) { getString(R.string.browser_display_name) } }
+
+    private fun openPublisherPage(url: String) {
+        if(GeckoMotorDenemesi.verifiedHttpsUrl(url)!=url)return
+        val privateMode=activeTab?.privateMode==true
+        hideSettings();createTab(privateMode,url)
+    }
+
+    private fun feedbackEmailIntent(): Intent {
+        val version=try{packageManager.getPackageInfo(packageName,0).versionName.orEmpty()}catch(_:Exception){""}
+        val uri=Uri.parse("mailto:destek@atasoyyazilim.com?subject="+Uri.encode(getString(R.string.feedback_subject))+
+            "&body="+Uri.encode(getString(R.string.feedback_body,version)))
+        return Intent(Intent.ACTION_SENDTO,uri)
+    }
+
+    private fun prepareFeedbackEmail() {
+        try{startActivity(feedbackEmailIntent())}catch(_:Exception){notice(R.string.feedback_no_email)}
     }
 
     private fun showStarterSettings() {
@@ -2196,12 +2211,12 @@ class MainActivity : ComponentActivity() {
             getString(R.string.menu_settings_search),
             getString(R.string.menu_settings_address)
         )
-        AlertDialog.Builder(this)
+        BrowserDialogs.builder(this)
             .setTitle(R.string.menu_settings_limited)
             .setItems(choices) { _, selected ->
                 if (selected == 0) {
                     val engines = arrayOf("Google", "DuckDuckGo", "Bing", "Yandex")
-                    AlertDialog.Builder(this)
+                    BrowserDialogs.builder(this)
                         .setTitle(R.string.menu_change_search)
                         .setSingleChoiceItems(
                             engines, engines.indexOf(searchEngine).coerceAtLeast(0)
@@ -2215,7 +2230,7 @@ class MainActivity : ComponentActivity() {
                         getString(R.string.onboarding_bottom),
                         getString(R.string.onboarding_top)
                     )
-                    AlertDialog.Builder(this)
+                    BrowserDialogs.builder(this)
                         .setTitle(R.string.menu_change_address)
                         .setSingleChoiceItems(
                             positions, if (addressBottom) 0 else 1
@@ -2283,7 +2298,7 @@ class MainActivity : ComponentActivity() {
         fun finish(allowed: Boolean) {
             if (done.compareAndSet(false, true)) answer(allowed && activeId.value == tabId)
         }
-        val builder = AlertDialog.Builder(this)
+        val builder = BrowserDialogs.builder(this)
             .setTitle(getString(R.string.drm_permission_title))
             .setMessage(getString(R.string.drm_permission_message, host))
             .setPositiveButton(getString(R.string.drm_permission_allow)) { _, _ -> finish(true) }
@@ -2293,13 +2308,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun shareNormalTab(id: Long) {
-        if (childMode.enabled) { notice(R.string.child_blocked); return }
-        val tab = tabs.firstOrNull { it.id == id && !it.privateMode && !it.home } ?: return
-        val url = GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf { it == tab.url } ?: return
-        try { startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"; putExtra(Intent.EXTRA_TEXT, url)
-        }, getString(R.string.menu_send_device))) }
-        catch (_: Exception) { notice(R.string.settings_operation_failed) }
+        if(childMode.enabled){notice(R.string.child_blocked);return}
+        val tab=tabs.firstOrNull{it.id==id && !it.privateMode && !it.home}?:return
+        val url=GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf{it==tab.url}?:return
+        sharing.show(SharedPage(shareTitle(tab.title,url),url,false))
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -2404,6 +2416,7 @@ class MainActivity : ComponentActivity() {
         if (::toolbarMotion.isInitialized) toolbarMotion.dispose()
         vpn.stopUiMonitoring()
         updater.dispose()
+        if(::sharing.isInitialized)sharing.dismiss()
         downloads.dispose()
         if (::view.isInitialized) view.releaseSession()
         tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }

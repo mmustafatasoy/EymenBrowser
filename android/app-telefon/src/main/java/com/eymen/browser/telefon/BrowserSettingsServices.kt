@@ -141,7 +141,7 @@ internal class BrowserSettingsServices(
 
     fun changePermission(perm: GeckoSession.PermissionDelegate.ContentPermission) {
         val values = intArrayOf(allow, deny, GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT)
-        currentDialog = AlertDialog.Builder(activity)
+        currentDialog = BrowserDialogs.builder(activity)
             .setTitle(origin(perm.uri))
             .setItems(arrayOf(activity.getString(R.string.permission_allow),
                 activity.getString(R.string.permission_deny), activity.getString(R.string.permission_ask))) { _, index ->
@@ -207,7 +207,7 @@ internal class BrowserSettingsServices(
         val finished = AtomicBoolean(false)
         fun finish(ok: Boolean) { if (finished.compareAndSet(false, true)) done(ok) }
         if (activity.isFinishing || activity.isDestroyed) { finish(false); return }
-        currentDialog = AlertDialog.Builder(activity).setTitle(title).setMessage(body)
+        currentDialog = BrowserDialogs.builder(activity).setTitle(title).setMessage(body)
             .setNegativeButton(R.string.permission_deny) { _, _ -> finish(false) }
             .setPositiveButton(R.string.permission_allow) { _, _ -> finish(true) }
             .setOnDismissListener { finish(false) }.show()

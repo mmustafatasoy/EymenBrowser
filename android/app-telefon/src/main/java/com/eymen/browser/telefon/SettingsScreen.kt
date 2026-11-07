@@ -18,9 +18,10 @@ import com.eymen.browser.tema.EymenTokens as T
 internal enum class SettingsAction {
     SHIELD, VPN, PASSWORDS, SEARCH_ENGINE, APPEARANCE, EXTENSIONS,
     SITE_PERMISSIONS, DOWNLOADS, LANGUAGE, CHILD_MODE, ABOUT, TOOLS, LICENSES,
-    ADDRESS, DEFAULT_BROWSER, SECURITY_CHECK, HOME, NOTIFICATIONS, ACCESSIBILITY, TABS, CLEAR_DATA
+    ADDRESS, DEFAULT_BROWSER, SECURITY_CHECK, HOME, NOTIFICATIONS, ACCESSIBILITY, TABS, CLEAR_DATA,
+    WEBSITE, SUPPORT, FEEDBACK_EMAIL, PRIVACY_POLICY
 }
-internal enum class BrowserSettingsPage { MAIN, SEARCH, APPEARANCE, ADDRESS, HOME, ABOUT }
+internal enum class BrowserSettingsPage { MAIN, SEARCH, APPEARANCE, ADDRESS, HOME, ABOUT, LICENSES, FEEDBACK }
 private data class SettingRow(val title: Int,val action: SettingsAction,val section: Int)
 private val settingsRows=listOf(
     SettingRow(R.string.menu_settings_search,SettingsAction.SEARCH_ENGINE,R.string.settings_basic),
@@ -52,10 +53,14 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
     onDayMode: (Boolean)->Unit,onAddressBottom: (Boolean)->Unit) {
     val p=browserListPalette(dayMode)
     var query by remember(visible){mutableStateOf("")}
-    var page by remember(visible,initialPage){mutableStateOf(initialPage)}
+    val pages=remember(visible,initialPage){mutableStateListOf(initialPage)}
+    val page=pages.last()
     val focus=LocalFocusManager.current;val keyboard=LocalSoftwareKeyboardController.current
-    val back:()->Unit={focus.clearFocus();keyboard?.hide();if(page==BrowserSettingsPage.MAIN)onBack() else page=BrowserSettingsPage.MAIN}
-    BackHandler(enabled=visible && page!=BrowserSettingsPage.MAIN,onBack=back)
+    val back:()->Unit={focus.clearFocus();keyboard?.hide();if(pages.size==1)onBack() else pages.removeAt(pages.lastIndex)}
+    BackHandler(enabled=visible && pages.size>1,onBack=back)
+    if(page==BrowserSettingsPage.LICENSES){OpenSourceLicensesScreen(dayMode,back);return}
+    if(page==BrowserSettingsPage.FEEDBACK){FeedbackScreen(dayMode,back,{onAction(SettingsAction.SUPPORT)},
+        {onAction(SettingsAction.FEEDBACK_EMAIL)},{onAction(SettingsAction.WEBSITE)});return}
     val title=stringResource(when(page){
         BrowserSettingsPage.MAIN->R.string.settings
         BrowserSettingsPage.SEARCH->R.string.menu_settings_search
@@ -63,11 +68,13 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
         BrowserSettingsPage.ADDRESS->R.string.settings_address
         BrowserSettingsPage.HOME->R.string.settings_home
         BrowserSettingsPage.ABOUT->R.string.settings_about_update
+        BrowserSettingsPage.LICENSES->R.string.about_licenses
+        BrowserSettingsPage.FEEDBACK->R.string.feedback_title
     })
     val filtered=settingsRows.filter { query.isBlank() || stringResource(it.title).contains(query.trim(),true) }
     Column(Modifier.fillMaxSize().background(p.background)) {
         ListPageHeader(title,p,back){
-            if(page==BrowserSettingsPage.MAIN)ListIconAction(stringResource(R.string.settings_help),EymenPaths.bilgi,p,{onAction(SettingsAction.LICENSES)})
+            if(page==BrowserSettingsPage.MAIN)ListIconAction(stringResource(R.string.settings_help),EymenPaths.bilgi,p,{pages.add(BrowserSettingsPage.FEEDBACK)})
         }
         if(page==BrowserSettingsPage.MAIN)Box(Modifier.fillMaxWidth().padding(horizontal=T.telefon_ekran_kenar.dp,
             vertical=T.telefon_ekran_kucukBosluk.dp)){
@@ -94,11 +101,11 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
                                 SettingsActionRow(stringResource(row.title),p,{
                                     focus.clearFocus();keyboard?.hide()
                                     when(row.action){
-                                        SettingsAction.SEARCH_ENGINE->page=BrowserSettingsPage.SEARCH
-                                        SettingsAction.APPEARANCE->page=BrowserSettingsPage.APPEARANCE
-                                        SettingsAction.ADDRESS->page=BrowserSettingsPage.ADDRESS
-                                        SettingsAction.HOME->page=BrowserSettingsPage.HOME
-                                        SettingsAction.ABOUT->page=BrowserSettingsPage.ABOUT
+                                        SettingsAction.SEARCH_ENGINE->pages.add(BrowserSettingsPage.SEARCH)
+                                        SettingsAction.APPEARANCE->pages.add(BrowserSettingsPage.APPEARANCE)
+                                        SettingsAction.ADDRESS->pages.add(BrowserSettingsPage.ADDRESS)
+                                        SettingsAction.HOME->pages.add(BrowserSettingsPage.HOME)
+                                        SettingsAction.ABOUT->pages.add(BrowserSettingsPage.ABOUT)
                                         else->onAction(row.action)
                                     }
                                 },note=note)
@@ -132,11 +139,17 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
                         Column{ScreenText(stringResource(R.string.browser_display_name),p.text,T.telefon_liste_baslik)
                             ScreenText(stringResource(R.string.settings_app_version,version),p.muted,T.telefon_liste_ikincil)}
                     }
+                    ScreenText(stringResource(R.string.about_publisher),p.text,T.telefon_liste_yazi,strong=true)
+                    ScreenText(stringResource(R.string.about_summary),p.muted,T.telefon_liste_ikincil,maxLines=5)
                     SettingsRows(p){
                         SettingsActionRow(stringResource(R.string.update_manual_check),p,{onAction(SettingsAction.ABOUT)})
-                        SettingsActionRow(stringResource(R.string.about_licenses),p,{onAction(SettingsAction.LICENSES)})
+                        SettingsActionRow(stringResource(R.string.about_website),p,{onAction(SettingsAction.WEBSITE)},note=stringResource(R.string.about_website_address),icon=EymenPaths.site)
+                        SettingsActionRow(stringResource(R.string.about_feedback),p,{pages.add(BrowserSettingsPage.FEEDBACK)},icon=EymenPaths.paylas)
+                        SettingsActionRow(stringResource(R.string.about_privacy),p,{onAction(SettingsAction.PRIVACY_POLICY)},icon=EymenPaths.kilit)
+                        SettingsActionRow(stringResource(R.string.about_licenses),p,{pages.add(BrowserSettingsPage.LICENSES)},icon=EymenPaths.belge)
                     }
                 }
+                BrowserSettingsPage.LICENSES,BrowserSettingsPage.FEEDBACK->Unit
             }
         }
     }

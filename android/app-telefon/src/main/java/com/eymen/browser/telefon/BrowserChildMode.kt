@@ -47,7 +47,7 @@ internal class BrowserChildMode(private val activity: ComponentActivity, private
             message = activity.getString(R.string.child_wait); return
         }
         val input = pinField()
-        dialog = AlertDialog.Builder(activity).setTitle(R.string.child_parent_pin).setView(input)
+        dialog = BrowserDialogs.builder(activity).setTitle(R.string.child_parent_pin).setView(input)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val chars = input.text.toString().toCharArray(); input.text.clear()
@@ -75,7 +75,7 @@ internal class BrowserChildMode(private val activity: ComponentActivity, private
 
     private fun askNewPin() {
         val first = pinField()
-        dialog = AlertDialog.Builder(activity).setTitle(R.string.child_set_pin).setMessage(R.string.child_pin_note)
+        dialog = BrowserDialogs.builder(activity).setTitle(R.string.child_set_pin).setMessage(R.string.child_pin_note)
             .setView(first).setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val chars = first.text.toString().toCharArray(); first.text.clear()
@@ -83,7 +83,7 @@ internal class BrowserChildMode(private val activity: ComponentActivity, private
                     chars.fill('\u0000'); message = activity.getString(R.string.child_pin_invalid); return@setPositiveButton
                 }
                 val second = pinField()
-                dialog = AlertDialog.Builder(activity).setTitle(R.string.child_repeat_pin).setView(second)
+                dialog = BrowserDialogs.builder(activity).setTitle(R.string.child_repeat_pin).setView(second)
                     .setNegativeButton(android.R.string.cancel) { _, _ -> chars.fill('\u0000') }
                     .setPositiveButton(android.R.string.ok) { _, _ ->
                         val confirmation = second.text.toString().toCharArray(); second.text.clear()

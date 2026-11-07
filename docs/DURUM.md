@@ -2,6 +2,14 @@
 
 Son güncelleme: 2026-11-07
 
+## v1.0.21 — Paylaşım ve ürün düzeni: geliştirme / kabul bekliyor
+
+- S-004 kapsamında: sayfa başlığı/URL önizlemeli paylaş paneli; tam bağlantı kopyalama, çevrimdışı QR oluşturma, yalnız okunabilir content URI ile QR görseli ve gerçek Android paylaşım ekranı. Gizli sekme panosu Android sensitive işareti taşır; çocuk modu dış paylaşımı engellemeyi sürdürür.
+- Hakkında yayıncı/sürüm/site/gizlilik/geri bildirim/lisans satırları içerir. Yardım gerçek destek merkezi ve kullanıcı tarafından gözden geçirilen e-posta taslağına gider; otomatik veri gönderimi yok. Uygulamada GitHub tanıtım metni eklenmedi.
+- Altı bileşen grubu için aranabilir çevrimdışı lisans sayfası; Gecko'nun dağıtılan gerçek tam credits belgesi ve PDF/font bildirimleri, Apache/MIT/BSD metinleri, desugar_jdk_libs için doğru GPLv2 + Classpath Exception. Native uyarı/PIN pencereleri ortak token tabanlı açık/koyu görünüm kullanır; izin kararları korunur.
+- Yeni gerçek Android 15/16 kabulü: tam URL/pano, gizli panonun işareti, paylaşılan PNG'yi yeniden QR decode, Android metin/görsel paylaşım ekranı, lisans arama/okuma/Geri, Hakkında/site/gizlilik/destek ve yalnız e-posta düzenleyicisi. Önceki adres/geri/geçmiş/çerez/indirme/eklentiler/PIN/dil/toolbar kabulü birlikte korunur. Kaynak lisans hash/bildirim ve dosya sağlayıcı denetimi eklendi.
+- **Açık:** bu yeni kaynak için CI/Android derleme ve emülatör kabulü henüz çalıştırılmadı. İmzalı v1.0.21 henüz yayımlanmadı; son kararlı v1.0.20 aşağıdadır. Nihai uzak VPN yapılandırması/gerçek cihaz denetimi ve mağaza yayın şartları ayrı kabul gerektirir.
+
 ## Güncel yayın — v1.0.20
 
 - **[v1.0.20 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.20)** — 2026-11-07 19:01:45 Türkiye (16:01:45 UTC). [İmzalı üretim #42388423055](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388423055) başarılı. Etiket `03104d0a16b1f866516133ecbd42189206525c36` yayın isteği commit'ine bağlıdır.
