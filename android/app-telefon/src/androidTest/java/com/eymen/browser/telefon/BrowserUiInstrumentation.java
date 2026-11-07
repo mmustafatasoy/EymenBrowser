@@ -51,6 +51,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             Rect firstAddress=new Rect();field(address).getBoundsInScreen(firstAddress);
             tapAt(firstAddress.centerX(),firstAddress.centerY(),180);
             await(() -> field(address) != null && field(address).isFocused(), "address receives focus after touch");
+            await(this::softwareKeyboardVisible,"the real on-screen keyboard is visible for address entry");
             waitForIdleSync();
             SystemClock.sleep(100);
             android.view.inputmethod.EditorInfo initialInfo=new android.view.inputmethod.EditorInfo();
@@ -64,6 +65,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             android.view.inputmethod.InputConnection activeComposition=addressConnection(searchInfo);
             require((searchInfo.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,"plain text exposes a real Search keyboard action");
             require(uiCheck(activeComposition::finishComposingText),"native IME composition committed through the current connection");
+            await(()->softwareKeyboardVisible()&&"eymen yeni arama".equals(text(field(address))),"Search action preserves the query and the real on-screen keyboard");
             capture("address-search-ime.png",true);
             Bundle caret = new Bundle();
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 5);
@@ -172,6 +174,14 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         });
         require(result.get()!=null,"native address InputConnection exists");return result.get();
     }
+    private boolean softwareKeyboardVisible() {
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows())if(window.getType()==AccessibilityWindowInfo.TYPE_INPUT_METHOD){
+            Rect bounds=new Rect();window.getBoundsInScreen(bounds);
+            AccessibilityNodeInfo root=window.getRoot();
+            if(root!=null&&root.refresh()&&root.isVisibleToUser()&&bounds.height()>getTargetContext().getResources().getDisplayMetrics().density*100)return true;
+        }
+        return false;
+    }
     private void menuNavigation(int labelId) throws Exception {
         click(label(R.string.browser_menu));click(label(labelId));
     }
@@ -188,7 +198,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void navigationAndSearch() throws Exception {
         String address=label(R.string.address_edit_label);
         tap(field(address));
-        click(label(R.string.address_clear));
+        await(()->field(address)!=null&&field(address).isFocused(),"new-tab address is focused for native search");
+        if(!text(field(address)).isEmpty())click(label(R.string.address_clear));
         android.view.inputmethod.EditorInfo info=new android.view.inputmethod.EditorInfo();
         android.view.inputmethod.InputConnection input=addressConnection(info);
         final android.view.inputmethod.InputConnection composingInput=input;
@@ -212,6 +223,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(searched::get,"keyboard Search starts the selected real search engine in Gecko");
         menuNavigation(R.string.menu_new_normal_tab_accessibility);
         tap(field(address));
+        await(()->field(address)!=null&&field(address).isFocused(),"new-tab address is focused for native Go");
         search(address,"https://example.com/?eymen-navigation=first");
         android.view.inputmethod.EditorInfo goInfo=new android.view.inputmethod.EditorInfo();
         android.view.inputmethod.InputConnection goInput=addressConnection(goInfo);
@@ -709,7 +721,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         runOnMainSync(()->{
             try {
                 diagnostic.append("uptime=").append(SystemClock.uptimeMillis()).append('\n');
-                for(String name:new String[]{"atHome","imeVisible","menuShowing","settingsShowing","overviewShowing","shieldShowing","downloadsShowing","libraryShowing","videoFullScreen"}){
+                for(String name:new String[]{"atHome","imeVisible","addressEditing","menuShowing","settingsShowing","overviewShowing","shieldShowing","downloadsShowing","libraryShowing","videoFullScreen"}){
                     java.lang.reflect.Field flag;
                     try{flag=MainActivity.class.getDeclaredField(name);}catch(NoSuchFieldException e){flag=MainActivity.class.getDeclaredField(name+"$delegate");}
                     flag.setAccessible(true);Object value=flag.get(activity);

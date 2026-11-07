@@ -3,6 +3,7 @@ set -euo pipefail
 mkdir -p browser-ui-audit
 trap 'adb logcat -d -v threadtime > browser-ui-audit/logcat.txt || true' EXIT
 adb shell am force-stop com.android.launcher3 || true
+adb shell settings put secure show_ime_with_hard_keyboard 1
 adb install -r android/app-telefon/build/outputs/apk/debug/app-telefon-x86_64-debug.apk
 adb install -r android/app-telefon/build/outputs/apk/androidTest/debug/app-telefon-debug-androidTest.apk
 adb shell pm list instrumentation > browser-ui-audit/registered-runners.txt
