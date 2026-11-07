@@ -168,7 +168,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
 
         openSettingsItem(R.string.settings_default_browser);
         await(()->systemBrowserChoice()!=null,"real Android browser-role dialog lists this app");
-        capture("default-browser-system.png",true);
+        // The system dialog follows Android's theme and dim amount, not the app palette.
+        capture("default-browser-system.png",null);
         require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK),true),"system back down");
         require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK),true),"system back up");
         await(()->systemBrowserChoice()==null&&field(label(R.string.settings_search_hint))!=null,"cancel returns to settings without changing the default");
@@ -722,12 +723,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         require(getUiAutomation().injectInputEvent(up, true), "touch up"); up.recycle();
     }
-    private void capture(String name, boolean light) throws Exception {
+    private void capture(String name, Boolean light) throws Exception {
         waitForIdleSync(); SystemClock.sleep(250);
         Bitmap bitmap = getUiAutomation().takeScreenshot();
         require(bitmap != null, "real window screenshot");
         int pixel = bitmap.getPixel(8, bitmap.getHeight() / 2);
-        require(light ? Color.red(pixel) > 180 && Color.green(pixel) > 180 : Color.red(pixel) < 80,
+        require(light == null || (light ? Color.red(pixel) > 180 && Color.green(pixel) > 180 : Color.red(pixel) < 80),
             "screen follows selected theme: " + name);
         File directory = new File(getTargetContext().getCacheDir(), "browser-ui-audit");
         require(directory.isDirectory() || directory.mkdirs(), "capture directory");

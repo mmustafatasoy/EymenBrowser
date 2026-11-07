@@ -27,7 +27,7 @@ internal enum class MenuAction {
 }
 private data class MenuRow(val title: Int,val icon: String,val action: MenuAction,val needsPage: Boolean = false)
 private val groups = listOf(
-    listOf(MenuRow(R.string.menu_new_tab,EymenPaths.eklenti,MenuAction.NEW_TAB),
+    listOf(MenuRow(R.string.menu_new_tab,EymenPaths.yeniSekme,MenuAction.NEW_TAB),
         MenuRow(R.string.private_tab,EymenPaths.gizli,MenuAction.PRIVATE),
         MenuRow(R.string.menu_group_tab,EymenPaths.klasor,MenuAction.TAB_GROUP)),
     listOf(MenuRow(R.string.history,EymenPaths.gecmis,MenuAction.HISTORY),
@@ -88,7 +88,7 @@ internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,te
                         EymenVector(EymenPaths.yakinlastir,color=p.muted,iconSize=T.telefon_liste_menuSimge.dp)
                         Spacer(Modifier.width(T.telefon_ekran_kenar.dp))
                         Column(Modifier.weight(1f)) {
-                            ScreenText(stringResource(R.string.menu_text_size),p.text,T.telefon_liste_ikincil,maxLines=1)
+                            ScreenText(stringResource(R.string.menu_text_size_short),p.text,T.telefon_liste_ikincil,maxLines=1)
                             ScreenText(stringResource(R.string.menu_text_size_value,textPercent),p.muted,T.telefon_liste_ikincil,maxLines=1)
                         }
                         MenuZoomButton("−",p,textPercent>50){onTextSize(textPercent-10)}
