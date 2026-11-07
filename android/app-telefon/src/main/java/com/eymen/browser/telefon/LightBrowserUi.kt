@@ -215,8 +215,12 @@ internal fun LightBrowserToolbar(
     onVoiceSearch: () -> Unit,
     onNewTab: () -> Unit,
     onTabs: () -> Unit,
-    onMenu: () -> Unit
+    onMenu: () -> Unit,
+    dayMode: Boolean = true,
+    homeButtonEnabled: Boolean = true
 ) {
+    val palette=browserListPalette(dayMode)
+    val toolbarInk=if(dayMode)ink else palette.text
     val editor = rememberAddressEditor(if (atHome) "" else currentUrl)
     val input = editor.value
     val focus = LocalFocusManager.current
@@ -230,17 +234,17 @@ internal fun LightBrowserToolbar(
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
         Modifier.fillMaxWidth()
-            .background(Color(0xFFF3F7FD))
+            .background(if(dayMode)Color(0xFFF3F7FD) else palette.background)
             .padding(start = 3.dp, end = 6.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        LightIcon(stringResource(R.string.home), EymenPaths.ev, onHome, Modifier.size(36.dp))
+        if(homeButtonEnabled)LightIcon(stringResource(R.string.home), EymenPaths.ev, onHome, Modifier.size(36.dp),color=toolbarInk)
         Row(
             Modifier.weight(1f).height(47.dp)
                 .shadow(2.dp, RoundedCornerShape(26.dp))
-                .border(1.dp, outline, RoundedCornerShape(26.dp))
-                .background(Color(0xFFEAF1FB), RoundedCornerShape(26.dp))
+                .border(1.dp, if(dayMode)outline else palette.surface, RoundedCornerShape(26.dp))
+                .background(if(dayMode)Color(0xFFEAF1FB) else palette.surface, RoundedCornerShape(26.dp))
                 .padding(start = 9.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -253,7 +257,7 @@ internal fun LightBrowserToolbar(
                     .onFocusChanged { editor.focusChanged(it.isFocused) }
                     .semantics { contentDescription = addressLabel },
                 singleLine = true,
-                textStyle = TextStyle(color = ink, fontSize = 13.sp),
+                textStyle = TextStyle(color = toolbarInk, fontSize = 13.sp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
                     val entered = input.text
@@ -263,7 +267,7 @@ internal fun LightBrowserToolbar(
                 }),
                 decorationBox = { field ->
                     Box {
-                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, secondary)
+                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, if(dayMode)secondary else palette.muted)
                         field()
                     }
                 }
@@ -272,7 +276,7 @@ internal fun LightBrowserToolbar(
                 Box(Modifier.size(31.dp).semantics { contentDescription = clearLabel; role = Role.Button }
                     .clickable { editor.clear(); requester.requestFocus(); keyboard?.show() },
                     contentAlignment = Alignment.Center) {
-                    EymenVector(EymenPaths.temizle, color = ink, iconSize = 21.dp)
+                    EymenVector(EymenPaths.temizle, color = toolbarInk, iconSize = 21.dp)
                 }
             } else {
             Box(
@@ -280,7 +284,8 @@ internal fun LightBrowserToolbar(
                     .semantics { contentDescription = voiceLabel; role = Role.Button }
                     .clickable(onClick = onVoiceSearch),
                 contentAlignment = Alignment.Center
-            ) { MicrophoneIcon(Modifier.size(21.dp)) }
+            ) { if(dayMode)MicrophoneIcon(Modifier.size(21.dp))
+                else EymenVector(EymenPaths.mikrofon,color=toolbarInk,iconSize=21.dp) }
             }
         }
         Box(
@@ -288,7 +293,7 @@ internal fun LightBrowserToolbar(
                 .semantics { contentDescription = newTabLabel; role = Role.Button }
                 .clickable(onClick = onNewTab),
             contentAlignment = Alignment.Center
-        ) { LightText("+", 30, ink) }
+        ) { LightText("+", 30, toolbarInk) }
         Box(
             Modifier.size(36.dp)
                 .semantics { contentDescription = tabsLabel; role = Role.Button }
@@ -296,16 +301,16 @@ internal fun LightBrowserToolbar(
             contentAlignment = Alignment.Center
         ) {
             Box(
-                Modifier.size(25.dp).border(1.8.dp, ink, RoundedCornerShape(6.dp)),
+                Modifier.size(25.dp).border(1.8.dp, toolbarInk, RoundedCornerShape(6.dp)),
                 contentAlignment = Alignment.Center
-            ) { LightText(tabCount.toString(), 12, ink, bold = true) }
+            ) { LightText(tabCount.toString(), 12, toolbarInk, bold = true) }
         }
         Box(
-            Modifier.size(35.dp).background(Color(0xFFB1D6FF), RoundedCornerShape(13.dp))
+            Modifier.size(35.dp).background(if(dayMode)Color(0xFFB1D6FF) else palette.surface, RoundedCornerShape(13.dp))
                 .semantics { contentDescription = menuLabel; role = Role.Button }
                 .clickable(onClick = onMenu),
             contentAlignment = Alignment.Center
-        ) { LightText("⋮", 26, ink) }
+        ) { LightText("⋮", 26, toolbarInk) }
     }
 }
 
@@ -396,7 +401,7 @@ internal fun LightBrowserHome(
         val compact = maxHeight < 650.dp
         // Capture the BoxWithConstraints maxWidth before entering nested
         // Column scopes; otherwise Kotlin's DSL receiver hides maxWidth.
-        val brandShiftDp = if (menuOpen) maxWidth * -0.15f else 0.dp
+        val brandShiftDp = 0.dp
         val topSpace = if (compact) 76.dp else 101.dp
         val blockGap = if (compact) 14.dp else 22.dp
         val brandSize = if (compact) 78.dp else 94.dp
@@ -513,7 +518,7 @@ internal fun LightBrowserHome(
                 Row(
                     // Keep the voice button visible to the LEFT of the popup.
                     Modifier
-                        .fillMaxWidth(if (menuOpen) 0.59f else 1f)
+                        .fillMaxWidth()
                         .align(Alignment.Start)
                         .height(48.dp)
                         .shadow(4.dp, RoundedCornerShape(26.dp))
@@ -660,180 +665,6 @@ internal fun LightBrowserHome(
                     }
                 }
             }
-        }
-    }
-}
-
-
-
-/** Device-independent menu symbols drawn as paths, not vendor font glyphs. */
-@Composable
-private fun ReferenceMenuIcon(symbol: String, enabled: Boolean) {
-    val tint = if (enabled) ink else Color(0xFF9BA9BC)
-    Canvas(Modifier.size(19.dp)) {
-        val unit = size.minDimension / 24f
-        val p = { x: Float, y: Float -> Offset(x * unit, y * unit) }
-        val stroke = Stroke(
-            width = 2.0f * unit,
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round
-        )
-        when (symbol) {
-            "←" -> {
-                drawLine(tint, p(20f, 12f), p(4f, 12f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(4f, 12f), p(10f, 6f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(4f, 12f), p(10f, 18f), stroke.width, StrokeCap.Round)
-            }
-            "→" -> {
-                drawLine(tint, p(4f, 12f), p(20f, 12f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(20f, 12f), p(14f, 6f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(20f, 12f), p(14f, 18f), stroke.width, StrokeCap.Round)
-            }
-            "⟳" -> {
-                drawArc(
-                    tint, -40f, 305f, false,
-                    p(4.5f, 4.5f), Size(15f * unit, 15f * unit),
-                    style = stroke
-                )
-                drawLine(tint, p(20f, 7f), p(20f, 12f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(20f, 12f), p(15f, 11f), stroke.width, StrokeCap.Round)
-            }
-            "♧" -> {
-                drawLine(tint, p(7f, 12f), p(17f, 6f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(7f, 12f), p(17f, 18f), stroke.width, StrokeCap.Round)
-                drawCircle(Color.White, 2.5f * unit, p(5.5f, 12f))
-                drawCircle(Color.White, 2.5f * unit, p(18f, 5f))
-                drawCircle(Color.White, 2.5f * unit, p(18f, 19f))
-                drawCircle(tint, 2.5f * unit, p(5.5f, 12f), style = stroke)
-                drawCircle(tint, 2.5f * unit, p(18f, 5f), style = stroke)
-                drawCircle(tint, 2.5f * unit, p(18f, 19f), style = stroke)
-            }
-            "☆" -> {
-                val star = Path().apply {
-                    moveTo(12f * unit, 2f * unit)
-                    lineTo(15.2f * unit, 9f * unit)
-                    lineTo(22f * unit, 9.7f * unit)
-                    lineTo(16.8f * unit, 14.5f * unit)
-                    lineTo(18.1f * unit, 22f * unit)
-                    lineTo(12f * unit, 18.2f * unit)
-                    lineTo(5.9f * unit, 22f * unit)
-                    lineTo(7.2f * unit, 14.5f * unit)
-                    lineTo(2f * unit, 9.7f * unit)
-                    lineTo(8.8f * unit, 9f * unit)
-                    close()
-                }
-                drawPath(star, tint, style = stroke)
-            }
-            "↓" -> {
-                drawLine(tint, p(12f, 3f), p(12f, 16f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(7f, 11f), p(12f, 16f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(17f, 11f), p(12f, 16f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(4f, 19f), p(4f, 22f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(4f, 22f), p(20f, 22f), stroke.width, StrokeCap.Round)
-                drawLine(tint, p(20f, 22f), p(20f, 19f), stroke.width, StrokeCap.Round)
-            }
-            "◎" -> {
-                drawCircle(tint, 5f * unit, p(6.8f, 12f), style = stroke)
-                drawCircle(tint, 5f * unit, p(17.2f, 12f), style = stroke)
-                drawLine(tint, p(11.8f, 12f), p(12.2f, 12f), stroke.width)
-                drawLine(tint, p(2f, 12f), p(1f, 9.5f), stroke.width)
-                drawLine(tint, p(22f, 12f), p(23f, 9.5f), stroke.width)
-                drawLine(tint, p(7.5f, 3f), p(16.5f, 3f), stroke.width)
-            }
-            "⚙" -> {
-                drawCircle(tint, 7.5f * unit, p(12f, 12f), style = stroke)
-                drawCircle(tint, 2.9f * unit, p(12f, 12f), style = stroke)
-                val spokes = listOf(
-                    floatArrayOf(12f, 1f, 12f, 4f),
-                    floatArrayOf(12f, 20f, 12f, 23f),
-                    floatArrayOf(1f, 12f, 4f, 12f),
-                    floatArrayOf(20f, 12f, 23f, 12f),
-                    floatArrayOf(4f, 4f, 6f, 6f),
-                    floatArrayOf(18f, 18f, 20f, 20f),
-                    floatArrayOf(4f, 20f, 6f, 18f),
-                    floatArrayOf(18f, 6f, 20f, 4f)
-                )
-                spokes.forEach {
-                    drawLine(tint, p(it[0], it[1]), p(it[2], it[3]),
-                        stroke.width, StrokeCap.Round)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LightMenuRow(
-    title: String, symbol: String, enabled: Boolean = true,
-    highlighted: Boolean = false,
-    onClick: () -> Unit
-) {
-    Row(
-        Modifier.fillMaxWidth()
-            .padding(horizontal = 5.dp, vertical = 0.dp)
-            // 27dp is the compact visual reference. heightIn allows text
-            // accessibility scaling without clipping on larger font settings.
-            .heightIn(min = 27.dp)
-            .background(
-                if (highlighted) Color(0xFFE0EEFE) else Color.Transparent,
-                RoundedCornerShape(12.dp)
-            )
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 9.dp, vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ReferenceMenuIcon(symbol, enabled)
-        Spacer(Modifier.width(9.dp))
-        LightText(title, 12, if (enabled) ink else Color(0xFF9BA9BC))
-    }
-}
-
-/** Compact 05 Nov approved menu, located under the upper-right dots. */
-@Composable
-internal fun LightBrowserMenu(
-    hasPage: Boolean,
-    onDismiss: () -> Unit,
-    onBack: () -> Unit,
-    onForward: () -> Unit,
-    onReload: () -> Unit,
-    onAction: (MenuAction) -> Unit
-) {
-    Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().clickable(onClick = onDismiss))
-        Column(
-            Modifier.align(Alignment.TopEnd)
-                .padding(top = 57.dp, end = 6.dp)
-                .width(148.dp)
-                .heightIn(max = 440.dp)
-                .shadow(10.dp, RoundedCornerShape(20.dp))
-                .border(1.dp, Color(0xFFBED7F9), RoundedCornerShape(20.dp))
-                .background(Color(0xFAFFFFFF), RoundedCornerShape(20.dp))
-                .verticalScroll(rememberScrollState())
-                .padding(vertical = 5.dp)
-        ) {
-            LightMenuRow(stringResource(R.string.back), "←", highlighted = true) {
-                onDismiss(); onBack()
-            }
-            LightMenuRow(stringResource(R.string.forward), "→", highlighted = true) {
-                onDismiss(); onForward()
-            }
-            LightMenuRow(stringResource(R.string.menu_reload), "⟳", enabled = hasPage) {
-                onDismiss(); onReload()
-            }
-            Box(Modifier.fillMaxWidth().padding(
-                horizontal = 9.dp, vertical = 3.dp
-            ).height(1.dp).background(outline))
-            LightMenuRow(stringResource(R.string.menu_share), "♧", enabled = hasPage) {
-                onAction(MenuAction.SHARE)
-            }
-            LightMenuRow(stringResource(R.string.bookmarks), "☆") { onAction(MenuAction.BOOKMARKS) }
-            LightMenuRow(stringResource(R.string.downloads), "↓") { onAction(MenuAction.DOWNLOADS) }
-            Box(Modifier.fillMaxWidth().padding(
-                horizontal = 9.dp, vertical = 3.dp
-            ).height(1.dp).background(outline))
-            LightMenuRow(stringResource(R.string.private_tab), "◎") { onAction(MenuAction.PRIVATE) }
-            LightMenuRow(stringResource(R.string.menu_tools), "⚙") { onAction(MenuAction.TOOLS) }
-            LightMenuRow(stringResource(R.string.settings), "⚙") { onAction(MenuAction.SETTINGS) }
         }
     }
 }

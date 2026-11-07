@@ -68,7 +68,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> "tekrar".equals(text(field(address))), "field remains writable after clear");
 
             click("Tarayıcı menüsü");
-            click(label(R.string.settings));
+            scrollClick(label(R.string.settings));
             await(() -> field(label(R.string.settings_search_hint)) != null, "custom settings page");
             capture("settings-light.png", true);
             search(label(R.string.settings_search_hint), label(R.string.menu_settings_search));
@@ -116,9 +116,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> field(address) != null && "".equals(text(field(address))), "home resets the address editor");
             click("Yeni sekme");
             await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
+            realHistoryAndScrolling();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation");
+            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -148,8 +149,110 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         return com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.getRuntime(activity);
     }
     private void openSettingsItem(int labelId) throws Exception {
-        click(label(R.string.browser_menu)); click(label(R.string.settings));
+        click(label(R.string.browser_menu)); scrollClick(label(R.string.settings));
         search(label(R.string.settings_search_hint), label(labelId)); click(label(labelId));
+    }
+    private void realHistoryAndScrolling() throws Exception {
+        BrowserHistory history=(BrowserHistory)controller("history");
+        String first="https://example.com/?eymen-history=a";
+        String second="https://example.com/?eymen-history=b";
+        org.mozilla.geckoview.GeckoSession session=currentSession();
+        runOnMainSync(()->session.loadUri(first));
+        await(()->uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().equals(first)&&e.getTitle().equals("Example Domain"))),"first completed HTTPS title really stored");
+        runOnMainSync(()->session.loadUri(second));
+        await(()->uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().equals(second))),"second completed HTTPS visit stored");
+        try(android.database.sqlite.SQLiteDatabase db=android.database.sqlite.SQLiteDatabase.openDatabase(
+            getTargetContext().getDatabasePath("browser-history.db").getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+            android.database.Cursor rows=db.rawQuery("SELECT title,visited_at FROM visits WHERE url=?",new String[]{first})){
+            require(rows.moveToFirst()&&"Example Domain".equals(rows.getString(0))&&rows.getLong(1)>0,"real title and visit time persisted to SQLite");
+        }
+        click(label(R.string.browser_menu));capture("menu-native.png",true);click(label(R.string.history));
+        await(()->field(label(R.string.history_search_hint))!=null,"real full-page history list");
+        await(()->find("example.com/?eymen-history=a",false)!=null,"history shows actual URL rows");
+        require(find(label(R.string.history_today),false)!=null,"visits grouped under their real local day");
+        capture("history-light.png",true);
+        search(label(R.string.history_search_hint),"eymen-history=b");
+        await(()->find("example.com/?eymen-history=a",false)==null&&find("example.com/?eymen-history=b",false)!=null,"history searches real titles and URLs");
+        click(label(R.string.search_clear));
+        scrollClick(activity.getString(R.string.history_delete_item,second));
+        await(()->uiCheck(()->history.getEntries().stream().noneMatch(e->e.getUrl().equals(second))),"delete action removes an actual database visit");
+        click("example.com/?eymen-history=a");
+        await(()->field(label(R.string.address_edit_label))!=null&&text(field(label(R.string.address_edit_label))).contains("eymen-history=a"),"tapping a history link navigates the live browser");
+
+        click(label(R.string.browser_menu));click(label(R.string.private_tab));
+        org.mozilla.geckoview.GeckoSession secret=currentSession();
+        java.util.concurrent.atomic.AtomicBoolean privateLoaded=new java.util.concurrent.atomic.AtomicBoolean();
+        java.util.concurrent.atomic.AtomicBoolean privateLoading=new java.util.concurrent.atomic.AtomicBoolean();
+        runOnMainSync(()->{
+            org.mozilla.geckoview.GeckoSession.ProgressDelegate original=secret.getProgressDelegate();
+            secret.setProgressDelegate(new org.mozilla.geckoview.GeckoSession.ProgressDelegate(){
+                @Override public void onPageStart(org.mozilla.geckoview.GeckoSession s,String url){privateLoading.set(url.contains("eymen-private-history=1"));original.onPageStart(s,url);}
+                @Override public void onPageStop(org.mozilla.geckoview.GeckoSession s,boolean success){original.onPageStop(s,success);if(privateLoading.getAndSet(false)&&success)privateLoaded.set(true);}
+            });
+            secret.loadUri("https://example.com/?eymen-private-history=1");
+        });
+        await(privateLoaded::get,"private page really completed in Gecko");
+        require(uiCheck(()->history.getEntries().stream().noneMatch(e->e.getUrl().contains("eymen-private-history"))),"private navigation excluded from visible history");
+        try(android.database.sqlite.SQLiteDatabase db=android.database.sqlite.SQLiteDatabase.openDatabase(
+            getTargetContext().getDatabasePath("browser-history.db").getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+            android.database.Cursor rows=db.rawQuery("SELECT COUNT(*) FROM visits WHERE url LIKE '%eymen-private-history%'",null)){
+            require(rows.moveToFirst()&&rows.getInt(0)==0,"private URL never reached SQLite");
+        }
+        click(label(R.string.browser_menu));click(label(R.string.menu_new_tab));
+        require(!currentSession().getSettings().getUsePrivateMode(),"explicit new tab returns to normal context");
+        org.mozilla.geckoview.GeckoSession longPage=currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
+        runOnMainSync(()->{
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original=longPage.getContentDelegate();
+            longPage.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s,String value){title.set(value);original.onTitleChange(s,value);}
+            });
+            longPage.loadUri("https://example.com/?eymen-scroll=1");
+        });
+        await(()->"Example Domain".equals(title.get())&&uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().contains("eymen-scroll=1"))),"completed real HTTPS document for native scrolling");
+        String html="<main style='height:7000px;background:linear-gradient(white,lightgray)'><h1>Eymen scrolling test</h1><p>Real page movement</p></main><button id='footer' style='position:fixed;bottom:0;left:0;width:100%;height:48px'>Eymen footer action</button>";
+        String fixture="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";document.getElementById('footer').onclick=function(){document.title='Eymen footer tapped';};document.title='Eymen scroll ready';}())";
+        runOnMainSync(()->longPage.loadUri(fixture));
+        await(()->"Eymen scroll ready".equals(title.get()),"long web page injected only into the test document");
+        int engineHeight=uiInt(()->{try{return browserView().getHeight();}catch(Exception e){throw new RuntimeException(e);}});
+        swipeUp();
+        await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.INVISIBLE),"scrolling down hides the complete top address/menu bar");
+        require(engineHeight==uiInt(()->{try{return browserView().getHeight();}catch(Exception e){throw new RuntimeException(e);}}),"toolbar animation preserves the engine measured height");
+        capture("scroll-hidden.png",true);
+        tinyReverseSwipe();
+        await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.VISIBLE&&Math.abs(chromeView().getTranslationY())<1f),"eight-pixel upward reversal reveals top controls");
+        capture("scroll-visible.png",true);
+        openSettingsItem(R.string.settings_address);click(label(R.string.onboarding_bottom));
+        require(prefs().getBoolean("address_at_bottom",false),"bottom address choice persisted in light theme");
+        click(label(R.string.back));click(label(R.string.back));
+        swipeUp();await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.INVISIBLE),"bottom toolbar also hides on downward page scrolling");
+        tinyReverseSwipe();await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.VISIBLE&&Math.abs(chromeView().getTranslationY())<1f),"bottom toolbar returns on the same tiny reversal");
+        capture("scroll-bottom.png",true);
+        await(()->find("Eymen footer action",false)!=null,"real fixed page footer remains accessible");
+        tap(find("Eymen footer action",false));
+        await(()->"Eymen footer tapped".equals(title.get()),"fixed footer hit testing stays correct above visible bottom controls");
+        openSettingsItem(R.string.settings_address);click(label(R.string.onboarding_top));click(label(R.string.back));click(label(R.string.back));
+
+        openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_night));click(label(R.string.back));
+        click(label(R.string.search_clear));capture("settings-native-dark.png",false);click(label(R.string.back));
+        click(label(R.string.browser_menu));click(label(R.string.history));capture("history-dark.png",false);
+        click(label(R.string.history_clear));clickNativePositive();
+        await(()->uiCheck(()->history.getEntries().isEmpty()&&!history.getLoading()),"clear history empties real persistent records");
+        require(find(label(R.string.history_empty),false)!=null,"cleared history displays an honest empty list");
+        click(label(R.string.back));
+        openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_day));click(label(R.string.back));click(label(R.string.back));
+    }
+    private android.view.View chromeView(){return (android.view.View)controller("chrome");}
+    private int uiInt(java.util.function.IntSupplier value){java.util.concurrent.atomic.AtomicInteger result=new java.util.concurrent.atomic.AtomicInteger();runOnMainSync(()->result.set(value.getAsInt()));return result.get();}
+    private void tinyReverseSwipe(){
+        Bitmap bitmap=getUiAutomation().takeScreenshot();float x=bitmap.getWidth()*0.6f,y=bitmap.getHeight()*0.5f;bitmap.recycle();
+        long down=SystemClock.uptimeMillis();
+        for(int i=0;i<=5;i++){
+            int action=i==0?MotionEvent.ACTION_DOWN:i==5?MotionEvent.ACTION_UP:MotionEvent.ACTION_MOVE;
+            MotionEvent event=MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,x,y+8f*i/5f,0);
+            event.setSource(InputDevice.SOURCE_TOUCHSCREEN);getUiAutomation().injectInputEvent(event,true);event.recycle();SystemClock.sleep(25);
+        }
+        waitForIdleSync();SystemClock.sleep(250);
     }
     private void advancedSettings() throws Exception {
         BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");

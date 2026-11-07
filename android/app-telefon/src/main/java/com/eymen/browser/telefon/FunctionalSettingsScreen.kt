@@ -20,29 +20,30 @@ import org.mozilla.geckoview.GeckoSession
 @Composable
 internal fun SettingsPage(title: Int, dayMode: Boolean, onBack: () -> Unit,
     content: @Composable ColumnScope.(BrowserScreenPalette) -> Unit) {
-    val p = browserScreenPalette(dayMode)
+    val p = browserListPalette(dayMode)
     BackHandler { onBack() }
-    Column(Modifier.fillMaxSize().screenBackground(p).padding(T.telefon_ekran_kenar.dp),
+    Column(Modifier.fillMaxSize().background(p.background),
         verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
-        ScreenHeader(stringResource(title), stringResource(R.string.settings_personal_subtitle), p, onBack)
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) { content(p) }
+        ListPageHeader(stringResource(title), p, onBack)
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+            .padding(horizontal=T.telefon_ekran_kenar.dp,vertical=T.telefon_ekran_bosluk.dp),
+            verticalArrangement = Arrangement.spacedBy(T.telefon_liste_ayirici.dp)) { content(p) }
     }
 }
 
 @Composable
 internal fun SettingsToggle(label: String, note: String, selected: Boolean,
     p: BrowserScreenPalette, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_kart.dp))
-        .toggleable(selected, role = Role.Switch, onValueChange = onChange)
-        .padding(T.telefon_ekran_kenar.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().background(p.surface,RoundedCornerShape(T.telefon_liste_satirKose.dp))
+        .toggleable(selected,role=Role.Switch,onValueChange=onChange)
+        .padding(horizontal=T.telefon_ekran_kenar.dp,vertical=T.telefon_liste_satirDikey.dp),
+        verticalAlignment=Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            ScreenText(label, p.text, strong = true)
-            ScreenText(note, p.muted, T.telefon_yazi_ikincil, maxLines = 5)
+            ScreenText(label,p.text,T.telefon_liste_yazi,maxLines=3)
+            if(note.isNotBlank())ScreenText(note,p.muted,T.telefon_liste_ikincil,maxLines=4)
         }
-        Spacer(Modifier.width(T.telefon_ekran_kucukBosluk.dp))
-        ScreenText(stringResource(if (selected) R.string.settings_enabled else R.string.settings_disabled),
-            if (selected) p.accent else p.muted, strong = true)
+        Spacer(Modifier.width(T.telefon_ekran_bosluk.dp))
+        ListToggleMark(selected,p)
     }
 }
 
@@ -66,12 +67,12 @@ internal fun PrivacySettingsScreen(services: BrowserSettingsServices, dayMode: B
     ScreenText(stringResource(R.string.cookie_policy_title), p.text, strong = true)
     listOf("partition" to R.string.cookie_policy_partition, "first" to R.string.cookie_policy_first,
         "all" to R.string.cookie_policy_all, "none" to R.string.cookie_policy_none).forEach { (mode, title) ->
-        ScreenButton(stringResource(title), p,
-            { services.setCookies(mode) }, primary = services.cookieMode == mode)
+        SettingsActionRow(stringResource(title), p,
+            { services.setCookies(mode) }, chosen = services.cookieMode == mode)
     }
     ScreenText(stringResource(R.string.cookie_policy_note), p.muted, T.telefon_yazi_ikincil, maxLines = 5)
-    ScreenButton(stringResource(R.string.cookie_clear), p, { onClear(false) }, enabled = !services.clearing)
-    ScreenButton(stringResource(R.string.cache_clear), p, { onClear(true) }, enabled = !services.clearing)
+    SettingsActionRow(stringResource(R.string.cookie_clear), p, { onClear(false) }, enabled = !services.clearing)
+    SettingsActionRow(stringResource(R.string.cache_clear), p, { onClear(true) }, enabled = !services.clearing)
     if (services.message.isNotEmpty()) ScreenText(services.message, p.muted, maxLines = 4)
 }
 
@@ -85,8 +86,8 @@ internal fun PermissionsSettingsScreen(services: BrowserSettingsServices, dayMod
             SettingsToggle(stringResource(R.string.popup_allow), origin,
                 services.popupAllowed(currentUrl, privateMode), p) { services.setPopups(currentUrl, privateMode, it) }
         }
-        ScreenButton(stringResource(R.string.permission_android), p, onAndroidSettings)
-        ScreenButton(stringResource(R.string.permission_refresh), p, services::refreshPermissions)
+        SettingsActionRow(stringResource(R.string.permission_android), p, onAndroidSettings)
+        SettingsActionRow(stringResource(R.string.permission_refresh), p, services::refreshPermissions)
         if (services.permissions.isEmpty()) ScreenText(stringResource(
             if (services.busy) R.string.settings_loading else R.string.permission_none), p.muted)
         services.permissions.forEach { perm ->
@@ -120,7 +121,7 @@ internal fun PasswordSettingsScreen(services: BrowserSettingsServices, dayMode: 
         SettingsToggle(stringResource(R.string.autofill_title), stringResource(R.string.autofill_note),
             services.autofill, p) { services.set(PrivacyOption.AUTOFILL, it) }
         ScreenText(stringResource(R.string.autofill_privacy_note), p.muted, maxLines = 6)
-        ScreenButton(stringResource(R.string.autofill_manage), p, services::openPasswordService, primary = true)
+        SettingsActionRow(stringResource(R.string.autofill_manage), p, services::openPasswordService)
         if (services.message.isNotEmpty()) ScreenText(services.message, p.muted)
     }
 
@@ -128,10 +129,10 @@ internal fun PasswordSettingsScreen(services: BrowserSettingsServices, dayMode: 
 internal fun LanguageSettingsScreen(services: BrowserSettingsServices, dayMode: Boolean,
     onBack: () -> Unit, onTranslate: () -> Unit) = SettingsPage(R.string.settings_language, dayMode, onBack) { p ->
     listOf("system" to R.string.language_system, "tr" to R.string.language_turkish, "en" to R.string.language_english).forEach { (code, label) ->
-        ScreenButton(stringResource(label), p, { services.updateLanguage(code) }, primary = services.language == code)
+        SettingsActionRow(stringResource(label), p, { services.updateLanguage(code) }, chosen = services.language == code)
     }
     ScreenText(stringResource(R.string.translation_local_note), p.muted, maxLines = 6)
-    ScreenButton(stringResource(R.string.menu_translate), p, onTranslate)
+    SettingsActionRow(stringResource(R.string.menu_translate), p, onTranslate)
 }
 
 @Composable
@@ -141,17 +142,17 @@ internal fun AddonsSettingsScreen(addons: BrowserAddons, dayMode: Boolean,
     LaunchedEffect(Unit) { addons.refresh() }
     SettingsPage(R.string.menu_extensions, dayMode, onBack) { p ->
         ScreenText(stringResource(R.string.addon_note), p.muted, maxLines = 5)
-        ScreenButton(stringResource(R.string.addon_browse), p, onBrowse)
-        ScreenSearch(url, stringResource(R.string.addon_url_hint), p) { url = it }
-        ScreenButton(stringResource(R.string.addon_install), p, { addons.install(url) },
-            primary = true, enabled = !addons.busy && url.isNotBlank())
+        SettingsActionRow(stringResource(R.string.addon_browse), p, onBrowse)
+        ListSearch(url, stringResource(R.string.addon_url_hint), p) { url = it }
+        SettingsActionRow(stringResource(R.string.addon_install), p, { addons.install(url) },
+            enabled = !addons.busy && url.isNotBlank())
         if (addons.message.isNotBlank()) ScreenText(addons.message, p.muted, maxLines = 4)
         if (addons.items.isEmpty()) ScreenText(stringResource(R.string.addon_none), p.muted)
         addons.items.forEach { item ->
             SettingsToggle(item.metaData?.name ?: item.id, item.metaData?.version.orEmpty(), item.metaData?.enabled == true, p) { addons.toggle(item) }
             val options = item.metaData?.optionsPageUrl
-            if (!options.isNullOrBlank()) ScreenButton(stringResource(R.string.addon_options), p, { onOptions(options) })
-            ScreenButton(stringResource(R.string.addon_remove), p, { addons.remove(item) }, enabled = !addons.busy)
+            if (!options.isNullOrBlank()) SettingsActionRow(stringResource(R.string.addon_options), p, { onOptions(options) })
+            SettingsActionRow(stringResource(R.string.addon_remove), p, { addons.remove(item) }, enabled = !addons.busy)
         }
     }
 }
@@ -162,16 +163,16 @@ internal fun ChildSettingsScreen(child: BrowserChildMode, dayMode: Boolean, onBa
     SettingsPage(R.string.settings_child_mode, dayMode, onBack) { p ->
         ScreenText(stringResource(R.string.child_scope_note), p.muted, maxLines = 8)
         ScreenText(stringResource(R.string.child_tabs_note), p.muted, maxLines = 3)
-        ScreenButton(stringResource(if (child.enabled) R.string.child_disable else R.string.child_enable), p,
-            child::toggle, primary = true, enabled = !child.busy)
-        ScreenButton(stringResource(R.string.child_set_pin), p, child::configurePin, enabled = !child.busy)
-        ScreenSearch(host, stringResource(R.string.child_host_hint), p) { host = it }
-        ScreenButton(stringResource(R.string.child_add_host), p, { child.add(host) }, enabled = !child.busy && host.isNotBlank())
+        SettingsActionRow(stringResource(if (child.enabled) R.string.child_disable else R.string.child_enable), p,
+            child::toggle, enabled = !child.busy)
+        SettingsActionRow(stringResource(R.string.child_set_pin), p, child::configurePin, enabled = !child.busy)
+        ListSearch(host, stringResource(R.string.child_host_hint), p) { host = it }
+        SettingsActionRow(stringResource(R.string.child_add_host), p, { child.add(host) }, enabled = !child.busy && host.isNotBlank())
         child.allowed.forEach { name ->
             Column(Modifier.fillMaxWidth().background(p.surface, RoundedCornerShape(T.telefon_kose_kart.dp))
                 .padding(T.telefon_ekran_bosluk.dp)) {
                 ScreenText(name, p.text, strong = true)
-                ScreenButton(stringResource(R.string.child_remove_host), p, { child.remove(name) }, enabled = !child.busy)
+                SettingsActionRow(stringResource(R.string.child_remove_host), p, { child.remove(name) }, enabled = !child.busy)
             }
         }
         if (child.message.isNotEmpty()) ScreenText(child.message, p.muted, maxLines = 4)
@@ -185,10 +186,10 @@ internal fun BrowserToolsScreen(services: BrowserSettingsServices, dayMode: Bool
         ScreenText(stringResource(R.string.menu_text_size), p.text, strong = true)
         ScreenText(stringResource(R.string.menu_text_size_value, services.textPercent), p.accent)
         Row(horizontalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
-            ScreenButton("−", p, { services.setTextSize(services.textPercent - 10) },
+            SettingsActionRow("−", p, { services.setTextSize(services.textPercent - 10) },
                 Modifier.weight(1f), enabled = services.textPercent > 50)
-            ScreenButton("100%", p, { services.setTextSize(100) }, Modifier.weight(1f))
-            ScreenButton("+", p, { services.setTextSize(services.textPercent + 10) },
+            SettingsActionRow("100%", p, { services.setTextSize(100) }, Modifier.weight(1f))
+            SettingsActionRow("+", p, { services.setTextSize(services.textPercent + 10) },
                 Modifier.weight(1f), enabled = services.textPercent < 300)
         }
         listOf(MenuAction.HISTORY to R.string.history, MenuAction.QR to R.string.menu_scan_qr,
@@ -197,8 +198,40 @@ internal fun BrowserToolsScreen(services: BrowserSettingsServices, dayMode: Bool
             MenuAction.DESKTOP to R.string.menu_desktop, MenuAction.SEND_TO_DEVICE to R.string.menu_send_device,
             MenuAction.OPEN_EXTERNAL to R.string.menu_open_official_app,
             MenuAction.OPEN_BROWSER to R.string.menu_open_other_browser).forEach { (action, label) ->
-            ScreenButton(stringResource(label), p, { onAction(action) },
+            SettingsActionRow(stringResource(label), p, { onAction(action) },
                 enabled = hasPage || action in setOf(MenuAction.HISTORY, MenuAction.QR, MenuAction.READER))
         }
         ScreenText(stringResource(R.string.menu_devices_share_note), p.muted, maxLines = 5)
+    }
+
+@Composable
+internal fun AccessibilitySettingsScreen(services: BrowserSettingsServices,dayMode: Boolean,onBack: ()->Unit) =
+    SettingsPage(R.string.settings_accessibility,dayMode,onBack){p->
+        ScreenText(stringResource(R.string.menu_text_size),p.muted,modifier=Modifier.padding(T.telefon_ekran_bosluk.dp))
+        SettingsRows(p){listOf(50,75,100,110,125,150,200,250,300).forEach{amount->
+            SettingsActionRow(stringResource(R.string.menu_text_size_value,amount),p,{services.setTextSize(amount)},chosen=services.textPercent==amount)
+        }}
+    }
+
+@Composable
+internal fun BrowsingDataSettingsScreen(dayMode: Boolean,onBack: ()->Unit,onHistory: ()->Unit,onClear: (Boolean)->Unit) =
+    SettingsPage(R.string.menu_clear_data,dayMode,onBack){p->
+        ScreenText(stringResource(R.string.data_all_time),p.muted,modifier=Modifier.padding(T.telefon_ekran_bosluk.dp))
+        SettingsRows(p){
+            SettingsActionRow(stringResource(R.string.history_clear),p,onHistory)
+            SettingsActionRow(stringResource(R.string.cookie_clear),p,{onClear(false)},note=stringResource(R.string.data_cookies_note))
+            SettingsActionRow(stringResource(R.string.cache_clear),p,{onClear(true)},note=stringResource(R.string.data_cache_note))
+        }
+    }
+
+@Composable
+internal fun SecuritySettingsScreen(services: BrowserSettingsServices,shieldEnabled: Boolean,dayMode: Boolean,
+    onBack: ()->Unit,onPrivacy: ()->Unit,onUpdate: ()->Unit) = SettingsPage(R.string.settings_security_check,dayMode,onBack){p->
+        SettingsRows(p){
+            SettingsActionRow(stringResource(R.string.security_https),p,onPrivacy,
+                note=stringResource(if(services.httpsOnly)R.string.settings_enabled else R.string.settings_disabled))
+            SettingsActionRow(stringResource(R.string.security_blocking),p,onPrivacy,
+                note=stringResource(if(shieldEnabled)R.string.settings_enabled else R.string.settings_disabled))
+            SettingsActionRow(stringResource(R.string.security_updates),p,onUpdate)
+        }
     }

@@ -17,7 +17,7 @@ import org.mozilla.geckoview.GeckoResult
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal enum class FunctionalSettingsPage { PRIVACY, PERMISSIONS, PASSWORDS, EXTENSIONS, LANGUAGE, CHILD, TOOLS }
+internal enum class FunctionalSettingsPage { PRIVACY, PERMISSIONS, PASSWORDS, EXTENSIONS, LANGUAGE, CHILD, TOOLS, ACCESSIBILITY, DATA, SECURITY }
 internal enum class PrivacyOption { COOKIE_REJECT, FINGERPRINT, HTTPS, AUTOPLAY, AUTOFILL }
 
 /** Preferences are applied to the real Gecko runtime; site permissions stay in Gecko. */

@@ -34,6 +34,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import com.eymen.browser.tema.EymenTokens as T
 import androidx.compose.ui.platform.ComposeView
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.ContentBlocking
@@ -105,6 +107,9 @@ class MainActivity : ComponentActivity() {
     private var libraryMode by mutableStateOf(BrowserLibrary.HISTORY)
     private var bookmarkRevision by mutableStateOf(0)
     private var imeVisible = false
+    private var homeButtonEnabled by mutableStateOf(true)
+    private var defaultBrowser by mutableStateOf(false)
+    private var notificationsEnabled by mutableStateOf(false)
     private lateinit var prefs: SharedPreferences
     private lateinit var settingsServices: BrowserSettingsServices
     private lateinit var childMode: BrowserChildMode
@@ -244,6 +249,14 @@ class MainActivity : ComponentActivity() {
                 .apply()
         }
         dayMode.value = prefs.getBoolean("day_theme", true)
+        homeButtonEnabled = prefs.getBoolean("home_button_enabled",true)
+        // The old light toolbar always used the top despite its legacy saved
+        // bottom value. Preserve its visible position once, then honor choices.
+        if (!prefs.getBoolean("toolbar_position_migrated_v119",false)) {
+            if (dayMode.value) { addressBottom=false;prefs.edit().putBoolean("address_at_bottom",false).apply() }
+            prefs.edit().putBoolean("toolbar_position_migrated_v119",true).apply()
+        }
+
         globalShieldWanted.value = prefs.getBoolean("shield_wanted", true)
         strictShieldWanted.value = prefs.getBoolean("shield_strict_mode", false)
         cosmeticFilterWanted.value = prefs.getBoolean("cosmetic_filter_wanted", false)
@@ -361,36 +374,12 @@ class MainActivity : ComponentActivity() {
         )
         toolbarMotion = BrowserChromeMotion(view, chrome) { canCollapseChrome() }
         chrome.setContent {
-            if (dayMode.value) {
-                LightBrowserToolbar(
-                    currentUrl = currentUrl.value,
-                    atHome = atHome.value,
-                    tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
-                    onGo = ::openAddress,
-                    onHome = { showHome(true) },
-                    onVoiceSearch = ::startVoiceSearch,
-                    onNewTab = { createTab(privateMode = false) },
-                    onTabs = ::showTabs,
-                    onMenu = ::showBrowserMenu
-                )
-            } else {
-                BrowserToolbar(
-                    currentUrl = currentUrl.value,
-                    home = atHome.value,
-                    day = dayMode.value,
-                    addressBottom = addressBottom,
-                    privateMode = activeTab?.privateMode == true,
-                    tabCount = tabs.count { it.privateMode == (activeTab?.privateMode == true) },
-                    onGo = ::openAddress,
-                    onBack = { hideBrowserKeyboard(); activeTab?.gecko?.goBack() },
-                    onForward = { hideBrowserKeyboard(); activeTab?.gecko?.goForward() },
-                    onHome = { showHome(true) },
-                    onReload = { hideBrowserKeyboard(); activeTab?.gecko?.reload() },
-                    onTabs = ::showTabs,
-                    onMenu = ::showBrowserMenu,
-                    onShield = ::showShield
-                )
-            }
+            LightBrowserToolbar(
+                currentUrl=currentUrl.value,atHome=atHome.value,
+                tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
+                dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
+                onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
+                onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
         }
 
         tabsLayer = ComposeView(this)
@@ -460,28 +449,16 @@ class MainActivity : ComponentActivity() {
             )
         )
         menuLayer.setContent {
-            if (dayMode.value) {
-                LightBrowserMenu(
-                    hasPage = !atHome.value &&
-                        GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
-                    onDismiss = ::hideBrowserMenu,
-                    onBack = { hideBrowserKeyboard(); activeTab?.gecko?.goBack() },
-                    onForward = { hideBrowserKeyboard(); activeTab?.gecko?.goForward() },
-                    onReload = { hideBrowserKeyboard(); activeTab?.gecko?.reload() },
-                    onAction = ::handleMenuAction
-                )
-            } else {
-                BrowserMenu(
-                    hasPage = !atHome.value &&
-                        GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
-                    isDesktop = activeTab?.desktop == true,
-                    dayMode = dayMode.value,
-                    textPercent = settingsServices.textPercent,
-                    onTextSize = settingsServices::setTextSize,
-                    onDismiss = ::hideBrowserMenu,
-                    onAction = ::handleMenuAction
-                )
-            }
+            BrowserMenu(
+                hasPage = !atHome.value && GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
+                isDesktop = activeTab?.desktop == true,dayMode = dayMode.value,
+                textPercent = settingsServices.textPercent,onTextSize = settingsServices::setTextSize,
+                onDismiss = ::hideBrowserMenu,onAction = ::handleMenuAction,
+                onBack = { hideBrowserKeyboard();activeTab?.gecko?.goBack() },
+                onForward = { hideBrowserKeyboard();activeTab?.gecko?.goForward() },
+                onReload = { hideBrowserKeyboard();activeTab?.gecko?.reload() },
+                canGoBack = activeTab?.canGoBack == true,canGoForward = activeTab?.canGoForward == true,
+                bookmarked = isCurrentBookmarked(),onBookmark = ::toggleCurrentBookmark)
         }
         menuLayer.visibility = View.GONE
         shieldLayer = ComposeView(this)
@@ -575,6 +552,10 @@ class MainActivity : ComponentActivity() {
             } else if (functionalSettingsPage != null) {
                 val back = { hideBrowserKeyboard(); functionalSettingsPage = null }
                 when (functionalSettingsPage) {
+                    FunctionalSettingsPage.ACCESSIBILITY -> AccessibilitySettingsScreen(settingsServices,dayMode.value,back)
+                    FunctionalSettingsPage.DATA -> BrowsingDataSettingsScreen(dayMode.value,back,::confirmClearHistory,::clearBrowsingData)
+                    FunctionalSettingsPage.SECURITY -> SecuritySettingsScreen(settingsServices,globalShieldWanted.value,dayMode.value,back,
+                        { functionalSettingsPage=FunctionalSettingsPage.PRIVACY },{updater.check(manual=true)})
                     FunctionalSettingsPage.PRIVACY -> PrivacySettingsScreen(settingsServices, dayMode.value, back, ::clearBrowsingData)
                     FunctionalSettingsPage.PERMISSIONS -> PermissionsSettingsScreen(settingsServices, dayMode.value, back,
                         currentUrl.value, activeTab?.privateMode == true) {
@@ -601,6 +582,10 @@ class MainActivity : ComponentActivity() {
                     addressBottom = addressBottom,
                     visible = settingsShowing,
                     initialPage = settingsInitialPage,
+                    defaultBrowser = defaultBrowser,notificationsEnabled = notificationsEnabled,
+                    homeButtonEnabled = homeButtonEnabled,onHomeButton = { enabled ->
+                        homeButtonEnabled=enabled;prefs.edit().putBoolean("home_button_enabled",enabled).apply()
+                    },
                     onSearchEngine = ::updateSearchEnginePreference,
                     onDayMode = ::updateDayThemePreference,
                     onAddressBottom = ::updateAddressPositionPreference,
@@ -1152,17 +1137,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openTabOverview(devices: Boolean) {
+        hideLibrary()
         if (::root.isInitialized) hideBrowserKeyboard()
         if (!::tabsLayer.isInitialized || videoFullScreen) return
         if (!devices) captureActiveTabThumbnail()
         devicesRequested.value = devices
         overviewShowing = true
         tabsLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
 
     private fun hideTabs() {
         overviewShowing = false
         if (::tabsLayer.isInitialized) tabsLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
 
     /** Uses an installed speech recognizer without requesting microphone permission ourselves. */
@@ -1211,6 +1199,8 @@ class MainActivity : ComponentActivity() {
         if (!childMode.allows(url)) { notice(R.string.child_blocked); return }
         if (::root.isInitialized) hideBrowserKeyboard()
         val verified = GeckoMotorDenemesi.verifiedHttpsUrl(url)
+            ?: HistoryPolicy.safeUrl(url,false)?.takeIf { it.startsWith("http://") }
+        // Gecko still applies the user's HTTPS-only policy to HTTP history links.
         if (verified == null) {
             notice(R.string.invalid_address)
             return
@@ -1455,7 +1445,7 @@ class MainActivity : ComponentActivity() {
         if (::root.isInitialized) {
             root.setBackgroundColor(
                 if (dayMode.value) AndroidColor.rgb(245, 247, 251)
-                else AndroidColor.rgb(10, 15, 28)
+                else T.listeGece_zemin.toArgb()
             )
         }
         WindowCompat.getInsetsController(window, window.decorView)
@@ -1483,6 +1473,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Overflow and full-page panels expose only their own accessibility tree. */
+    private fun updateOverlayAccessibility() {
+        if (!::root.isInitialized) return
+        val owner = when {
+            libraryShowing && ::libraryLayer.isInitialized -> libraryLayer
+            settingsShowing && ::settingsLayer.isInitialized -> settingsLayer
+            downloadsShowing && ::downloadsLayer.isInitialized -> downloadsLayer
+            shieldShowing && ::shieldLayer.isInitialized -> shieldLayer
+            overviewShowing && ::tabsLayer.isInitialized -> tabsLayer
+            menuShowing && ::menuLayer.isInitialized -> menuLayer
+            else -> null
+        }
+        for (index in 0 until root.childCount) {
+            val child=root.getChildAt(index)
+            child.importantForAccessibility=if(owner==null || child===owner)
+                View.IMPORTANT_FOR_ACCESSIBILITY_AUTO else View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        }
+    }
+
     private fun canCollapseChrome(): Boolean {
         val accessibility = getSystemService(android.view.accessibility.AccessibilityManager::class.java)
         return !atHome.value && !videoFullScreen && !imeVisible && !menuShowing &&
@@ -1492,9 +1501,8 @@ class MainActivity : ComponentActivity() {
 
     private fun updateChromeMargins() {
         if (!::chrome.isInitialized || !::toolbarMotion.isInitialized) return
-        val lightTopBar = dayMode.value
-        val bottomBar = addressBottom && !lightTopBar
-        val barHeightDp = if (lightTopBar) 68f else 130f
+        val bottomBar = addressBottom
+        val barHeightDp = T.telefon_liste_aracCubugu.toFloat()
         val barHeight = (barHeightDp * resources.displayMetrics.density).roundToInt()
         // The engine keeps its maximum measured height. Dynamic clipping moves
         // sticky site controls with the toolbar without repeatedly reflowing pages.
@@ -1547,16 +1555,19 @@ class MainActivity : ComponentActivity() {
         if (menuShowing) hideBrowserMenu()
         shieldShowing = true
         shieldLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
 
     private fun hideShield() {
         shieldShowing = false
         if (::shieldLayer.isInitialized) shieldLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
 
     private fun showSettings() = openSettingsPage(BrowserSettingsPage.MAIN)
 
     private fun openSettingsPage(page: BrowserSettingsPage) {
+        hideLibrary()
         settingsInitialPage = page
         hideBrowserKeyboard()
         if (!::settingsLayer.isInitialized || videoFullScreen) return
@@ -1566,6 +1577,7 @@ class MainActivity : ComponentActivity() {
         if (overviewShowing) hideTabs()
         settingsShowing = true
         settingsLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
 
     private fun hideSettings() {
@@ -1575,6 +1587,7 @@ class MainActivity : ComponentActivity() {
         vpnScreenVisible = false
         settingsShowing = false
         if (::settingsLayer.isInitialized) settingsLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
 
     private fun handleSettingsAction(action: SettingsAction) {
@@ -1585,6 +1598,14 @@ class MainActivity : ComponentActivity() {
 
     private fun performSettingsAction(action: SettingsAction) {
         when (action) {
+            SettingsAction.ADDRESS -> openSettingsPage(BrowserSettingsPage.ADDRESS)
+            SettingsAction.HOME -> openSettingsPage(BrowserSettingsPage.HOME)
+            SettingsAction.DEFAULT_BROWSER -> requestDefaultBrowser()
+            SettingsAction.NOTIFICATIONS -> openNotificationSettings()
+            SettingsAction.SECURITY_CHECK -> { functionalSettingsPage=FunctionalSettingsPage.SECURITY }
+            SettingsAction.ACCESSIBILITY -> { functionalSettingsPage=FunctionalSettingsPage.ACCESSIBILITY }
+            SettingsAction.CLEAR_DATA -> { functionalSettingsPage=FunctionalSettingsPage.DATA }
+            SettingsAction.TABS -> { hideSettings();showTabs() }
             SettingsAction.VPN -> {
                 vpnScreenVisible = true
                 vpn.startUiMonitoring()
@@ -1611,6 +1632,31 @@ class MainActivity : ComponentActivity() {
                     .setPositiveButton(android.R.string.ok, null).show()
             }
         }
+    }
+
+    private fun refreshSystemPreferences() {
+        defaultBrowser = if (Build.VERSION.SDK_INT>=29) {
+            getSystemService(android.app.role.RoleManager::class.java)?.isRoleHeld(android.app.role.RoleManager.ROLE_BROWSER)==true
+        } else try {
+            packageManager.resolveActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://example.com/")),0)
+                ?.activityInfo?.packageName==packageName
+        } catch (_: Exception) { false }
+        notificationsEnabled = getSystemService(android.app.NotificationManager::class.java)?.areNotificationsEnabled()==true
+    }
+
+    private fun requestDefaultBrowser() {
+        try {
+            val roles=if(Build.VERSION.SDK_INT>=29)getSystemService(android.app.role.RoleManager::class.java) else null
+            if(Build.VERSION.SDK_INT>=29 && roles?.isRoleAvailable(android.app.role.RoleManager.ROLE_BROWSER)==true &&
+                !roles.isRoleHeld(android.app.role.RoleManager.ROLE_BROWSER))
+                startActivity(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_BROWSER))
+            else startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+        } catch (_: Exception) { notice(R.string.settings_system_unavailable) }
+    }
+
+    private fun openNotificationSettings() {
+        try { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,packageName)) }
+        catch (_: Exception) { notice(R.string.settings_system_unavailable) }
     }
 
     private fun updateAutofill() {
@@ -1854,12 +1900,14 @@ class MainActivity : ComponentActivity() {
         savedFiles.addAll(downloadRegistry.items())
         downloadsShowing = true
         downloadsLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
 
     private fun hideDownloads() {
         hideBrowserKeyboard()
         downloadsShowing = false
         if (::downloadsLayer.isInitialized) downloadsLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
 
     private fun openDownloadedFile(file: SavedDownload) {
@@ -1886,11 +1934,13 @@ class MainActivity : ComponentActivity() {
         if (!::menuLayer.isInitialized || videoFullScreen) return
         menuShowing = true
         menuLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
 
     private fun hideBrowserMenu() {
         menuShowing = false
         if (::menuLayer.isInitialized) menuLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
 
     private fun handleMenuAction(action: MenuAction) {
@@ -1899,6 +1949,12 @@ class MainActivity : ComponentActivity() {
         }
         hideBrowserMenu()
         when (action) {
+            MenuAction.NEW_TAB -> createTab(privateMode = false)
+            MenuAction.TAB_GROUP -> { hideSettings();showTabs() }
+            MenuAction.RECENT_TABS -> showLibrary(BrowserLibrary.RECENT_TABS)
+            MenuAction.CLEAR_DATA -> { showSettings();handleSettingsAction(SettingsAction.CLEAR_DATA) }
+            MenuAction.SITE_CONTROLS -> showShield()
+            MenuAction.HELP -> openSettingsPage(BrowserSettingsPage.ABOUT)
             MenuAction.BOOKMARKS -> showBookmarks()
             MenuAction.HISTORY -> showRecentPages()
             MenuAction.DOWNLOADS -> showDownloads()
@@ -1940,7 +1996,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun bookmarkUrls(): Set<String> = getSharedPreferences("eymen_browser_bookmarks",MODE_PRIVATE)
-        .getStringSet("urls",emptySet()).orEmpty().filter { HistoryPolicy.safeUrl(it,false) == it }.toSet()
+        .getStringSet("urls",emptySet()).orEmpty().filter { GeckoMotorDenemesi.verifiedHttpsUrl(it) == it }.toSet()
 
     private fun isCurrentBookmarked(): Boolean {
         bookmarkRevision
@@ -1949,7 +2005,7 @@ class MainActivity : ComponentActivity() {
 
     private fun toggleCurrentBookmark() {
         val tab = activeTab ?: return
-        val url = HistoryPolicy.safeUrl(tab.url,false)?.takeIf { !tab.home } ?: return
+        val url = GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf { it==tab.url && !tab.home } ?: return
         val old = bookmarkUrls()
         getSharedPreferences("eymen_browser_bookmarks",MODE_PRIVATE).edit()
             .putStringSet("urls",if (url in old) old-url else old+url).apply()
@@ -1964,10 +2020,13 @@ class MainActivity : ComponentActivity() {
     private fun openLibrary(mode: BrowserLibrary) {
         hideBrowserKeyboard();hideBrowserMenu();hideSettings();hideDownloads();hideShield();hideTabs()
         libraryMode = mode;history.refresh();libraryShowing = true;libraryLayer.visibility = View.VISIBLE
+        updateOverlayAccessibility()
     }
     private fun hideLibrary() {
+        hideBrowserKeyboard()
         libraryShowing = false
         if (::libraryLayer.isInitialized) libraryLayer.visibility = View.GONE
+        updateOverlayAccessibility()
     }
     private fun confirmClearHistory() {
         AlertDialog.Builder(android.view.ContextThemeWrapper(this,if(dayMode.value)
@@ -2253,6 +2312,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        refreshSystemPreferences()
         updateAutofill()
         downloads.observe()
         savedFiles.clear()

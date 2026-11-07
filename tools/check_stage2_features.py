@@ -84,7 +84,7 @@ assert 'download_clear_confirm' in downloads
 
 assert 'settingsRows.filter' in settings
 assert 'SettingRow(R.string.settings_shield' in settings
-assert 'settings_coming_soon' in settings
+assert 'settings_basic' in settings and 'SettingsActionRow' in settings
 assert 'SettingRow(R.string.settings_about_update' in settings
 assert 'SettingsAction.SHIELD ->' in main
 assert 'SettingsAction.SEARCH_ENGINE -> showSearchEngineSelection()' in main
@@ -96,10 +96,10 @@ assert 'Modifier.navigationBarsPadding()' not in chrome
 assert 'bottomSystemInsetPx' in main
 assert 'insets.getInsets(WindowInsets.Type.navigationBars()).bottom' in main
 assert 'root.setPadding(left, top, right, bottom)' in main
-assert 'val barHeightDp = if (lightTopBar) 68f else 130f' in main
+assert 'T.telefon_liste_aracCubugu.toFloat()' in main
 assert 'LightBrowserHome(' in main
 assert 'LightBrowserToolbar(' in main
-assert 'LightBrowserMenu(' in main
+assert 'BrowserMenu(' in main
 # Signed upgrades from <=v1.0.4 must not strand users on the saved dark default.
 assert 'light_design_default_migrated_v105' in main
 assert '.putBoolean("day_theme", true)' in main
@@ -108,26 +108,23 @@ assert 'SettingsAction.ABOUT -> updater.check(manual = true)' in main
 assert 'updater.onResumed()' in main
 assert 'updater.dispose()' in main
 
-# 06 Nov approved light reference: compact top-right three-dot popup
-# (not the previously oversized menu), native vector icons and two-tone title.
+# S-002: flat list overflow and settings replace the old narrow/grid panels.
 light_ui = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/LightBrowserUi.kt").read_text()
-assert "internal fun LightBrowserMenu(" in light_ui
-assert ".width(148.dp)" in light_ui
-assert "menuOpen: Boolean" in light_ui
-assert "maxWidth * -0.15f" in light_ui
-assert ".fillMaxWidth(if (menuOpen) 0.59f else 1f)" in light_ui
-assert "private var menuShowing by mutableStateOf(false)" in main
-assert "menuOpen = menuShowing" in main
-assert ".padding(top = 57.dp, end = 6.dp)" in light_ui
-assert "ReferenceMenuIcon(symbol, enabled)" in light_ui
-assert 'LightMenuRow(stringResource(R.string.back), "←", highlighted = true)' in light_ui
-assert 'LightMenuRow(stringResource(R.string.forward), "→", highlighted = true)' in light_ui
-assert "buildAnnotatedString" in light_ui
+menu = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserMenu.kt").read_text()
+assert '.width(width).heightIn(max=available)' in menu
+assert 'ListPageHeader' in settings and 'SettingsRows' in settings
+assert 'settings_personal_hint' not in settings
+assert 'buildAnnotatedString' in light_ui
 assert 'append("Eymen ")' in light_ui and 'append("Browser")' in light_ui
-assert "quadraticBezierTo(" in light_ui
-assert "LightBrowserToolbar(" in light_ui and "onVoiceSearch" in light_ui
-visual_check = (root / "tools/capture_android_visual.sh").read_text()
-assert "Approved narrow/no-scrim three-dot menu" in visual_check
+assert 'quadraticBezierTo(' in light_ui
+assert 'LightBrowserToolbar(' in light_ui and 'onVoiceSearch' in light_ui
+assert 'BrowserChromeMotion' in main and 'session.setScrollDelegate' in main
+motion = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChromeMotion.kt").read_text()
+assert 'engine.setVerticalClipping(-visible)' in motion
+assert 'engine.setDynamicToolbarMaxHeight(height)' in motion
+assert 'event.rawY' in motion and 'return super.dispatchTouchEvent(event)' in motion
+visual_check = (root / 'tools/capture_android_visual.sh').read_text()
+assert 'S-002 native list overflow' in visual_check
 
 for label in ('T05-Kalkan','T08-Indirmeler','T10-Ayarlar'):
     assert (root / f'design/ekranlar/{label}.png').exists()

@@ -1,5 +1,10 @@
 package com.eymen.browser.telefon
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -97,8 +102,24 @@ internal fun SettingsActionRow(label: String, p: BrowserScreenPalette, onClick: 
         }
         if (chosen != null) {
             Spacer(Modifier.width(T.telefon_ekran_bosluk.dp))
-            EymenVector(if (chosen) EymenPaths.kalkan else EymenPaths.site,
-                color = if (chosen) p.accent else p.disabled,iconSize = T.telefon_liste_menuSimge.dp)
+            ListSelectionMark(chosen,p)
         }
+    }
+}
+
+@Composable
+internal fun ListSelectionMark(chosen: Boolean,p: BrowserScreenPalette){
+    Canvas(Modifier.size(T.telefon_liste_menuSimge.dp)){
+        val width=T.telefon_ekran_cizgi.dp.toPx()*2
+        drawCircle(if(chosen)p.accent else p.muted,radius=size.minDimension/2-width,style=Stroke(width))
+        if(chosen)drawCircle(p.accent,radius=size.minDimension/5)
+    }
+}
+@Composable
+internal fun ListToggleMark(chosen: Boolean,p: BrowserScreenPalette){
+    Canvas(Modifier.size(T.telefon_ekran_rozet.dp,T.telefon_liste_menuSimge.dp)){
+        drawRoundRect(if(chosen)p.accent else p.disabled,cornerRadius=CornerRadius(size.height/2))
+        drawCircle(p.background,radius=size.height/2-T.telefon_ekran_cizgi.dp.toPx()*2,
+            center=Offset(if(chosen)size.width-size.height/2 else size.height/2,size.height/2))
     }
 }

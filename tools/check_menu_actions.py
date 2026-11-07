@@ -8,16 +8,17 @@ menu = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/Brow
 design = (root / "design/kaynak/T07-Menu.html").read_text()
 tokens = (root / "design/tokens.json").read_text()
 
-assert 'grid-template-columns: repeat(4,' in design
-assert 'height: 628px' in design
-assert 'height: 196px' not in menu, "T07 grid must not reuse T06 card height"
-assert 'tiles.chunked(4)' in menu, "menu must remain in four columns"
-assert 'private val tiles = listOf(' in menu
+# S-002: the user's 7 Nov Chrome reference supersedes the old 4x3 sheet.
+assert 'private val groups = listOf(' in menu
+assert 'rows.forEach' in menu and '.verticalScroll(rememberScrollState())' in menu
+assert 'heightIn(max=available)' in menu
+assert 'MenuAction.HISTORY' in menu and 'MenuAction.CLEAR_DATA' in menu
+assert 'canGoBack: Boolean' in menu and 'canGoForward: Boolean' in menu
 assert 'EymenPaths.' in menu
-assert 'tile.supported' in menu and '.clickable(enabled = allowed)' in menu
+assert '.clickable(enabled=allowed' in menu
 assert 'MenuAction.TRANSLATE -> translateCurrentPage()' in main
 assert 'MenuAction.READER -> toggleReaderMode()' in main
-assert 'MenuAction.PDF)' in menu
+assert 'MenuAction.PDF' in menu
 assert 'MenuAction.PDF -> saveCurrentPageAsPdf()' in main
 assert 'tab.gecko.saveAsPdf().accept(' in main
 assert 'downloads.savePdfStream(stream)' in main

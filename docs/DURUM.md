@@ -1,13 +1,17 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-06
+Son güncelleme: 2026-11-07
 
 ## Yeni çalışma — v1.0.19 hazırlığı
 
 - Kullanıcı 7 Kasım’da Chrome ekran görüntülerindeki düz satırlı Ayarlar/üç nokta menüsünü, gerçek ziyaret Geçmişi ve kaydırmayla gizlenen adres/menü çubuğunu istedi (onay S-002).
 - İlk adım: yerel SQLite geçmişi; yalnız tamamlanan normal HTTP(S) ziyaretleri, gerçek başlık ve zaman. Gün bazında aynı URL yenilenir; 90 gün/10.000 kayıt sınırı ve arama/silme altyapısı. Gizli/çocuk ziyaretleri kayda girmez; başarısız yükler ve iç motor adresleri dışarıda kalır.
 - Liste sayfası, yer imleri/son kapatılan sekmeler ve normal geçmiş aynı düz satır altyapısına bağlandı. Native Gecko scroll delegate, dokunma yönü ve dinamik viewport clipping ile animasyonlu çubuk altyapısı eklendi. Sayfa betiği/telemetri yoktur; üst/alt ve video/klavye güvenli alanları korunacak.
-- Yeni geçmiş sınırları/tarihleri ve aşağı/yukarı kaydırma kararları için anlamlı JVM testleri eklendi. Henüz Android derlemesi/yeni gerçek UI kabulü geçmedi. Ayar ve menü görünümünün yeni referansa dönüşümü sonraki adımdır.
+- İlk altyapı kaynağı `62a5d1d85c39feb793f7da46f65f2f5138eee96f`: kaynak/JVM/üç ABI #42332718535, önceki Android 15/16 UI #42332718518, görsel #42332718510 ve arka plan servisi #42332718511 geçti. Dokuz yeni geçmiş/kaydırma JVM testi başarılı. Yeni tasarım ve kaydırma akışının kendisi bu eski UI testinin kapsamı değildi.
+- Yeni Ayarlar: düz Temel/Gelişmiş listeler, aranabilir satırlar, nötr açık/koyu yüzeyler; ayrı adres konumu, gerçek Android varsayılan tarayıcı/bildirim ayarları, gerçek ana sayfa düğmesi tercihi, metin ölçeği ve güvenlik tercihi sayfaları. Mevcut gizlilik, dil, eklenti ve çocuk sayfaları düz satırlara dönüştürüldü; büyük pazarlama kartları kaldırıldı.
+- Yeni menü: üstte gerçek geri/ileri/yer imi/PDF/yenile; aşağıda gruplanmış tam boy kaydırılabilir işlev satırları. Eski 148 dp mini menü ve gece 4x3 sayfa kaldırıldı. Ana sayfa menü açılırken kaydırılmaz. Yer imleri mevcut HTTPS bağlantılarını korur.
+- Tek satırlı adres çubuğu iki temada üst/alt yerleşimi gerçekten uygular. Eski açık tema üst konumu bir kez korunur, yeni seçimler kalıcıdır; ilk kurulum varsayılanı üsttür. Menü/paneller erişilebilirlikte alttaki sayfayı örter. Kaydırma gözlemi dispatchTouchEvent’i tüketmez, ham ekran koordinatını kullanır; küçük ters harekette döner. Gecko dinamik toolbar/clipping ile viewport ve sabit alt öğeler izlenir.
+- Yeni gerçek UI kabulü: SQLite başlık/zaman kaydı, gerçek URL satırları, arama/silme/açma, gizli URL’nin disk DB’sine hiç girmemesi, geçmiş temizleme, iki temada ekran görüntüsü; gerçek uzun HTTPS belgede üst/alt çubuğun kaybolması, sekiz fiziksel piksel ters hareketle dönmesi, sabit alt düğmenin doğru dokunulması. Bu genişletilmiş kabul ve yeni UI derlemesi henüz geçmedi. T07 görsel geometrisi S-002’ye göre güncellendi; T02/T03 referans kapıları korunur.
 - Son imzalı yayın v1.0.18; v1.0.19 henüz yayınlanmadı.
 
 ## Güncel yayın — v1.0.18

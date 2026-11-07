@@ -121,7 +121,7 @@ private fun SetupView(
 ) {
     var shieldWanted by remember { mutableStateOf(true) }
     var searchEngine by remember { mutableStateOf("Google") }
-    var addressBottom by remember { mutableStateOf(true) }
+    var addressBottom by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize()
             .background(T.gece_zemin)

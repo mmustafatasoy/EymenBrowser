@@ -101,6 +101,6 @@ private fun HistoryRow(entry: HistoryEntry,p: BrowserScreenPalette,showTime: Boo
                 if (showTime) ScreenText(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(entry.visitedAt)),p.muted,T.telefon_yazi_enAz,maxLines = 1)
             }
         }
-        ListIconAction(stringResource(R.string.history_delete_item,entry.title),EymenPaths.temizle,p,{ onDelete(entry) })
+        ListIconAction(stringResource(R.string.history_delete_item,entry.url),EymenPaths.temizle,p,{ onDelete(entry) })
     }
 }

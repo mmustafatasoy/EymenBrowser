@@ -13,9 +13,9 @@ import kotlin.math.roundToInt
 
 internal class BrowserGeckoView(context: Context) : GeckoView(context) {
     var onBrowserTouch: ((MotionEvent) -> Unit)? = null
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         onBrowserTouch?.invoke(event)
-        return super.onTouchEvent(event)
+        return super.dispatchTouchEvent(event)
     }
 }
 

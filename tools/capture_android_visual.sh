@@ -44,6 +44,7 @@ adb shell cmd locale get-app-locales "$PKG" | grep -q 'tr-TR' || {
   echo "Failed to switch the app locale to tr-TR; cannot compare references." >&2
   exit 19
 }
+adb shell am force-stop com.android.launcher3 || true
 adb logcat -c
 adb shell am start -W -n "$PKG/.MainActivity"
 sleep 7
@@ -197,57 +198,29 @@ with Image.open("visual-captures/T03-Yeni-sekme.png") as raw:
         raise SystemExit("T03 is not the approved LIGHT home with the real blue A mark")
 PY
 
-# T07: the approved compact three-dot menu must really open at the top
-# right and contain working Back/Forward actions (not a decorative image).
+# S-002 native list overflow: bounded top-right panel, real rows, no home movement.
 adb shell input tap 365 58
 sleep 2
 check_browser_foreground
 adb exec-out screencap -p > visual-captures/T07-Acik-Menu.png
-python - <<'PY'
-from PIL import Image, ImageChops
-with Image.open("visual-captures/T03-Yeni-sekme.png") as original:
-    full_home = original.convert("RGB")
-with Image.open("visual-captures/T07-Acik-Menu.png") as current:
-    full_menu = current.convert("RGB")
-# The approved menu is narrow (~154px on this 390px density-160 fixture),
-# top-right aligned, and leaves the center-left home UNDIMMED.
-right_box = (228, 90, 389, 359)
-# Logo/search intentionally reposition, so examine an unchanged shortcut strip.
-left_box = (15, 368, 155, 438)
-right_before = full_home.crop(right_box)
-right_after = full_menu.crop(right_box)
-right_diff = ImageChops.difference(right_before, right_after)
-right_fraction = sum(max(px) >= 24 for px in right_diff.getdata()) / (
-    right_diff.width * right_diff.height
-)
-left_before = full_home.crop(left_box)
-left_after = full_menu.crop(left_box)
-left_diff = ImageChops.difference(left_before, left_after)
-left_fraction = sum(max(px) >= 24 for px in left_diff.getdata()) / (
-    left_diff.width * left_diff.height
-)
-# Two highlighted navigation rows near the very top of the opened menu.
-highlighted = full_menu.crop((234, 90, 376, 143))
-blue = sum(
-    205 <= r < 239 and 215 <= g <= 248 and b > 246
-    for r, g, b in highlighted.getdata()
-)
-print(
-    f"Actual T07 compact popup: right delta={right_fraction:.3f}, "
-    f"left scrim delta={left_fraction:.3f}, highlighted pixels={blue}"
-)
-# The menu-open logo should shift left, no longer hiding under the menu.
-logo_shift_region = full_menu.crop((103, 130, 139, 218))
-left_brand_blues = sum(
-    r < 115 and 50 < g < 180 and b > 185
-    for r, g, b in logo_shift_region.getdata()
-)
-print(f"Menu-open branding left blue pixels={left_brand_blues}")
-if right_fraction < 0.12 or blue < 3000 or left_fraction > 0.07 or left_brand_blues < 300:
-    raise SystemExit(
-        "Approved narrow/no-scrim three-dot menu failed its screenshot geometry"
-    )
-PY
+python - <<'CHECK'
+from PIL import Image,ImageChops
+home=Image.open('visual-captures/T03-Yeni-sekme.png').convert('RGB')
+menu=Image.open('visual-captures/T07-Acik-Menu.png').convert('RGB')
+diff=ImageChops.difference(home,menu)
+# 256dp panel on the density-160 390dp fixture. The unchanged left strip
+# must remain visible; the new reference does not shift the homepage logo.
+left=diff.crop((0,368,90,438))
+left_fraction=sum(max(p)>=24 for p in left.getdata())/(left.width*left.height)
+right=diff.crop((140,100,380,700))
+right_fraction=sum(max(p)>=24 for p in right.getdata())/(right.width*right.height)
+print(f'S-002 native list overflow: left delta={left_fraction:.3f}, panel delta={right_fraction:.3f}')
+assert left_fraction<0.08,'overflow moved/dimmed content outside the panel'
+assert right_fraction>0.20,'real full-height overflow panel did not open'
+# Require the newly wider list to occupy the area the old 148dp popup left free.
+wide=diff.crop((140,200,215,650))
+assert sum(max(p)>=24 for p in wide.getdata())/(wide.width*wide.height)>0.25,'obsolete narrow menu still present'
+CHECK
 adb shell input keyevent 4
 sleep 1
 check_browser_foreground
