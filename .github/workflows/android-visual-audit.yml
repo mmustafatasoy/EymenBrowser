@@ -76,7 +76,7 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 5X
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash tools/capture_android_visual.sh
       - name: Tasarim fark raporlarini olustur

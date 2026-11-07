@@ -48,7 +48,7 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 5X
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash tools/audit_android_downloads.sh
       - name: Preserve instrumentation result and device log
