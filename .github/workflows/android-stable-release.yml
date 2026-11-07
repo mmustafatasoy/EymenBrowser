@@ -316,23 +316,32 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PYTHON'
-          import json, os, subprocess, time
+          import json, os, re, subprocess, time
           from pathlib import Path
-          source=json.loads(Path('.github/release-requests/android-v1.0.20.json').read_text())['candidate_source_sha']
+          request=json.loads(Path('.github/release-requests/android-v1.0.20.json').read_text())
+          source=request['candidate_source_sha']
+          retained=request['retained_source_sha']
+          assert re.fullmatch(r'[0-9a-f]{40}',source) and re.fullmatch(r'[0-9a-f]{40}',retained)
+          subprocess.run(['git','fetch','--depth=1','origin',retained],check=True)
+          files=('phase0.yml','android-download-audit.yml','android-browser-ui-audit.yml','android-visual-audit.yml')
+          proof={file:retained if file in ('android-download-audit.yml','android-visual-audit.yml') else source for file in files}
+          for file,ref in proof.items():
+              subprocess.run(['git','diff','--exit-code',ref,'HEAD','--','android','shared','design','tools','versions.toml',f'.github/workflows/{file}'],check=True)
           repo=os.environ['GITHUB_REPOSITORY']
           def api(path):
               return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/{path}']))
           deadline=time.monotonic()+600
           while True:
-              runs=api(f'actions/runs?head_sha={source}&per_page=100')['workflow_runs']
+              runs_by_ref={ref:api(f'actions/runs?head_sha={ref}&per_page=100')['workflow_runs'] for ref in set(proof.values())}
               pending=[]
-              for file in ('phase0.yml','android-download-audit.yml','android-browser-ui-audit.yml','android-visual-audit.yml'):
+              for file,ref in proof.items():
+                  runs=runs_by_ref[ref]
                   matching=[r for r in runs if r['path']==f'.github/workflows/{file}']
                   if not matching:
                       pending.append(file)
                       continue
                   run=max(matching,key=lambda r:(r['id'],r['run_attempt']))
-                  assert run['head_sha']==source,file
+                  assert run['head_sha']==ref,file
                   if run['status']!='completed':
                       pending.append(file)
                       continue
@@ -341,11 +350,11 @@ jobs:
                       jobs=api(f"actions/runs/{run['id']}/jobs?filter=all&per_page=100")['jobs']
                       prefix='address-custom-screens' if file=='android-browser-ui-audit.yml' else 'emulator-visual-audit'
                       for level in (35,36):
-                          same=[j for j in jobs if j['name']==f'{prefix} ({level})' and j['head_sha']==source]
+                          same=[j for j in jobs if j['name']==f'{prefix} ({level})' and j['head_sha']==ref]
                           assert same, f'{file}: API {level} missing'
                           latest=max(same,key=lambda j:j['id'])
                           assert latest['status']=='completed' and latest['conclusion']=='success',f'{file}: API {level}'
-                  print(f"Verified {file}: {run['id']} at {source}",flush=True)
+                  print(f"Verified {file}: {run['id']} at {ref}",flush=True)
               if not pending:
                   break
               assert time.monotonic()<deadline,f'Acceptance timed out: {pending}'
