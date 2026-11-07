@@ -1,5 +1,8 @@
 name: EymenBrowser Android signed stable release
 on:
+  push:
+    branches: [main]
+    paths: ['.github/release-requests/android-v1.0.20.json']
   workflow_dispatch:
     inputs:
       version:
@@ -9,6 +12,7 @@ on:
         default: "1.0.20"
 permissions:
   contents: write
+  actions: read
 concurrency:
   # v1 held by a stuck GitHub emulator job and blocked later runs. This v2
   # group safely isolates recovery from the stale v1 queue.
@@ -16,6 +20,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   signed-phone-release:
+    if: "github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'release(android): request signed v1.0.20'"
     name: Verify, sign, compare old APK metadata and publish stable APKs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -28,6 +33,24 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify production files match the declared Android source
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import json, os, re, subprocess
+          from pathlib import Path
+          request = json.loads(Path('.github/release-requests/android-v1.0.20.json').read_text())
+          assert request['version'] == '1.0.20'
+          source = request['candidate_source_sha']
+          assert re.fullmatch(r'[0-9a-f]{40}', source)
+          subprocess.run(['git','fetch','--depth=1','origin',source],check=True)
+          subprocess.run(['git','diff','--exit-code',source,'HEAD','--',
+              'android','shared','design','tools','versions.toml',
+              '.github/workflows/phase0.yml','.github/workflows/android-download-audit.yml',
+              '.github/workflows/android-browser-ui-audit.yml','.github/workflows/android-visual-audit.yml'],check=True)
+          print(f"Production files match declared source: {source}")
+          PYTHON
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -41,7 +64,7 @@ jobs:
           gradle-version: "9.3.1"
       - name: Only release from main with a new monotonic stable tag
         env:
-          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ inputs.version || '1.0.20' }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" != "main" ]]; then
@@ -251,54 +274,84 @@ jobs:
           cat > release-staging/RELEASE_NOTES.md <<EOF
           EYMEN Browser Android Telefon v$RELEASE_VERSION
 
-          - Kullanıcının 7 Kasım Chrome referanslarına göre Ayarlar ve üç nokta
-            menüsü yeniden düzenlendi: sade, gruplanmış satırlar; açık/koyu
-            nötr yüzeyler, arama ve gerçek alt sayfalar. Ana sayfa/A logosu korunur.
-          - Geçmiş artık yerel SQLite veritabanında gerçek tamamlanmış normal
-            ziyaretleri başlık, URL ve zamanıyla tutar. Tarih grupları, arama,
-            bağlantıyı açma, tek kaydı silme ve geçmiş temizleme vardır.
-            Gün içinde aynı URL yenilenir; 90 gün/10.000 kayıt sınırı uygulanır.
-          - Gizli ve çocuk ziyaretleri geçmişe yazılmaz. Yer imleri mevcut
-            bağlantıları korur; son kapatılan normal sekmeler gerçek liste olarak açılır.
-          - Adres ve menü çubuğu aşağı kaydırırken animasyonla gizlenir,
-            küçük ters harekette geri gelir. Üst/alt konum ve iki tema desteklenir.
-            Gecko native kaydırma/ofset API'leri kullanılır; sayfaya takip betiği yoktur.
-          - Sayfa altındaki sabit öğeler ve dokunma alanları dinamik viewport
-            ile hizalanır. Klavye, seçim, ekran okuyucu, menü ve tam ekran
-            video durumlarında çubuk/sistem güvenli alanı korunur.
-          - Gerçek Android varsayılan tarayıcı ve bildirim ayarları; üst/alt adres,
-            ana sayfa düğmesi, metin boyutu, site/çerez ve güvenlik tercihleri.
-            HTTP/HTTPS tarayıcı rolü desteklenir; HTTPS-only tercihi korunur.
-          - Sistem seçim penceresinde ve başlatıcıda onaylı A logosu gösterilir.
-          - Üst menüde gerçek geri/ileri, yer imi, PDF kaydet ve yenile;
-            aşağıda geçmiş, veri silme, site kontrolleri ve diğer çalışan araçlar.
-            Açılır menü her seferinde en üstten başlar.
-          - Önceki banka popup/opener/kapatma, çerez/DOM temizliği,
-            eklenti, çocuk PIN'i ve güvenli imzalı güncelleme davranışları korunur.
+          - Adres alanı ortak 16sp ölçüsünde ve kutu boyunca dokunulabilir.
+            Parmağın ilk dokunuşu bir kareden uzun sürse de mevcut adresin
+            tümünü seçer; sonraki imleç ve IME composition düzenlemeleri korunur.
+          - Arama metninde Android klavyesi gerçek Ara, web adresinde Git eylemi
+            alır. Klavye eylemi editörün en son değerini motora gönderir.
+            Android Geri, adres düzenlemesini ve klavyeyi önce kapatır.
+          - Menü ve Android Geri/İleri aynı tarayıcı gezinmesini kullanır.
+            İlk sayfadan Geri ana sayfaya, oradan İleri gerçek sayfaya döner;
+            ana sayfa düğmesinden sonra Geri açık belgeyi gösterir.
+          - Yeni boş sekmede Geri, aynı tarama bağlamındaki gerçek önceki sekmeye döner.
+          - Motor geçmişi olmayan kullanıcı popup'ında Geri yalnız o pencereyi
+            kapatır ve gerçek opener sekmesini gösterir. Banka popup, izin,
+            window.opener ve window.close davranışları korunur.
+          - PageStart üretmeyen SPA/hash gezintilerinde de gerçek motor konumu
+            izlenir; adres alanı Geri/İleri ile doğru bağlantıya döner.
+          - v1.0.19'daki sade Ayarlar/menü, gerçek yerel geçmiş, gizli kayıt
+            dışlama, üst/alt kayan çubuk ve ekran güvenli alanları korunur.
 
-          Doğrulama: kaynak/JVM ve üç ABI; Android 15/16 emülatöründe gerçek dokunma,
-          SQLite başlık/zaman ve kalıcılık, geçmiş arama/açma/silme/temizleme,
-          gizli URL'nin DB'ye girmemesi, üst/alt çubukta aşağı gizleme ve
-          8 fiziksel piksel ters harekette gösterme, sabit alt düğmeye dokunma,
-          iki temada gerçek ekran görüntüleri ve önceki işlev kabulü.
-          Arka plan indirme testi gerçek Android servisi ve yerel akış kullanır;
-          uzak VPN ağı testi değildir. APK'lar orijinal üretim sertifikası,
-          hizalama, SHA-256 ve önceki v1.0.18 APK metadata uyumundan geçer.
+          Doğrulama: kaynak/JVM/üç ABI; Android 15/16 emülatöründe 180 ms gerçek
+          dokunma, gerçekten görünen ekran klavyesi, native InputConnection ile
+          tümünü seç/IME composition ve
+          Ara/Git; iki gerçek HTTPS belgesi arasında kullanıcı bağlantısı,
+          menü ve Android Geri/İleri, kullanıcı tıklamasıyla SPA/hash,
+          ana sayfa dönüşü, popup'ta Android Geri ve klavye iptali.
+          Önceki gerçek çerez/DOM temizliği, eklenti, PIN, dil, indirme ve
+          dinamik çubuk kabulleri de bu kaynakta yeniden çalıştırıldı.
+          Kullanıcı önceki sürümde banka sitelerini ve ekran uyumunu onayladı;
+          CI bir banka hesabına giriş yapmaz. Tüm 64 özellik tamamlandı denmez.
 
-          Önceki sürümün kaydetmediği eski ziyaretler oluşturulmaz. Geçmiş bu
-          sürümdeki gerçek gezinmeden oluşur; başka tarayıcıdan gizlice alınmaz.
-          Google hesabı/hizmeti, bulut eşitleme veya ayrı parola kasası eklenmedi.
-          Gerçek banka hesabı, fiziksel Tecno kamera/klavye/şifre hizmeti,
-          gerçek çeviri modeli, uzak WireGuard ve Android 8/9 SAF ayrı cihaz kabulüdür.
-          VPN kullanıcıya ait WireGuard sunucusu/yapılandırması gerektirir.
-
+          APK'lar orijinal üretim sertifikası, 16 KiB hizalama, SHA-256,
+          boyut sınırı ve önceki v1.0.19 APK metadata uyumundan geçer.
+          Bu son karşılaştırma fiziksel telefonda üzerine kurulum testi değildir.
           ARM64: EymenBrowser-Android-Phone-arm64-v8a.apk
           ARMv7: EymenBrowser-Android-Phone-armeabi-v7a.apk
           x86_64: EymenBrowser-Android-Phone-x86_64.apk
-          Mevcut uygulamayı silmeden aynı imzalı APK ile güncelleyebilirsiniz.
-          Uygulama içi güncelleme SHA-256/paket/sürüm/imza doğrulaması ve
-          Android'in son kurulum onayıyla çalışır.
+          Aynı imzalı mevcut sürümü silmeden güncelleyebilirsiniz.
           EOF
+      - name: Require four successful acceptance workflows before publishing v1.0.20
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import json, os, subprocess, time
+          from pathlib import Path
+          source=json.loads(Path('.github/release-requests/android-v1.0.20.json').read_text())['candidate_source_sha']
+          repo=os.environ['GITHUB_REPOSITORY']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/{path}']))
+          deadline=time.monotonic()+600
+          while True:
+              runs=api(f'actions/runs?head_sha={source}&per_page=100')['workflow_runs']
+              pending=[]
+              for file in ('phase0.yml','android-download-audit.yml','android-browser-ui-audit.yml','android-visual-audit.yml'):
+                  matching=[r for r in runs if r['path']==f'.github/workflows/{file}']
+                  if not matching:
+                      pending.append(file)
+                      continue
+                  run=max(matching,key=lambda r:(r['id'],r['run_attempt']))
+                  assert run['head_sha']==source,file
+                  if run['status']!='completed':
+                      pending.append(file)
+                      continue
+                  assert run['conclusion']=='success',f"{file}: {run['conclusion']}"
+                  if file in ('android-browser-ui-audit.yml','android-visual-audit.yml'):
+                      jobs=api(f"actions/runs/{run['id']}/jobs?filter=all&per_page=100")['jobs']
+                      prefix='address-custom-screens' if file=='android-browser-ui-audit.yml' else 'emulator-visual-audit'
+                      for level in (35,36):
+                          same=[j for j in jobs if j['name']==f'{prefix} ({level})' and j['head_sha']==source]
+                          assert same, f'{file}: API {level} missing'
+                          latest=max(same,key=lambda j:j['id'])
+                          assert latest['status']=='completed' and latest['conclusion']=='success',f'{file}: API {level}'
+                  print(f"Verified {file}: {run['id']} at {source}",flush=True)
+              if not pending:
+                  break
+              assert time.monotonic()<deadline,f'Acceptance timed out: {pending}'
+              print(f'Waiting for acceptance: {pending}',flush=True)
+              time.sleep(15)
+          PYTHON
       - name: Publish stable GitHub Release ONLY if all previous gates succeeded
         run: |
           set -euo pipefail

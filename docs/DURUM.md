@@ -21,6 +21,8 @@ Son güncelleme: 2026-11-07
 
 - Aynı kaynağın API 36 tekrar işi #128437708483, SwiftShader/gfxstream ColorBuffer hatasından sonra emülatörün yeniden çevrimdışı olmasıyla durdu. Ürün kodunda istisna kanıtı yok; başarısız iş kabul edilmedi. Resmî Android grafik belgelerindeki `-gpu software` seçeneğiyle sürücünün güncel GLES/Vulkan yazılım backend'ini seçmesine geçildi; önceki `-feature -Vulkan` emülatör kısıtı kaldırıldı. Üç emülatör iş akışı aynı ayarı kullanır. Uygulama, test senaryoları ve zorunlu PNG denetimleri değişmedi. İmzalı paket hazırlama kabul işleriyle paralel ilerleyebilir, fakat dört kaynak kabulü ve iki API'nin UI/görsel işleri başarılı olmadan yayın yapılmaz.
 
+- v1.0.20 üretim hazırlığı kaynak `1d6be80ac2e2e0e4c194ac52b08c90ab5f48de9b` ile paralel başlatılacak. Üretim işinin başında ürün/denetim dosyalarının bu kaynakla eşitliği denetlenir. İmza, üç ABI ve eski APK metadata kontrolü hazırlanabilir; son yayın kapısı dört kabul iş akışı ve API 35/36 UI/görsel işlerinin başarıyla tamamlanmasını en çok 10 dakika bekler, hata/eksiklikte yayınlamaz. Henüz v1.0.20 Release yoktur.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
