@@ -183,10 +183,10 @@ class MainActivity : ComponentActivity() {
     private var nextId = 1L
     private var addressBottom by mutableStateOf(true)
     private var searchEngine by mutableStateOf("Google")
-    private var overviewShowing = false
+    private var overviewShowing by mutableStateOf(false)
     // Compose observes this so only the home logo/search reflow when popup opens.
     private var menuShowing by mutableStateOf(false)
-    private var shieldShowing = false
+    private var shieldShowing by mutableStateOf(false)
     private var downloadsShowing by mutableStateOf(false)
     private var settingsShowing by mutableStateOf(false)
     private var settingsInitialPage by mutableStateOf(BrowserSettingsPage.MAIN)
@@ -850,10 +850,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        session.setScrollDelegate(object : GeckoSession.ScrollDelegate {
-            override fun onScrollChanged(session: GeckoSession, scrollX: Int, scrollY: Int) {
-                tab.lastScrollY = scrollY.coerceAtLeast(0)
-                if (activeId.value == id && ::toolbarMotion.isInitialized) toolbarMotion.onScroll(tab.lastScrollY)
+        session.setCompositorScrollDelegate(object : GeckoSession.CompositorScrollDelegate {
+            override fun onScrollChanged(session: GeckoSession, update: GeckoSession.ScrollPositionUpdate) {
+                val screenY=update.scrollY*update.zoom
+                if(!screenY.isFinite())return
+                tab.lastScrollY = screenY.roundToInt().coerceAtLeast(0)
+                if (activeId.value == id && ::toolbarMotion.isInitialized) toolbarMotion.onScroll(tab.lastScrollY,
+                    update.source==GeckoSession.ScrollPositionUpdate.SOURCE_USER_INTERACTION)
             }
         })
         tabs.add(tab)

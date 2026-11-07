@@ -17,7 +17,7 @@ timeout 480 adb shell am instrument -w -r \
   | tee browser-ui-audit/instrumentation.txt
 TEST_EXIT=${PIPESTATUS[0]}
 set -e
-for NAME in settings-light.png appearance-night.png downloads-light.png privacy-settings.png extensions-installed.png child-mode.png language-english.png site-permissions.png history-light.png history-dark.png menu-native.png settings-native-dark.png default-browser-system.png scroll-hidden.png scroll-visible.png scroll-bottom.png failure.png hierarchy.txt; do
+for NAME in settings-light.png appearance-night.png downloads-light.png privacy-settings.png extensions-installed.png child-mode.png language-english.png site-permissions.png history-light.png history-dark.png menu-native.png settings-native-dark.png default-browser-system.png scroll-hidden.png scroll-visible.png scroll-bottom.png failure.png hierarchy.txt chrome-diagnostics.txt; do
   adb exec-out run-as com.eymen.browser.telefon cat "cache/browser-ui-audit/$NAME" \
     > "browser-ui-audit/$NAME" || true
 done

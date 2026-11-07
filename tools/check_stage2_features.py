@@ -118,7 +118,8 @@ assert 'buildAnnotatedString' in light_ui
 assert 'append("Eymen ")' in light_ui and 'append("Browser")' in light_ui
 assert 'quadraticBezierTo(' in light_ui
 assert 'LightBrowserToolbar(' in light_ui and 'onVoiceSearch' in light_ui
-assert 'BrowserChromeMotion' in main and 'session.setScrollDelegate' in main
+assert 'BrowserChromeMotion' in main and 'session.setCompositorScrollDelegate' in main
+assert 'SOURCE_USER_INTERACTION' in main and 'update.scrollY*update.zoom' in main
 motion = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserChromeMotion.kt").read_text()
 assert 'engine.setVerticalClipping(-(height-visible))' in motion
 assert 'engine.setDynamicToolbarMaxHeight(height)' in motion

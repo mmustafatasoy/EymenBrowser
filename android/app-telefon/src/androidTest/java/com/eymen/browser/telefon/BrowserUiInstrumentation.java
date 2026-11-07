@@ -593,6 +593,33 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void recordFailure() throws Exception {
         File directory = new File(getTargetContext().getCacheDir(), "browser-ui-audit");
         directory.mkdirs();
+        StringBuilder diagnostic=new StringBuilder();
+        runOnMainSync(()->{
+            try {
+                diagnostic.append("uptime=").append(SystemClock.uptimeMillis()).append('\n');
+                for(String name:new String[]{"atHome","imeVisible","menuShowing","settingsShowing","overviewShowing","shieldShowing","downloadsShowing","libraryShowing","videoFullScreen"}){
+                    java.lang.reflect.Field flag;
+                    try{flag=MainActivity.class.getDeclaredField(name);}catch(NoSuchFieldException e){flag=MainActivity.class.getDeclaredField(name+"$delegate");}
+                    flag.setAccessible(true);Object value=flag.get(activity);
+                    if(value instanceof androidx.compose.runtime.State<?>)value=((androidx.compose.runtime.State<?>)value).getValue();
+                    diagnostic.append(name).append('=').append(value).append('\n');
+                }
+                java.lang.reflect.Method gate=MainActivity.class.getDeclaredMethod("canCollapseChrome");gate.setAccessible(true);
+                diagnostic.append("canCollapse=").append(gate.invoke(activity)).append('\n');
+                diagnostic.append("pin=").append(browserView().shouldPinOnScreen()).append(" engineHeight=").append(browserView().getHeight())
+                    .append(" engineY=").append(browserView().getTranslationY()).append(" chromeVisibility=").append(chromeView().getVisibility())
+                    .append(" chromeY=").append(chromeView().getTranslationY()).append('\n');
+                Object motion=controller("toolbarMotion");
+                for(java.lang.reflect.Field f:motion.getClass().getDeclaredFields())if(f.getType().isPrimitive()){
+                    f.setAccessible(true);diagnostic.append("motion.").append(f.getName()).append('=').append(f.get(motion)).append('\n');
+                }
+                java.lang.reflect.Field pf=motion.getClass().getDeclaredField("policy");pf.setAccessible(true);Object policy=pf.get(motion);
+                for(java.lang.reflect.Field f:policy.getClass().getDeclaredFields())if(f.getType().isPrimitive()){
+                    f.setAccessible(true);diagnostic.append("policy.").append(f.getName()).append('=').append(f.get(policy)).append('\n');
+                }
+            }catch(Exception e){diagnostic.append(e.getClass().getSimpleName()).append(':').append(e.getMessage());}
+        });
+        try(FileOutputStream out=new FileOutputStream(new File(directory,"chrome-diagnostics.txt"))){out.write(diagnostic.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));}
         Bitmap bitmap = getUiAutomation().takeScreenshot();
         if (bitmap != null) {
             try (FileOutputStream out = new FileOutputStream(new File(directory, "failure.png"))) {

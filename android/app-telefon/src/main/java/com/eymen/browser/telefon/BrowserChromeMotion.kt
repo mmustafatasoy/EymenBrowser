@@ -61,12 +61,12 @@ internal class BrowserChromeMotion(private val engine: GeckoView,private val too
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { fingers=false;lastTouch=SystemClock.uptimeMillis() }
         }
     }
-    fun onScroll(y: Int) {
+    fun onScroll(y: Int,fromUser: Boolean = false) {
         val now=SystemClock.uptimeMillis()
         if (height<=0 || !canCollapse() || engine.shouldPinOnScreen()) {
             policy.scroll(y,false);show();return
         }
-        if (!(fingers || now-lastTouch<1500) || now<suppressHideUntil) return
+        if (!(fromUser || fingers || now-lastTouch<1500) || now<suppressHideUntil) return
         animateTo(policy.scroll(y,true))
     }
     fun reset(y: Int = 0) { policy.reset(y);show(false) }
