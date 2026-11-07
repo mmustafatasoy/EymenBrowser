@@ -27,6 +27,8 @@ Son güncelleme: 2026-11-07
 
 - Üretim isteği sabit emülatör/bellek yapılandırmalı `64b44c1a2aca72e45a7e3402004246837280582a` kaynağına taşınır. Önceki başarısız kabul yayınlamadı; yeni üretim aynı son dört-iş-akışı/iki-API başarı kapısını korur.
 
+- `64b44c1` kaynak/JVM/üç ABI #42385282043, indirme #42385282020 ve iki API görsel #42385282027 başarılı. İki UI işi yine SwiftShader ColorBuffer/çevrimdışı hatasıyla durdu; üretim kapısı yayınlamadı. Yalnız UI emülatörü, resmî grafik modlarında bulunan `swangle` (ANGLE + SwiftShader) altyapısına geçirildi. Çalışmış indirme/görsel kontrollerinin aynı ürün, ortak kaynaklar, araçlar ve kendi iş akışı dosyaları korunur; bunlar `64b44c1` kaynağından doğrulanarak kullanılabilir. Yeni kaynak/JVM ve UI kabulleri yeni commit üzerinde başarılı olmalı. Yayın kapısı dört başarılı kabulü, her kabulün gerçek kaynak SHA'sını ve ürün/ortak araçlar/ilgili iş akışı eşitliğini ayrı ayrı doğrular. Başarısız UI kabulü başarılı sayılmaz.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.

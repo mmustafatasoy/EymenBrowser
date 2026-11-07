@@ -56,7 +56,7 @@ jobs:
           emulator-build: 15507667
           ram-size: 4096M
           heap-size: 512M
-          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swangle -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           emulator-boot-timeout: 240
           script: timeout 660 bash tools/audit_android_browser_ui.sh
