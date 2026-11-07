@@ -1465,6 +1465,8 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
+    // Native Home is an overlay, not a Gecko document. Its return boundary and
+    // ordinary tab-return links do not grant the window.opener capability.
     private fun canNavigateBrowserBack(): Boolean = activeTab?.let {
         !it.home || (!it.homeFromBack && it.url.isNotBlank() && it.url!="about:blank") ||
             it.returnTabId?.let { previous -> tabs.any { tab -> tab.id==previous && tab.privateMode==it.privateMode } }==true
