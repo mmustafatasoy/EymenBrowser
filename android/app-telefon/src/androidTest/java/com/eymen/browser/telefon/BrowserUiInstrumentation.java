@@ -155,10 +155,22 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void realHistoryAndScrolling() throws Exception {
         BrowserHistory history=(BrowserHistory)controller("history");
         Intent webIntent=new Intent(Intent.ACTION_VIEW,Uri.parse("http://example.com/?eymen-browser-role=1")).addCategory(Intent.CATEGORY_BROWSABLE);
-        require(getTargetContext().getPackageManager().queryIntentActivities(webIntent,android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).stream()
-            .anyMatch(info->getTargetContext().getPackageName().equals(info.activityInfo.packageName)),"Android recognizes the app as a real HTTP browser-role candidate");
+        // Inspect our installed filter independently of Android's current default browser.
+        Intent ownWebIntent=new Intent(webIntent).setPackage(getTargetContext().getPackageName());
+        java.util.List<android.content.pm.ResolveInfo> handlers=getTargetContext().getPackageManager().queryIntentActivities(
+            ownWebIntent,android.content.pm.PackageManager.MATCH_ALL|android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+        require(handlers.stream().anyMatch(info->getTargetContext().getPackageName().equals(info.activityInfo.packageName)
+            &&info.handlesAllWebDataURI),"installed HTTP filter handles all web hosts: "+handlers);
         require("http://example.com/?eymen-browser-role=1".equals(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(webIntent)),"safe external HTTP link reaches browser routing without being dropped");
         require(com.eymen.browser.motor.GeckoMotorDenemesi.INSTANCE.urlFromIntent(new Intent(Intent.ACTION_VIEW,Uri.parse("javascript:alert(1)")))==null,"non-web external intent cannot enter browser routing");
+
+        openSettingsItem(R.string.settings_default_browser);
+        await(()->systemBrowserChoice()!=null,"real Android browser-role dialog lists this app");
+        capture("default-browser-system.png",true);
+        require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK),true),"system back down");
+        require(getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK),true),"system back up");
+        await(()->systemBrowserChoice()==null&&field(label(R.string.settings_search_hint))!=null,"cancel returns to settings without changing the default");
+        click(label(R.string.back));
 
         String first="https://example.com/?eymen-history=a";
         String second="https://example.com/?eymen-history=b";
@@ -605,6 +617,21 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         try (FileOutputStream out = new FileOutputStream(new File(directory, "hierarchy.txt"))) {
             out.write(tree.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
+    }
+    private AccessibilityNodeInfo systemBrowserChoice() {
+        String appName=getTargetContext().getApplicationInfo().loadLabel(getTargetContext().getPackageManager()).toString();
+        ArrayDeque<AccessibilityNodeInfo> queue=roots();
+        while(!queue.isEmpty()) {
+            AccessibilityNodeInfo node=queue.removeFirst();
+            if(!node.refresh())continue;
+            if(node.isVisibleToUser()&&!getTargetContext().getPackageName().contentEquals(String.valueOf(node.getPackageName()))
+                &&matches(node,appName))return node;
+            for(int i=0;i<node.getChildCount();i++) {
+                AccessibilityNodeInfo child=node.getChild(i);
+                if(child!=null)queue.add(child);
+            }
+        }
+        return null;
     }
     private AccessibilityNodeInfo clickTarget(String label) {
         ArrayDeque<AccessibilityNodeInfo> queue = roots();

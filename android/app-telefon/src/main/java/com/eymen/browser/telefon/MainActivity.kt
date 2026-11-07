@@ -149,6 +149,10 @@ class MainActivity : ComponentActivity() {
     // Safe to create only when onCreate/onResume has attached the Activity Context.
     private val updater by lazy { BrowserUpdateManager(this) }
     private val vpn by lazy { EymenWireGuardVpn.get(applicationContext) }
+    private val browserRoleLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { refreshSystemPreferences() }
+
     private val vpnImportLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -1650,7 +1654,7 @@ class MainActivity : ComponentActivity() {
             val roles=if(Build.VERSION.SDK_INT>=29)getSystemService(android.app.role.RoleManager::class.java) else null
             if(Build.VERSION.SDK_INT>=29 && roles?.isRoleAvailable(android.app.role.RoleManager.ROLE_BROWSER)==true &&
                 !roles.isRoleHeld(android.app.role.RoleManager.ROLE_BROWSER))
-                startActivity(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_BROWSER))
+                browserRoleLauncher.launch(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_BROWSER))
             else startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
         } catch (_: Exception) { notice(R.string.settings_system_unavailable) }
     }
