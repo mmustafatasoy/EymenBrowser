@@ -17,7 +17,7 @@ timeout 480 adb shell am instrument -w -r \
   | tee browser-ui-audit/instrumentation.txt
 TEST_EXIT=${PIPESTATUS[0]}
 set -e
-for NAME in settings-light.png appearance-night.png downloads-light.png privacy-settings.png extensions-installed.png child-mode.png language-english.png site-permissions.png history-light.png history-dark.png menu-native.png settings-native-dark.png default-browser-system.png scroll-hidden.png scroll-visible.png scroll-bottom.png failure.png hierarchy.txt chrome-diagnostics.txt; do
+for NAME in address-search-ime.png navigation-restored.png settings-light.png appearance-night.png downloads-light.png privacy-settings.png extensions-installed.png child-mode.png language-english.png site-permissions.png history-light.png history-dark.png menu-native.png settings-native-dark.png default-browser-system.png scroll-hidden.png scroll-visible.png scroll-bottom.png failure.png hierarchy.txt chrome-diagnostics.txt; do
   adb exec-out run-as com.eymen.browser.telefon cat "cache/browser-ui-audit/$NAME" \
     > "browser-ui-audit/$NAME" || true
 done
@@ -27,7 +27,7 @@ from pathlib import Path
 text = Path('browser-ui-audit/instrumentation.txt').read_text()
 assert 'INSTRUMENTATION_RESULT: eymen_browser_ui_audit=passed' in text, text
 assert 'INSTRUMENTATION_CODE: -1' in text, text
-for name in ('settings-light.png', 'appearance-night.png', 'downloads-light.png', 'history-light.png', 'history-dark.png', 'menu-native.png', 'scroll-hidden.png', 'scroll-visible.png', 'scroll-bottom.png', 'default-browser-system.png'):
+for name in ('address-search-ime.png', 'navigation-restored.png', 'settings-light.png', 'appearance-night.png', 'downloads-light.png', 'history-light.png', 'history-dark.png', 'menu-native.png', 'scroll-hidden.png', 'scroll-visible.png', 'scroll-bottom.png', 'default-browser-system.png'):
     assert Path('browser-ui-audit',name).stat().st_size > 1000, name
 print('Real touch/type and custom settings/download screens passed.')
 PY

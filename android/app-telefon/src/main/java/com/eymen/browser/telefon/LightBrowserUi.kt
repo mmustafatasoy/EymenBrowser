@@ -13,10 +13,14 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
@@ -28,6 +32,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -218,7 +223,8 @@ internal fun LightBrowserToolbar(
     onMenu: () -> Unit,
     dayMode: Boolean = true,
     homeButtonEnabled: Boolean = true,
-    privateMode: Boolean = false
+    privateMode: Boolean = false,
+    onEditingChanged: (Boolean) -> Unit = {}
 ) {
     val palette=browserListPalette(dayMode)
     val privateLabel=stringResource(R.string.private_tab)
@@ -234,6 +240,14 @@ internal fun LightBrowserToolbar(
     val tabsLabel = stringResource(R.string.tabs)
     val menuLabel = stringResource(R.string.browser_menu)
     val keyboard = LocalSoftwareKeyboardController.current
+    val draft=input.text.trim()
+    val addressAction=if(draft.contains("://") || ('.' in draft && draft.none { it.isWhitespace() })) ImeAction.Go else ImeAction.Search
+    val submitAddress={
+        val entered=editor.value.text
+        focus.clearFocus()
+        onGo(entered)
+        keyboard?.hide()
+    }
     Row(
         Modifier.fillMaxWidth()
             .background(if(privateMode)T.gizli_yuzey1 else if(dayMode)Color(0xFFF3F7FD) else palette.background)
@@ -257,21 +271,29 @@ internal fun LightBrowserToolbar(
             BasicTextField(
                 value = input,
                 onValueChange = editor::update,
-                modifier = Modifier.weight(1f).focusRequester(requester)
-                    .onFocusChanged { editor.focusChanged(it.isFocused) }
+                modifier = Modifier.weight(1f).fillMaxHeight().focusRequester(requester)
+                    .pointerInput(editor) {
+                        // Observe the entire physical tap without consuming it.
+                        // A normal finger tap lasts longer than one render frame.
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed=false,pass=PointerEventPass.Initial)
+                            editor.pointerDown()
+                            try {
+                                var pressed=true
+                                while(pressed)pressed=awaitPointerEvent(PointerEventPass.Final).changes.any { it.pressed }
+                            } finally { editor.pointerUp() }
+                        }
+                    }
+                    .onFocusChanged { editor.focusChanged(it.isFocused);onEditingChanged(it.isFocused) }
                     .semantics { contentDescription = addressLabel },
                 singleLine = true,
-                textStyle = TextStyle(color = toolbarInk, fontSize = 13.sp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                keyboardActions = KeyboardActions(onGo = {
-                    val entered = input.text
-                    focus.clearFocus()
-                    onGo(entered)
-                    keyboard?.hide()
-                }),
+                textStyle = TextStyle(color = toolbarInk, fontSize = T.telefon_liste_yazi.sp),
+                cursorBrush = SolidColor(toolbarInk),
+                keyboardOptions = KeyboardOptions(imeAction = addressAction),
+                keyboardActions = KeyboardActions(onGo = {submitAddress()},onSearch = {submitAddress()},onDone = {submitAddress()}),
                 decorationBox = { field ->
-                    Box {
-                        if (input.text.isBlank()) LightText(stringResource(R.string.address_edit_label), 12, if(privateMode)T.gizli_yaziIkincil else if(dayMode)secondary else palette.muted)
+                    Box(Modifier.fillMaxSize(),contentAlignment=Alignment.CenterStart) {
+                        if (input.text.isBlank()) LightText(stringResource(R.string.address_hint), T.telefon_liste_yazi, if(privateMode)T.gizli_yaziIkincil else if(dayMode)secondary else palette.muted)
                         field()
                     }
                 }

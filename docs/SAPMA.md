@@ -28,3 +28,8 @@ Burada kayıt yoksa şartnameden sapma yoktur. Yazılım aracı onay almadan sap
 - Karar: **Kullanıcı doğrudan ONAYLADI.** Dört telefon ekran görüntüsüyle ayarları ve üç nokta menüsünü sade liste olarak istedi; Geçmişte gerçek ziyaret bağlantıları, aşağı kaydırınca animasyonla gizlenen ve küçük yukarı harekette dönen adres/menü çubuğu istedi.
 - Yeni referans T07/T10 için önceki kart/ızgara ve 148 dp küçük menü kararının yerini alır. Ana sayfa/A logosu korunur; mevcut açık/koyu tema seçimi sürer. Google hesabı veya hizmeti varmış gibi gösterilmez. Yeni nötr liste renkleri/ölçüleri ortak tokens.json içindedir.
 - Yalnız Android telefon; TV/PC/Apple kapsamı açılmadı. Telemetri veya harici geçmiş hizmeti yoktur. Gizli ve çocuk gezinmesi geçmişe yazılmaz.
+
+## S-003 — Cihaz geri bildirimi: adres girişi ve Geri/İleri
+
+- Tarih: 2026-11-07. Kullanıcı doğrudan düzeltme istedi; arama alanı ekran görüntüsü ile önceki siteye geri dönemediğini bildirdi. Banka ve ekran uyumunu onayladı.
+- Mevcut S-002 arayüzünün adres girişini okunur ortak ölçüye getirme, native Ara/Git eylemi ve standart gerçek tarayıcı geri-ileri düzeltmesidir. Yeni hizmet, hesap, tema, telemetri veya platform eklenmez. Orijinal üretim imzası korunur; tek resmi APK güncellemesi hazırlanır.

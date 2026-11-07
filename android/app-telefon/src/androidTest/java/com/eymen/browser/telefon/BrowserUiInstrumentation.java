@@ -48,12 +48,20 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             popupRoundTrip();
             String address = label(R.string.address_edit_label);
             await(() -> field(address) != null && !text(field(address)).isEmpty(), "existing address field");
-            tap(field(address));
+            Rect firstAddress=new Rect();field(address).getBoundsInScreen(firstAddress);
+            tapAt(firstAddress.centerX(),firstAddress.centerY(),180);
             await(() -> field(address) != null && field(address).isFocused(), "address receives focus after touch");
             waitForIdleSync();
             SystemClock.sleep(100);
-            sendStringSync("eymen yeni arama");
+            android.view.inputmethod.EditorInfo initialInfo=new android.view.inputmethod.EditorInfo();
+            android.view.inputmethod.InputConnection composingConnection=addressConnection(initialInfo);
+            require(initialInfo.initialSelStart==0&&initialInfo.initialSelEnd==text(field(address)).length(),"a physical tap longer than one frame selects the entire native IME address");
+            runOnMainSync(()->require(composingConnection.setComposingText("eymen yeni arama",1),"native IME composing text accepted"));
             await(() -> "eymen yeni arama".equals(text(field(address))), "typing replaces the old address without deletion");
+            runOnMainSync(()->require(composingConnection.finishComposingText(),"native IME composition committed"));
+            android.view.inputmethod.EditorInfo searchInfo=new android.view.inputmethod.EditorInfo();addressConnection(searchInfo);
+            require((searchInfo.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,"plain text exposes a real Search keyboard action");
+            capture("address-search-ime.png",true);
             Bundle caret = new Bundle();
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 5);
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, 5);
@@ -116,10 +124,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             await(() -> field(address) != null && "".equals(text(field(address))), "home resets the address editor");
             click("Yeni sekme");
             await(() -> field(address) != null && "".equals(text(field(address))), "new tab has an empty address editor");
+            navigationAndSearch();
             realHistoryAndScrolling();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close,address_replace_caret_clear,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -151,6 +160,94 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void openSettingsItem(int labelId) throws Exception {
         click(label(R.string.browser_menu)); scrollClick(label(R.string.settings));
         search(label(R.string.settings_search_hint), label(labelId)); click(label(labelId));
+    }
+    private android.view.inputmethod.InputConnection addressConnection(android.view.inputmethod.EditorInfo info) {
+        java.util.concurrent.atomic.AtomicReference<android.view.inputmethod.InputConnection> result=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(()->{
+            android.view.View target=activity.getCurrentFocus();
+            require(target!=null,"focused Android view for the address IME");
+            result.set(target.onCreateInputConnection(info));
+        });
+        require(result.get()!=null,"native address InputConnection exists");return result.get();
+    }
+    private void menuNavigation(int labelId) throws Exception {
+        click(label(R.string.browser_menu));click(label(labelId));
+    }
+    private boolean homeVisible(){return uiCheck(()->Boolean.TRUE.equals(((androidx.compose.runtime.MutableState<?>)controller("atHome")).getValue()));}
+    private void systemBack() throws Exception {
+        waitForIdleSync();long time=SystemClock.uptimeMillis();
+        int flags=KeyEvent.FLAG_FROM_SYSTEM|KeyEvent.FLAG_VIRTUAL_HARD_KEY;
+        require(getUiAutomation().injectInputEvent(new KeyEvent(time,time,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK,0,0,
+            android.view.KeyCharacterMap.VIRTUAL_KEYBOARD,0,flags,InputDevice.SOURCE_KEYBOARD),true),"system Back down");
+        require(getUiAutomation().injectInputEvent(new KeyEvent(time,SystemClock.uptimeMillis(),KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK,0,0,
+            android.view.KeyCharacterMap.VIRTUAL_KEYBOARD,0,flags,InputDevice.SOURCE_KEYBOARD),true),"system Back up");
+        waitForIdleSync();SystemClock.sleep(200);
+    }
+    private void navigationAndSearch() throws Exception {
+        String address=label(R.string.address_edit_label);
+        tap(field(address));
+        click(label(R.string.address_clear));
+        android.view.inputmethod.EditorInfo info=new android.view.inputmethod.EditorInfo();
+        android.view.inputmethod.InputConnection input=addressConnection(info);
+        final android.view.inputmethod.InputConnection composingInput=input;
+        runOnMainSync(()->{require(composingInput.setComposingText("eymen ime arama",1),"native query composition");composingInput.finishComposingText();});
+        await(()->"eymen ime arama".equals(text(field(address))),"native search query visible");
+        input=addressConnection(info);
+        require((info.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,"Search action is available on the real input connection");
+        org.mozilla.geckoview.GeckoSession searchSession=currentSession();
+        java.util.concurrent.atomic.AtomicBoolean searched=new java.util.concurrent.atomic.AtomicBoolean();
+        runOnMainSync(()->{
+            org.mozilla.geckoview.GeckoSession.ProgressDelegate original=searchSession.getProgressDelegate();
+            searchSession.setProgressDelegate(new org.mozilla.geckoview.GeckoSession.ProgressDelegate(){
+                @Override public void onPageStart(org.mozilla.geckoview.GeckoSession s,String url){original.onPageStart(s,url);if(url.startsWith("https://www.bing.com/search?")&&url.contains("eymen+ime+arama"))searched.set(true);}
+                @Override public void onPageStop(org.mozilla.geckoview.GeckoSession s,boolean success){original.onPageStop(s,success);}
+            });
+        });
+        final android.view.inputmethod.InputConnection searchInput=input;
+        runOnMainSync(()->require(searchInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH),"native keyboard Search submitted"));
+        await(searched::get,"keyboard Search starts the selected real search engine in Gecko");
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
+        tap(field(address));
+        search(address,"https://example.com/?eymen-navigation=first");
+        android.view.inputmethod.EditorInfo goInfo=new android.view.inputmethod.EditorInfo();
+        android.view.inputmethod.InputConnection goInput=addressConnection(goInfo);
+        require((goInfo.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_GO,"web addresses expose the real Go action");
+        runOnMainSync(()->require(goInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_GO),"native keyboard Go submitted"));
+        BrowserHistory history=(BrowserHistory)controller("history");
+        String first="https://example.com/?eymen-navigation=first",second="https://example.com/?eymen-navigation=second";
+        await(()->uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().equals(first)&&e.getTitle().equals("Example Domain"))),"first page really completed");
+        menuNavigation(R.string.back);await(this::homeVisible,"Back from a first page reaches native home instead of a no-op");
+        menuNavigation(R.string.forward);await(()->!homeVisible()&&first.equals(text(field(address))),"Forward from native home restores its actual page");
+        click(label(R.string.home));await(this::homeVisible,"explicit home button");systemBack();
+        await(()->!homeVisible()&&first.equals(text(field(address))),"system Back after explicit Home returns to the page");
+        org.mozilla.geckoview.GeckoSession session=currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
+        runOnMainSync(()->{
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original=session.getContentDelegate();
+            session.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s,String value){title.set(value);original.onTitleChange(s,value);}
+            });
+            session.loadUri("javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote("<a href='"+second+"' style='position:fixed;inset:0;display:grid;place-items:center'>Eymen next page</a>")+";document.title='Eymen navigation ready';}())");
+        });
+        await(()->"Eymen navigation ready".equals(title.get()),"actual page link ready");tapBrowserCenter();
+        await(()->uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().equals(second)&&e.getTitle().equals("Example Domain"))),"a real link opened the second page in the same tab");
+        require(currentSession()==session,"normal links keep the same real Gecko history");
+        menuNavigation(R.string.back);await(()->first.equals(text(field(address))),"menu Back returns to the first real site");
+        menuNavigation(R.string.forward);await(()->second.equals(text(field(address))),"menu Forward returns to the second real site");
+        await(()->"Example Domain".equals(title.get()),"second page document ready again");
+        String spaHtml="<button style='position:fixed;inset:0;width:100%;height:100%' onclick=\"history.pushState({},'',location.href+'#native-step');document.title='Eymen SPA step ready';\">Eymen SPA step</button>";
+        String spaScript="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(spaHtml)+";document.title='Eymen SPA ready';}())";
+        runOnMainSync(()->session.loadUri(spaScript));
+        await(()->"Eymen SPA ready".equals(title.get()),"user-activated SPA history fixture ready");tapBrowserCenter();
+        await(()->text(field(address)).equals(second+"#native-step"),"same-document location updates the address without PageStart");
+        menuNavigation(R.string.back);await(()->second.equals(text(field(address))),"menu Back updates the SPA address");
+        menuNavigation(R.string.forward);await(()->(second+"#native-step").equals(text(field(address))),"menu Forward updates the SPA address");
+        systemBack();await(()->second.equals(text(field(address))),"Android Back handles same-document history");
+        systemBack();await(()->first.equals(text(field(address))),"Android Back returns to the previous real website");
+        tap(field(address));sendStringSync("unfinished address");systemBack();
+        await(()->first.equals(text(field(address)))&&!homeVisible(),"keyboard Back cancels editing without leaving the page");
+        capture("navigation-restored.png",true);
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
     }
     private void realHistoryAndScrolling() throws Exception {
         BrowserHistory history=(BrowserHistory)controller("history");
@@ -518,6 +615,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         waitForIdleSync(); SystemClock.sleep(350);
         tapBrowserCenter();
         await(() -> currentSession() == parent, "window.close returns to the original sign-in tab");
+        tapBrowserCenter();
+        await(()->currentSession()!=parent,"second user-opened popup ready for Android Back");
+        org.mozilla.geckoview.GeckoSession backPopup=currentSession();
+        systemBack();await(()->currentSession()==parent,"Android Back in a popup returns to its opener");
+        require(uiCheck(()->!backPopup.isOpen()),"Back closed only the popup session");
         runOnMainSync(() -> { parent.setContentDelegate(original); parent.loadUri(OLD_URL); });
     }
     private void tapBrowserCenter() {
@@ -754,11 +856,14 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         tapAt(rect.centerX(), rect.centerY());
     }
     private void tapAt(int x, int y) {
+        tapAt(x,y,40);
+    }
+    private void tapAt(int x,int y,long holdMillis) {
         long time = SystemClock.uptimeMillis();
         MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0);
         down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         require(getUiAutomation().injectInputEvent(down, true), "touch down");
-        down.recycle(); SystemClock.sleep(40);
+        down.recycle(); SystemClock.sleep(holdMillis);
         MotionEvent up = MotionEvent.obtain(time, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x, y, 0);
         up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         require(getUiAutomation().injectInputEvent(up, true), "touch up"); up.recycle();

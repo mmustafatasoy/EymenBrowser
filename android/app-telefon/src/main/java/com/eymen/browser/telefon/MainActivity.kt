@@ -65,6 +65,7 @@ private class BrowserTab(
     var url by mutableStateOf(initialUrl.orEmpty())
     var title by mutableStateOf("")
     var home by mutableStateOf(initialUrl == null)
+    var homeFromBack by mutableStateOf(false)
     var fullScreen by mutableStateOf(false)
     var desktop by mutableStateOf(false)
     var shieldEnabled by mutableStateOf(false)
@@ -186,6 +187,7 @@ class MainActivity : ComponentActivity() {
     private var overviewShowing by mutableStateOf(false)
     // Compose observes this so only the home logo/search reflow when popup opens.
     private var menuShowing by mutableStateOf(false)
+    private var addressEditing = false
     private var shieldShowing by mutableStateOf(false)
     private var downloadsShowing by mutableStateOf(false)
     private var settingsShowing by mutableStateOf(false)
@@ -319,8 +321,10 @@ class MainActivity : ComponentActivity() {
             safeLeftInsetPx = left
             safeRightInsetPx = right
             bottomSystemInsetPx = bottom
+            val imeWasVisible=imeVisible
             imeVisible = if (Build.VERSION.SDK_INT >= 30) insets.isVisible(WindowInsets.Type.ime())
                 else bottom > resources.displayMetrics.heightPixels / 5
+            if(imeWasVisible && !imeVisible && addressEditing)hideBrowserKeyboard()
             if (imeVisible && ::toolbarMotion.isInitialized) toolbarMotion.show()
             applyBrowserSafeArea()
             insets
@@ -391,6 +395,7 @@ class MainActivity : ComponentActivity() {
                 dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
                 privateMode=activeTab?.privateMode==true,
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
+                onEditingChanged={addressEditing=it},
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
             }
         }
@@ -467,10 +472,10 @@ class MainActivity : ComponentActivity() {
                 isDesktop = activeTab?.desktop == true,dayMode = dayMode.value,
                 textPercent = settingsServices.textPercent,onTextSize = settingsServices::setTextSize,
                 onDismiss = ::hideBrowserMenu,onAction = ::handleMenuAction,
-                onBack = { hideBrowserKeyboard();activeTab?.gecko?.goBack() },
-                onForward = { hideBrowserKeyboard();activeTab?.gecko?.goForward() },
+                onBack = ::navigateBrowserBack,
+                onForward = ::navigateBrowserForward,
                 onReload = { hideBrowserKeyboard();activeTab?.gecko?.reload() },
-                canGoBack = activeTab?.canGoBack == true,canGoForward = activeTab?.canGoForward == true,
+                canGoBack = canNavigateBrowserBack(),canGoForward = canNavigateBrowserForward(),
                 bookmarked = isCurrentBookmarked(),onBookmark = ::toggleCurrentBookmark)
         }
         menuLayer.visibility = View.GONE
@@ -655,8 +660,8 @@ class MainActivity : ComponentActivity() {
                     menuShowing -> hideBrowserMenu()
                     overviewShowing -> hideTabs()
                     videoFullScreen -> activeTab?.gecko?.exitFullScreen()
-                    !atHome.value -> activeTab?.gecko?.goBack()
-                    else -> showTabs()
+                    imeVisible || addressEditing -> hideBrowserKeyboard()
+                    else -> navigateBrowserBack()
                 }
             }
         })
@@ -787,6 +792,21 @@ class MainActivity : ComponentActivity() {
             },
             onCanGoBack = { value -> tabs.firstOrNull { it.id == id }?.canGoBack = value },
             onCanGoForward = { value -> tabs.firstOrNull { it.id == id }?.canGoForward = value },
+            onLocation = { url ->
+                val tab=tabs.firstOrNull { it.id==id }
+                if(tab!=null && url!=null && !(tab.home && url.equals("about:blank",true))) {
+                    val changed=tab.url!=url
+                    tab.url=url
+                    // Same-document navigation has no PageStart. Follow Gecko's
+                    // actual location for SPA/hash Back and Forward as well.
+                    if(changed && tab.historyVisitAt>0 && !tab.privateMode && !childMode.enabled && HistoryPolicy.safeUrl(url,false)!=null) {
+                        tab.historyVisitAt=System.currentTimeMillis();tab.historyUrl=url
+                        history.record(url,tab.title,false,tab.historyVisitAt)
+                    }
+                    if(activeId.value==id) {currentUrl.value=url;updateAutofill()}
+                    if(!tab.privateMode)saveNormalWorkspace()
+                }
+            },
             onExternalAppLink = { link, trigger, gesture ->
                 showSecureExternalAppPrompt(id, link, trigger, gesture)
             },
@@ -828,6 +848,7 @@ class MainActivity : ComponentActivity() {
                     tab.lastScrollY = 0
                     if (activeId.value == id && ::toolbarMotion.isInitialized) toolbarMotion.reset()
                     tab.home = false
+                    tab.homeFromBack = false
                     if (activeId.value == id) updateAutofill()
                     // Never show an obsolete screenshot after a new navigation.
                     tab.thumbnail = null
@@ -1440,8 +1461,39 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
-    private fun showHome(enabled: Boolean) {
+    private fun canNavigateBrowserBack(): Boolean = activeTab?.let {
+        !it.home || (!it.homeFromBack && it.url.isNotBlank() && it.url!="about:blank")
+    } ?: false
+
+    private fun canNavigateBrowserForward(): Boolean = activeTab?.let {
+        if(it.home)it.homeFromBack && it.url.isNotBlank() && it.url!="about:blank" else it.canGoForward
+    } ?: false
+
+    private fun navigateBrowserBack() {
+        hideBrowserKeyboard()
+        val tab=activeTab ?: return
+        when {
+            tab.home && !tab.homeFromBack && tab.url.isNotBlank() && tab.url!="about:blank" -> showHome(false)
+            tab.home -> showTabs()
+            tab.canGoBack -> tab.gecko.goBack()
+            tab.openerId?.let { parent -> tabs.any { it.id==parent } }==true -> closeTab(tab.id)
+            else -> {tab.gecko.stop();showHome(true,fromBack=true)}
+        }
+    }
+
+    private fun navigateBrowserForward() {
+        hideBrowserKeyboard()
+        val tab=activeTab ?: return
+        if(tab.home && tab.homeFromBack && tab.url.isNotBlank() && tab.url!="about:blank")showHome(false)
+        else if(!tab.home && tab.canGoForward)tab.gecko.goForward()
+    }
+
+    private fun showHome(enabled: Boolean,fromBack: Boolean = false) {
         if (::root.isInitialized) hideBrowserKeyboard()
+        activeTab?.let { tab ->
+            if(enabled && !tab.home)tab.homeFromBack=fromBack
+            else if(!enabled)tab.homeFromBack=false
+        }
         activeTab?.home = enabled
         atHome.value = enabled
         updateHomeVisibility()
@@ -1899,6 +1951,7 @@ class MainActivity : ComponentActivity() {
     private fun showAppearanceOptions() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
 
     private fun hideBrowserKeyboard() {
+        addressEditing=false
         if (::toolbarMotion.isInitialized) toolbarMotion.show()
         currentFocus?.clearFocus()
         (getSystemService(INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)

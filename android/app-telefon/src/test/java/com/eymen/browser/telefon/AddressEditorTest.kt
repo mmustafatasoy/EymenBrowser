@@ -6,6 +6,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AddressEditorTest {
+    @Test fun physicalTapReleaseAfterFirstFrameStillKeepsSelectAll() {
+        val url="https://example.com/old"
+        val editor=AddressEditor(url)
+        editor.pointerDown();editor.focusChanged(true)
+        editor.finishFocusSelection(editor.focusGeneration)
+        editor.update(TextFieldValue(url,selection=TextRange(url.length)))
+        assertEquals(TextRange(0,url.length),editor.value.selection)
+        editor.pointerUp()
+        editor.update(TextFieldValue("yeni arama",selection=TextRange(10),composition=TextRange(0,10)))
+        assertEquals("yeni arama",editor.value.text)
+        assertEquals(TextRange(0,10),editor.value.composition)
+    }
     @Test fun firstTapSelectsWholeUrlAndItsCaretEventCannotUndoSelection() {
         val url = "https://example.com/uzun?arama=İstanbul"
         val editor = AddressEditor(url)

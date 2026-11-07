@@ -2,6 +2,14 @@
 
 Son güncelleme: 2026-11-07
 
+## Yeni çalışma — v1.0.20
+
+- Kullanıcı v1.0.19'u cihazında denedi: banka sitelerinde sorun olmadığını ve ekran uyumunu beğendiğini bildirdi. Yeni açıklar: arama alanının davranışı/görünümü ve önceki sayfaya dönememe. Yalnız bu Android telefon düzeltmeleri ilerler (S-003); tüm 64 özelliğin bittiği iddia edilmez.
+- Geri/ileri aynı merkezden çalışır: gerçek Gecko geçmişi varsa motor gezintisi; ilk sayfadan Geri ile native ana sayfa ve İleri ile o sayfaya dönüş; açık ana sayfadan önceki belgeye Geri; geçmişi olmayan popup'ta yalnız çocuk pencereyi kapatıp gerçek opener'a dönüş. Android Geri önce adres düzenlemeyi/klavyeyi kapatır. Banka popup/izin/güvenlik akışları korunur.
+- Gecko 159'un gerçek onLocationChange bildirimi bağlandı; PageStart üretmeyen SPA/hash geri-ileri hareketleri de adres alanına ve normal yerel kayda yansır. Motorun goBack() çağrısının zaten kullanıcı etkileşimi sayıldığı resmî sabit sürüm kaynağından doğrulandı; bu davranış değiştirilmedi.
+- Adres metni ortak 16sp ölçüsünde, kutu yüksekliği boyunca dokunulabilir ve ortalı; tema ile uyumlu caret. Yazılan metin için native Ara, URL için Git; IME eylemi son editör değerini gönderir. İlk fiziksel dokunuşun bırakılması bir kareden uzun sürdüğünde tümünü seçmenin bozulması önlendi; sonraki imleç ve IME composition düzenlemeleri korunur.
+- Yeni kabul: 180 ms gerçek dokunma + native InputConnection composition/selection/Search/Go; gerçek bağlantı ile aynı sekmede iki HTTPS sayfası ve menü/Android Geri-İleri; kullanıcı tıklamasıyla SPA hash; ilk sayfa/ana sayfa dönüşü; klavyede geriyle düzenlemeyi iptal; popup'ta Android Geri. Önceki çerez, gizlilik, indirme ve kaydırma kabulleri birlikte çalışacak. Bu yeni derleme/emülatör kabulü henüz çalıştırılmadı; son yayımlanmış sürüm v1.0.19'dur.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.

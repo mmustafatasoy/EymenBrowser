@@ -13,6 +13,10 @@ internal class AddressEditor(initial: String) {
     var focusGeneration by mutableIntStateOf(0)
         private set
     private var firstFocusSelection = false
+    private var pointerGesture = false
+
+    fun pointerDown() { pointerGesture = true }
+    fun pointerUp() { pointerGesture = false;firstFocusSelection = false }
 
     fun focusChanged(hasFocus: Boolean) {
         if (hasFocus && !focused) {
@@ -30,7 +34,7 @@ internal class AddressEditor(initial: String) {
         else next.also { firstFocusSelection = false }
     }
     fun finishFocusSelection(generation: Int) {
-        if (generation == focusGeneration) firstFocusSelection = false
+        if (generation == focusGeneration && !pointerGesture) firstFocusSelection = false
     }
     fun navigationChanged(address: String) {
         if (!focused && value.text != address) value = TextFieldValue(address)
