@@ -39,6 +39,8 @@ Son güncelleme: 2026-11-07
 
 - Uzayan API 35 işi için UI testinden önce derleyici daemon'ları kapatılarak yalnız iş VM'sindeki derleme belleği serbest bırakılır. Test boyunca host MemAvailable/swap/yük ve yalnız Java/emülatör süreçlerinin RSS değerleri yerel CI kanıtına yazılır; URL, içerik veya kullanıcı verisi yoktur. Resmî Kotlin belgesinde daemon'un Gradle -Xmx değerini miras alabildiği doğrulandı; bu projede 3 GiB yapılandırma bulunur. Bu altyapı ölçümü uygulamaya veya APK'ya eklenmez; bir OOM kök nedeni henüz kanıtlanmış sayılmaz.
 
+- `478ecd2` API 35 UI iş #128445878364 son çubuk düzeltmesiyle bütün kontrolleri ve PNG aktarımını geçti. Menü testindeki tek-snapshot düzeltmeli üretim isteği bütün dört kabul için `52948733fd36d632ef55d6b33d0ffa19781af2ec` kaynağına geçer; ürün davranışı önceki adayla aynıdır. API 36 test aracı NPE'si başarılı sayılmaz; yeni koşu zorunludur.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
