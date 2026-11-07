@@ -76,7 +76,11 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 5X
-          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
+          # Android official archive: stable 36.6.11, before observed 37.2.13 graphics failures.
+          emulator-build: 15507667
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash tools/capture_android_visual.sh
       - name: Tasarim fark raporlarini olustur

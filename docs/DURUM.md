@@ -23,6 +23,8 @@ Son güncelleme: 2026-11-07
 
 - v1.0.20 üretim hazırlığı kaynak `1d6be80ac2e2e0e4c194ac52b08c90ab5f48de9b` ile paralel başlatılacak. Üretim işinin başında ürün/denetim dosyalarının bu kaynakla eşitliği denetlenir. İmza, üç ABI ve eski APK metadata kontrolü hazırlanabilir; son yayın kapısı dört kabul iş akışı ve API 35/36 UI/görsel işlerinin başarıyla tamamlanmasını en çok 10 dakika bekler, hata/eksiklikte yayınlamaz. Henüz v1.0.20 Release yoktur.
 
+- `1d6be80` kaynak/JVM/üç ABI #42384733988 ve indirme #42384733969 geçti. API 35 görsel işi geçti; API 36 görselinde Android System UI ANR penceresi görüntüyü kapattı (PNG incelendi), iki UI emülatörü çevrimdışı oldu. Üretim #42384786087 orijinal imza/üç ABI/metadata kontrollerini geçti, son kabul kapısında doğru biçimde yayın yapmadan durdu. `-gpu software` günlüğü hâlâ SwiftShader GLES seçtiğini gösterdi. Test ortamı resmî [Android arşivindeki](https://developer.android.com/studio/emulator_archive) 36.6.11 Stable Linux build `15507667` ile sabitlendi; profil varsayılanı yerine 4096M RAM ve 512M heap açıkça ayrıldı. SDK/Gecko/ürün kodu ve test kapsamı değişmedi. Sonuçlar yeniden doğrulanacak.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
