@@ -56,11 +56,14 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             android.view.inputmethod.EditorInfo initialInfo=new android.view.inputmethod.EditorInfo();
             android.view.inputmethod.InputConnection composingConnection=addressConnection(initialInfo);
             require(initialInfo.initialSelStart==0&&initialInfo.initialSelEnd==text(field(address)).length(),"a physical tap longer than one frame selects the entire native IME address");
-            runOnMainSync(()->require(composingConnection.setComposingText("eymen yeni arama",1),"native IME composing text accepted"));
+            require(uiCheck(()->composingConnection.setComposingText("eymen yeni arama",1)),"native IME composing text accepted");
             await(() -> "eymen yeni arama".equals(text(field(address))), "typing replaces the old address without deletion");
-            runOnMainSync(()->require(composingConnection.finishComposingText(),"native IME composition committed"));
-            android.view.inputmethod.EditorInfo searchInfo=new android.view.inputmethod.EditorInfo();addressConnection(searchInfo);
+            // A Go -> Search IME-options change restarts Android input. Real
+            // keyboards bind the fresh connection; the previous one is closed.
+            android.view.inputmethod.EditorInfo searchInfo=new android.view.inputmethod.EditorInfo();
+            android.view.inputmethod.InputConnection activeComposition=addressConnection(searchInfo);
             require((searchInfo.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,"plain text exposes a real Search keyboard action");
+            require(uiCheck(activeComposition::finishComposingText),"native IME composition committed through the current connection");
             capture("address-search-ime.png",true);
             Bundle caret = new Bundle();
             caret.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 5);
@@ -190,10 +193,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         android.view.inputmethod.EditorInfo info=new android.view.inputmethod.EditorInfo();
         android.view.inputmethod.InputConnection input=addressConnection(info);
         final android.view.inputmethod.InputConnection composingInput=input;
-        runOnMainSync(()->{require(composingInput.setComposingText("eymen ime arama",1),"native query composition");composingInput.finishComposingText();});
+        require(uiCheck(()->composingInput.setComposingText("eymen ime arama",1)),"native query composition");
         await(()->"eymen ime arama".equals(text(field(address))),"native search query visible");
         input=addressConnection(info);
         require((info.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,"Search action is available on the real input connection");
+        final android.view.inputmethod.InputConnection activeInput=input;
+        require(uiCheck(activeInput::finishComposingText),"query composition finished on the current input connection");
         org.mozilla.geckoview.GeckoSession searchSession=currentSession();
         java.util.concurrent.atomic.AtomicBoolean searched=new java.util.concurrent.atomic.AtomicBoolean();
         runOnMainSync(()->{
@@ -204,7 +209,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             });
         });
         final android.view.inputmethod.InputConnection searchInput=input;
-        runOnMainSync(()->require(searchInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH),"native keyboard Search submitted"));
+        require(uiCheck(()->searchInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH)),"native keyboard Search submitted");
         await(searched::get,"keyboard Search starts the selected real search engine in Gecko");
         menuNavigation(R.string.menu_new_normal_tab_accessibility);
         tap(field(address));
@@ -212,7 +217,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         android.view.inputmethod.EditorInfo goInfo=new android.view.inputmethod.EditorInfo();
         android.view.inputmethod.InputConnection goInput=addressConnection(goInfo);
         require((goInfo.imeOptions&android.view.inputmethod.EditorInfo.IME_MASK_ACTION)==android.view.inputmethod.EditorInfo.IME_ACTION_GO,"web addresses expose the real Go action");
-        runOnMainSync(()->require(goInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_GO),"native keyboard Go submitted"));
+        require(uiCheck(()->goInput.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_GO)),"native keyboard Go submitted");
         BrowserHistory history=(BrowserHistory)controller("history");
         String first="https://example.com/?eymen-navigation=first",second="https://example.com/?eymen-navigation=second";
         await(()->uiCheck(()->history.getEntries().stream().anyMatch(e->e.getUrl().equals(first)&&e.getTitle().equals("Example Domain"))),"first page really completed");
