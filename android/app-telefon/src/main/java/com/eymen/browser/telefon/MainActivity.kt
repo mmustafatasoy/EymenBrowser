@@ -332,6 +332,7 @@ class MainActivity : ComponentActivity() {
         }
         view = BrowserGeckoView(this).also { engine ->
             engine.onBrowserTouch = { event -> if (::toolbarMotion.isInitialized) toolbarMotion.onTouch(event) }
+            engine.onBrowserScrollInput = { if (::toolbarMotion.isInitialized) toolbarMotion.onScrollInput() }
         }
         root.addView(view, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,

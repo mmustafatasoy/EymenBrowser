@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.os.SystemClock
 import android.view.MotionEvent
+import android.view.KeyEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import org.mozilla.geckoview.GeckoView
@@ -13,9 +14,23 @@ import kotlin.math.roundToInt
 
 internal class BrowserGeckoView(context: Context) : GeckoView(context) {
     var onBrowserTouch: ((MotionEvent) -> Unit)? = null
+    var onBrowserScrollInput: (() -> Unit)? = null
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         onBrowserTouch?.invoke(event)
         return super.dispatchTouchEvent(event)
+    }
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) when (event.keyCode) {
+            KeyEvent.KEYCODE_PAGE_UP, KeyEvent.KEYCODE_PAGE_DOWN,
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_MOVE_HOME, KeyEvent.KEYCODE_MOVE_END,
+            KeyEvent.KEYCODE_SPACE -> onBrowserScrollInput?.invoke()
+        }
+        return super.dispatchKeyEvent(event)
+    }
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_SCROLL) onBrowserScrollInput?.invoke()
+        return super.dispatchGenericMotionEvent(event)
     }
 }
 
@@ -43,7 +58,7 @@ internal class BrowserChromeMotion(private val engine: GeckoView,private val too
         height = if (full) 0 else barHeight.coerceAtLeast(0)
         bottom = atBottom; fullscreen = full
         engine.setDynamicToolbarMaxHeight(height)
-        policy.show(); fraction = 0f; hidden = false
+        policy.allowHiding(); policy.show(); fraction = 0f; hidden = false
         applyFrame()
     }
     fun onTouch(event: MotionEvent) {
@@ -55,12 +70,20 @@ internal class BrowserChromeMotion(private val engine: GeckoView,private val too
                 lastX=event.rawX;lastY=event.rawY;lastTouch=SystemClock.uptimeMillis()
                 if (dy > 1f && abs(dy) > abs(dx)) {
                     suppressHideUntil = lastTouch+150
+                    // APZ may deliver old fling/viewport updates after the
+                    // small reveal gesture. Keep controls shown until fresh
+                    // downward intent instead of racing a fixed delay.
+                    policy.holdShown()
                     show()
+                } else if (dy < -1f && abs(dy) > abs(dx)) {
+                    policy.allowHiding()
+                    suppressHideUntil = 0L
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { fingers=false;lastTouch=SystemClock.uptimeMillis() }
         }
     }
+    fun onScrollInput() { policy.allowHiding(); suppressHideUntil = 0L }
     fun onScroll(y: Int,fromUser: Boolean = false) {
         val now=SystemClock.uptimeMillis()
         if (height<=0 || !canCollapse() || engine.shouldPinOnScreen()) {

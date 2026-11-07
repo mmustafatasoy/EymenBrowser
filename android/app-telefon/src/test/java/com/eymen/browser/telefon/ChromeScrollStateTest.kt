@@ -26,4 +26,16 @@ class ChromeScrollStateTest {
         val state=ChromeScrollState();assertTrue(state.scroll(Int.MAX_VALUE,true))
         assertFalse(state.scroll(Int.MAX_VALUE-1,true));state.reset();assertFalse(state.hidden)
     }
+    @Test fun delayedFlingUpdatesCannotHideControlsAfterSmallReverseGesture() {
+        val state=ChromeScrollState();assertTrue(state.scroll(1000,true))
+        state.holdShown()
+        assertFalse(state.scroll(1200,true));assertFalse(state.scroll(1800,true))
+        assertFalse(state.scroll(2500,true));assertFalse(state.hidden)
+        state.allowHiding()
+        assertFalse(state.scroll(2523,true));assertTrue(state.scroll(2524,true))
+    }
+    @Test fun aNewPageDoesNotKeepThePreviousPagesRevealLock() {
+        val state=ChromeScrollState();state.holdShown();state.reset(4000)
+        assertFalse(state.scroll(4023,true));assertTrue(state.scroll(4024,true))
+    }
 }
