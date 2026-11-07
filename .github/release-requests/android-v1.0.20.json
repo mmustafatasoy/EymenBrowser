@@ -1,6 +1,6 @@
 {
   "version": "1.0.20",
-  "candidate_source_sha": "ae4dcb1320943915850d748937c21fab9ea7660c",
+  "candidate_source_sha": "478ecd22b61debdcdb3002d2a6214854068c1345",
   "reason": "User-reported address entry and browser Back/Forward fixes; publication requires all four acceptance workflows and both API 35/36 UI and visual jobs.",
-  "retained_source_sha": "64b44c1a2aca72e45a7e3402004246837280582a"
+  "retained_source_sha": "478ecd22b61debdcdb3002d2a6214854068c1345"
 }

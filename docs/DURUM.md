@@ -33,6 +33,8 @@ Son güncelleme: 2026-11-07
 
 - ANGLE UI #42385892743 API 35 iş #128443059786 bütün testleri ve PNG aktarımını geçti; sürücü değişikliğiyle cihaz test boyunca çalıştı. API 36 iş #128443060130 arama, gerçek geri/ileri, popup, geçmiş ve üst çubuk kontrollerini geçti; alttaki çubuğun 8 piksel ters harekette açık kalması zaman aşımına uğradı. Gerçek PNG/tanılamada çubuk, ters dokunuştan sonra gecikmiş pozitif APZ/fling güncellemesiyle yeniden gizlendi. 150 ms bastırma tek başına yeterli değildi. Ürün düzeltmesi, küçük ters harekette gösterilen çubuğu yeni gerçek aşağı kaydırma niyetine kadar açık tutar; klavye/tekerlek kaydırması da kilidi bırakır. İki JVM regresyonu eklendi; mevcut gerçek üst/alt küçük hareket ve sabit footer kabulü korunur. Ürün değiştiği için kaynak, indirme, iki API görsel ve UI kontrolleri yeni aynı kaynaktan yeniden zorunludur; önceki kabul yeni ürünün yerine kullanılmaz.
 
+- Son üretim isteği küçük ters kaydırma düzeltmesini içeren `478ecd22b61debdcdb3002d2a6214854068c1345` kaynağını bütün dört kabul için kullanır; önceki kaynaktaki kabuller bu ürünün yerine sayılmaz. Yerel 11 zorunlu kaynak/güvenlik kontrolü geçti. Android/JVM ve iki API etkileşim sonuçları beklenir.
+
 ## Güncel yayın — v1.0.19
 
 - Kaynak: `62a3bfacccb1a8402c0d6be7f627de1d613f78ec`. Kullanıcının S-002 kapsamındaki Ayarlar/menü, gerçek yerel geçmiş ve animasyonlu adres çubuğu kabulü tamamlandı.
