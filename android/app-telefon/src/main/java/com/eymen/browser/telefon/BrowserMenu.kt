@@ -97,7 +97,9 @@ internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,te
                 }
                 rows.forEach { row ->
                     val allowed=!row.needsPage || hasPage
+                    val actionDescription=if(row.action==MenuAction.NEW_TAB)stringResource(R.string.menu_new_normal_tab_accessibility)else null
                     Row(Modifier.fillMaxWidth().heightIn(min=T.telefon_liste_satir.dp)
+                        .semantics(mergeDescendants=true){if(actionDescription!=null)contentDescription=actionDescription}
                         .clickable(enabled=allowed,role=Role.Button){onAction(row.action)}
                         .padding(horizontal=T.telefon_ekran_kenar.dp,vertical=T.telefon_ekran_bosluk.dp),
                         verticalAlignment=Alignment.CenterVertically) {

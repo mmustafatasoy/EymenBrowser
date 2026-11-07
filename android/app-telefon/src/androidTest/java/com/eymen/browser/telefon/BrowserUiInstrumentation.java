@@ -219,7 +219,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             android.database.Cursor rows=db.rawQuery("SELECT COUNT(*) FROM visits WHERE url LIKE '%eymen-private-history%'",null)){
             require(rows.moveToFirst()&&rows.getInt(0)==0,"private URL never reached SQLite");
         }
-        click(label(R.string.browser_menu));click(label(R.string.menu_new_tab));
+        click(label(R.string.browser_menu));click(label(R.string.menu_new_normal_tab_accessibility));
         require(!currentSession().getSettings().getUsePrivateMode(),"explicit new tab returns to normal context");
         org.mozilla.geckoview.GeckoSession longPage=currentSession();
         java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");

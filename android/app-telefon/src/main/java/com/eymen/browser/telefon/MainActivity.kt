@@ -37,6 +37,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import com.eymen.browser.tema.EymenTokens as T
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.eymen.browser.motor.GeckoMotorDenemesi
 import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoResult
@@ -378,6 +381,10 @@ class MainActivity : ComponentActivity() {
         )
         toolbarMotion = BrowserChromeMotion(view, chrome) { canCollapseChrome() }
         chrome.setContent {
+            // Compose owns a virtual accessibility tree beneath this native
+            // view. Clear it as well while a modal surface owns interaction.
+            val modal=menuShowing||overviewShowing||settingsShowing||downloadsShowing||shieldShowing||libraryShowing
+            Box(if(modal)Modifier.clearAndSetSemantics {} else Modifier) {
             LightBrowserToolbar(
                 currentUrl=currentUrl.value,atHome=atHome.value,
                 tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
@@ -385,6 +392,7 @@ class MainActivity : ComponentActivity() {
                 privateMode=activeTab?.privateMode==true,
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
+            }
         }
 
         tabsLayer = ComposeView(this)
