@@ -60,7 +60,8 @@ private class BrowserTab(
     val gecko: GeckoSession,
     val privateMode: Boolean,
     initialUrl: String?,
-    val openerId: Long? = null
+    val openerId: Long? = null,
+    val returnTabId: Long? = null
 ) {
     var url by mutableStateOf(initialUrl.orEmpty())
     var title by mutableStateOf("")
@@ -829,7 +830,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         )
-        val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null)
+        val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null,
+            if(deferRestoreLoad)null else activeTab?.takeIf { it.privateMode==privateMode }?.id)
         installStandardWebPrompts(tab)
         tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
@@ -952,7 +954,7 @@ class MainActivity : ComponentActivity() {
         if (!tab.privateMode) {
             recentlyClosedNormal.add(
                 ClosedNormalTab(
-                    safeUrl = if (tab.home) null
+                    safeUrl = if (tab.home && !tab.homeFromBack) null
                         else workspaceStore.safeHttpsUrl(tab.url),
                     groupId = tab.groupId
                 )
@@ -970,7 +972,9 @@ class MainActivity : ComponentActivity() {
                 createTab(privateMode = false)
             } else {
                 activeId.value = -1L
-                activateTab(tab.openerId?.takeIf { parent -> tabs.any { it.id == parent } } ?: tabs.last().id)
+                activateTab(tab.openerId?.takeIf { parent -> tabs.any { it.id == parent } }
+                    ?: tab.returnTabId?.takeIf { previous -> tabs.any { it.id==previous && it.privateMode==tab.privateMode } }
+                    ?: tabs.last().id)
             }
         }
         // activateTab/createTab normally dismiss the overview. When closing
@@ -1462,7 +1466,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun canNavigateBrowserBack(): Boolean = activeTab?.let {
-        !it.home || (!it.homeFromBack && it.url.isNotBlank() && it.url!="about:blank")
+        !it.home || (!it.homeFromBack && it.url.isNotBlank() && it.url!="about:blank") ||
+            it.returnTabId?.let { previous -> tabs.any { tab -> tab.id==previous && tab.privateMode==it.privateMode } }==true
     } ?: false
 
     private fun canNavigateBrowserForward(): Boolean = activeTab?.let {
@@ -1474,6 +1479,7 @@ class MainActivity : ComponentActivity() {
         val tab=activeTab ?: return
         when {
             tab.home && !tab.homeFromBack && tab.url.isNotBlank() && tab.url!="about:blank" -> showHome(false)
+            tab.home && tab.returnTabId?.let { previous -> tabs.any { it.id==previous && it.privateMode==tab.privateMode } }==true -> closeTab(tab.id)
             tab.home -> showTabs()
             tab.canGoBack -> tab.gecko.goBack()
             tab.openerId?.let { parent -> tabs.any { it.id==parent } }==true -> closeTab(tab.id)

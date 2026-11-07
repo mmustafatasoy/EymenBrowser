@@ -168,8 +168,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         java.util.concurrent.atomic.AtomicReference<android.view.inputmethod.InputConnection> result=new java.util.concurrent.atomic.AtomicReference<>();
         runOnMainSync(()->{
             android.view.View target=activity.getCurrentFocus();
-            require(target!=null,"focused Android view for the address IME");
-            result.set(target.onCreateInputConnection(info));
+            if(target!=null)result.set(target.onCreateInputConnection(info));
         });
         require(result.get()!=null,"native address InputConnection exists");return result.get();
     }
@@ -252,6 +251,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         tap(field(address));sendStringSync("unfinished address");systemBack();
         await(()->first.equals(text(field(address)))&&!homeVisible(),"keyboard Back cancels editing without leaving the page");
         capture("navigation-restored.png",true);
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
+        org.mozilla.geckoview.GeckoSession blank=currentSession();
+        systemBack();await(()->currentSession()==session,"Back from a new empty tab returns to the actual previous tab");
+        require(uiCheck(()->!blank.isOpen()),"only the new empty tab closed");
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
+        menuNavigation(R.string.back);await(()->currentSession()==session,"menu Back also returns from a new empty tab");
         menuNavigation(R.string.menu_new_normal_tab_accessibility);
     }
     private void realHistoryAndScrolling() throws Exception {
