@@ -912,14 +912,14 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         queue.add(root);
         java.util.List<AccessibilityNodeInfo> labels = new java.util.ArrayList<>();
         java.util.List<Rect> buttons = new java.util.ArrayList<>();
-        java.util.List<Rect> editors = new java.util.ArrayList<>();
+        java.util.List<AccessibilityNodeInfo> editors = new java.util.ArrayList<>();
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node = queue.removeFirst();
             if (!node.refresh()) continue;
             if (node.isVisibleToUser()) {
                 Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
                 boolean input = node.isEditable() || "android.widget.EditText".equals(String.valueOf(node.getClassName()));
-                if (input) editors.add(bounds);
+                if (input) editors.add(node);
                 else {
                     if (matches(node, label)) labels.add(node);
                     boolean clickable = node.isClickable();
@@ -937,8 +937,14 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         long bestArea = Long.MAX_VALUE;
         for (AccessibilityNodeInfo node : labels) {
             Rect marker = new Rect(); node.getBoundsInScreen(marker);
+            // Skip only a label that really belongs to an editor (its own
+            // description or a child of the EditText virtual node). A bounds
+            // overlap is not ownership: the home address field under the
+            // settings overlay and a page search box under the menu share
+            // screen space with real buttons such as "Web sitesi".
             boolean inEditor = false;
-            for (Rect input : editors) if (input.contains(marker.centerX(), marker.centerY())) inEditor = true;
+            for (AccessibilityNodeInfo parent = node; parent != null && !inEditor; parent = parent.getParent())
+                for (AccessibilityNodeInfo input : editors) if (input.equals(parent)) inEditor = true;
             if (inEditor) continue;
             for (Rect button : buttons) {
                 long area = (long) button.width() * button.height();
