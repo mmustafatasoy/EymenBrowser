@@ -1,6 +1,29 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-07
+Son güncelleme: 2026-11-10
+
+## v1.0.21 devam notu (2026-11-10, Claude oturumu) — ÖNCE BUNU OKU, PLANDAN SAPMA
+
+Kullanıcı isteği: hatasız, profesyonel Android tarayıcı; VPN çalışsın, her kısım çalışsın, otomatik güncelleme olsun; sürüm kararlı olsun. Kullanıcı gerekli her işlem için izin verdi.
+
+Yapılanlar (main, sırayla):
+- `10afce7` `setDimAmount(T.telefon_dialog_perde.toFloat())` — BrowserDialogs.kt ve BrowserShare.kt Double→Float derleme hatası (a539e8e'de dört CI işi bu yüzden kırmızıydı).
+- `d6c4bf8` UI kabul workflow'u başarısızlıkta hierarchy.txt / chrome-diagnostics / logcat'i job log'una yazar (artifact indirme proxy yüzünden mümkün değildi).
+- `77976c1` Test yardımcısı `clickTarget`: etiket, yalnız gerçekten atası olan editör varsa atlanır (sınır çakışması değil). Ana sayfa adres kutusu "Web sitesi" satırıyla, Bing arama kutusu "Yeni normal sekme aç" ile çakışıyordu. Doğrulandı: API35 paylaşım/hakkında bölümünün tamamını geçti.
+- `c292feb` `am instrument` zaman sınırı 480→780 s, script 660→960 s, adım 14→20 dk, iş 25→32 dk. Her iki API36 çökmesi tam 480 s'de oluyordu (DeadObjectException = adb istemcisi öldürüldü; freezer DEĞİL). Ayrıca advancedSettings'te iptal edilen önceki yüklemenin onPageStop(false)'u example.com bayrağını tüketmesin diye `success && getAndSet(false)`.
+
+Açık durum (oturum kesildiğinde):
+- UI kabulü #42830815029 (c292feb) çalışıyordu. Arka plan indirme ve kaynak/derleme işleri c292feb'de yeşil.
+- Görsel denetim #42830815008 (c292feb) başarısız: büyük olasılıkla API36 "System launcher overlay detected" emülatör sorunu (77976c1'de rerun ile geçti). Önce `gh run rerun <id> --failed` dene; iki rerun'da da aynı yerde kırılırsa gerçek hata say.
+
+Sıradaki adımlar (bu sırayla, başka iş ekleme):
+1. c292feb üzerinde 4 CI işinin tümü yeşil olana kadar: log oku, gerçek hata ise düzelt, emülatör/ağ kaynaklıysa bir kez rerun.
+2. Dört iş yeşilse: `gh workflow run android-stable-release.yml --ref main -f version=1.0.21`; production ortam onayı gerekirse kullanıcıya söyle.
+3. Yayın sonrası bu dosyanın "Güncel yayın" bölümünü v1.0.21 için güncelle (etiket, run id, APK SHA-256), README'deki sürüm notunu güncelle; sonraki manuel sürüm varsayılanı 1.0.22.
+4. Ancak bundan SONRA kullanıcının kalan isteklerine geç: gerçek cihazda VPN (EymenWireGuardVpn) kabulü, otomatik güncelleme (BrowserUpdateManager) gerçek sürümle uçtan uca denemesi. Bunlar için şartname/SARTNAME.md ve SAPMA.md kuralları geçerli; tasarım dosyaları (design/) değiştirilmez.
+
+Yapılmayacaklar: main'e doğrudan ürün kodu değişikliği (önce dal + CI), release workflow'unu düzenleme, imza anahtarına dokunma, test adımlarını silerek "yeşil" yapma.
+
 
 ## v1.0.21 — Paylaşım ve ürün düzeni: geliştirme / kabul bekliyor
 
