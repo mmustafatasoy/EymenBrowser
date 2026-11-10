@@ -70,6 +70,18 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 240
           script: timeout 660 bash tools/audit_android_browser_ui.sh
+      - name: Print failure hierarchy to the job log
+        if: failure()
+        run: |
+          echo "::group::hierarchy.txt (visible labels)"
+          grep -E "visible=true" browser-ui-audit/hierarchy.txt 2>/dev/null | grep -vE "desc=null text=( |$)" | head -300 || true
+          echo "::endgroup::"
+          echo "::group::chrome-diagnostics.txt"
+          cat browser-ui-audit/chrome-diagnostics.txt 2>/dev/null || true
+          echo "::endgroup::"
+          echo "::group::logcat tail"
+          grep -E "eymen|AndroidRuntime|Toast|ActivityTaskManager" browser-ui-audit/logcat.txt 2>/dev/null | tail -120 || true
+          echo "::endgroup::"
       - name: Preserve real screens and device evidence
         if: always()
         uses: actions/upload-artifact@v4
