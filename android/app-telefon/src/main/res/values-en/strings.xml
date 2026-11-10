@@ -178,7 +178,7 @@
     <string name="settings_shield_global_on">Enable shield</string>
     <string name="settings_shield_global_off">Disable shield</string>
     <string name="update_checking">Checking for updates…</string>
-    <string name="update_no_release">No stable Android phone release is published yet. The browser can still be used.</string>
+    <string name="update_no_release">No newer compatible stable version was found for this device.</string>
     <string name="update_check_failed">Unable to check for updates. Check your connection and retry later.</string>
     <string name="update_available_title">New version: %1$s</string>
     <string name="update_available_message">Stable version %1$s is available (%2$d MB). Download it in the app; Android will still request installation approval.</string>

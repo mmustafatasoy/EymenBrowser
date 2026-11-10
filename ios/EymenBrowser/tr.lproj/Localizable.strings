@@ -177,7 +177,7 @@
 "settings_shield_global_on" = "Kalkanı aç";
 "settings_shield_global_off" = "Kalkanı kapat";
 "update_checking" = "Yeni sürüm denetleniyor…";
-"update_no_release" = "Henüz yayımlanmış kararlı Android telefon sürümü yok. Tarayıcı çalışmaya devam eder.";
+"update_no_release" = "Bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı.";
 "update_check_failed" = "Güncelleme denetlenemedi. İnternet bağlantısını kontrol edip daha sonra yeniden deneyin.";
 "update_available_title" = "Yeni sürüm: %1$s";
 "update_available_message" = "%1$s kararlı sürümü bulundu (%2$d MB). APK uygulamanın içinde indirilecek; Android'in kurulum onayı gerekecek.";

@@ -2,6 +2,13 @@
 
 Son güncelleme: 2026-11-11
 
+## Güncel çalışma — kurulu sürüm güncelken gösterilen mesaj düzeltmesi
+
+- Yayımlanmış 1.0.21 → 1.0.22 gerçek imzalı yükseltme Android 15/16'da geçti ve test altyapısı/kabul kaydı `cd7490e95e602b786095ae1551e34299172bfbf2` ile ana dala alındı. Aşağıdaki kanıtlar ve fiziksel cihaz sınırı korunur.
+- Kabulün `current-version.png` ekranında bir metin hatası doğrulandı: kurulu 1.0.22 son kararlı sürümken “kararlı sürüm yayımlanmadı” gösteriliyordu. `fix/update-current-message` dalı yalnız mevcut `update_no_release` TR/EN metnini “bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı” anlamına getirir; ortak çıktılar yeniden üretilir.
+- Yeni sürüm arama/indirme, SHA-256/paket/sertifika doğrulaması, izin veya kurulum davranışı değişmez. Ürün kodu/tasarım, üretim imzası ve yayın workflow'u değişmez. Bu dar metin düzeltmesinin kaynak/JVM/Android derleme CI'sını ana daldan önce çalıştırmak için yalnız mevcut phase0 dal filtresine tam dal adı eklenir.
+- Kaynak/çeviri/güncelleme sözleşmesi denetimi ve diff bütünlüğü yerelde geçti; yeni dal kaynak/JVM/üç ABI CI'sı sıradadır. Başarılı olmadan main'e alınmaz. Son yayımlanmış sürüm v1.0.22; düzeltme bir sonraki 1.0.23 sürümü içindir ve henüz yayımlanmamıştır. Canlı VPN ve fiziksel telefon kabulü açık kalır.
+
 ## Güncel devam — imzalı uygulama içi güncelleme kabulü geçti (2026-11-11)
 
 - Devam notundaki sıradaki güncelleme kabulü için `test/signed-update-acceptance` dalı açıldı. Yayımlanmış orijinal üretim v1.0.21 → v1.0.22 APK'larıyla Android 15/16 emülatöründe gerçek indirme/izin/kurulum ve veri koruma kabulü eklendi; aşağıdaki CI ile doğrulandı. [Kabul kapsamı](ANDROID_SIGNED_UPDATE_ACCEPTANCE.md).

@@ -178,7 +178,7 @@
     <string name="settings_shield_global_on">Kalkanı aç</string>
     <string name="settings_shield_global_off">Kalkanı kapat</string>
     <string name="update_checking">Yeni sürüm denetleniyor…</string>
-    <string name="update_no_release">Henüz yayımlanmış kararlı Android telefon sürümü yok. Tarayıcı çalışmaya devam eder.</string>
+    <string name="update_no_release">Bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı.</string>
     <string name="update_check_failed">Güncelleme denetlenemedi. İnternet bağlantısını kontrol edip daha sonra yeniden deneyin.</string>
     <string name="update_available_title">Yeni sürüm: %1$s</string>
     <string name="update_available_message">%1$s kararlı sürümü bulundu (%2$d MB). APK uygulamanın içinde indirilecek; Android\'in kurulum onayı gerekecek.</string>
