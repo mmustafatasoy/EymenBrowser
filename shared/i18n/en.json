@@ -205,7 +205,7 @@
   "shield_cosmetic_unavailable": "Visual filter module is unavailable",
   "shield_cosmetic_scope": "Hides selected ad containers only; does not block ad network requests. Some pages may look incorrect. Disable site protection to exclude that site.",
   "vpn_title": "VPN — EYMEN Browser only",
-  "vpn_subtitle": "Use your own WireGuard server. No server is provided.",
+  "vpn_subtitle": "Connect with a free provider account or your own WireGuard file.",
   "vpn_import": "Import WireGuard .conf",
   "vpn_connect": "Connect with Android VPN consent",
   "vpn_disconnect": "Disconnect VPN tunnel",
@@ -479,5 +479,16 @@
   "license_kotlin_note": "Programming language and runtime",
   "license_wireguard_note": "VPN tunnel library",
   "license_zxing_note": "Offline QR code creation and scanning",
-  "license_desugar_note": "Java support for earlier Android versions"
+  "license_desugar_note": "Java support for earlier Android versions",
+  "vpn_free_title": "Get started with free VPN",
+  "vpn_free_summary": "Proton VPN Free does not require your own VPS or another VPN app. You need to create a free Proton account once during setup.",
+  "vpn_free_step_account": "1. Create your free account or sign in on the official Proton website. Choose the Free plan.",
+  "vpn_free_step_config": "2. Under Downloads → WireGuard configuration, select Android and a free server. Choose Create, then Download to get a new .conf file.",
+  "vpn_free_step_import": "3. Open the file in Eymen Browser Downloads and confirm the import. Then tap Connect and approve the Android VPN permission. You do not need to select the file again for later connections.",
+  "vpn_free_open": "Open Proton VPN account",
+  "vpn_free_provider_note": "Account setup takes place at account.protonvpn.com. Traffic passes through Proton VPN servers under the provider’s terms and privacy policy. If you downloaded the file in another browser, use the import button below.",
+  "vpn_import_title": "Import VPN file",
+  "vpn_import_download_confirmation": "%1$s contains personal VPN access keys. Validate this file and store it encrypted on this device, replacing your current profile? The VPN will stay off. After importing, you can delete the file copy in your Downloads folder.",
+  "vpn_import_confirm": "Import",
+  "vpn_import_requires_closed": "Disconnect the VPN and wait for any pending operation before importing a file."
 }

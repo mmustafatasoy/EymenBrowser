@@ -71,6 +71,25 @@ private fun vpnBytesLabel(value: Long): String = when {
     else -> "$value B"
 }
 
+@Composable
+private fun FreeVpnSetupCard(enabled: Boolean, onSetup: () -> Unit) {
+    val p = LocalVpnColors.current
+    Column(
+        Modifier.fillMaxWidth()
+            .background(p.surface, RoundedCornerShape(T.telefon_kose_kart.dp))
+            .padding(T.telefon_ekran_kenar.dp),
+        verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)
+    ) {
+        VpnText(stringResource(R.string.vpn_free_title), T.telefon_yazi_bolumBasligi, true)
+        VpnText(stringResource(R.string.vpn_free_summary), T.telefon_yazi_ikincil, color = p.muted)
+        VpnText(stringResource(R.string.vpn_free_step_account), T.telefon_yazi_ikincil)
+        VpnText(stringResource(R.string.vpn_free_step_config), T.telefon_yazi_ikincil)
+        VpnText(stringResource(R.string.vpn_free_step_import), T.telefon_yazi_ikincil)
+        VpnAction(stringResource(R.string.vpn_free_open), enabled, true, onSetup)
+        VpnText(stringResource(R.string.vpn_free_provider_note), T.telefon_yazi_enAz, color = p.muted)
+    }
+}
+
 /** A real VPN profile screen, separate from cosmetic/tracker blocking. */
 @Composable
 private fun VpnSettingsContent(
@@ -81,6 +100,7 @@ private fun VpnSettingsContent(
     message: String,
     onBack: () -> Unit,
     onImport: () -> Unit,
+    onSetup: () -> Unit,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onRefresh: () -> Unit,
@@ -189,6 +209,9 @@ private fun VpnSettingsContent(
                     color = p.muted)
             }
         }
+        if (!configPresent) {
+            FreeVpnSetupCard(enabled = !busy && !mayNeedDisconnect, onSetup = onSetup)
+        }
         VpnAction(
             stringResource(R.string.vpn_import),
             enabled = !busy && !mayNeedDisconnect,
@@ -237,11 +260,11 @@ private fun VpnSettingsContent(
 internal fun VpnSettingsScreen(
     status: EymenVpnStatus, configPresent: Boolean, importing: Boolean,
     peerStats: EymenVpnPeerStats?, message: String, dayMode: Boolean = false,
-    onBack: () -> Unit, onImport: () -> Unit, onConnect: () -> Unit,
+    onBack: () -> Unit, onImport: () -> Unit, onSetup: () -> Unit, onConnect: () -> Unit,
     onDisconnect: () -> Unit, onRefresh: () -> Unit, onDelete: () -> Unit
 ) {
     CompositionLocalProvider(LocalVpnColors provides browserScreenPalette(dayMode)) {
         VpnSettingsContent(status, configPresent, importing, peerStats, message,
-            onBack, onImport, onConnect, onDisconnect, onRefresh, onDelete)
+            onBack, onImport, onSetup, onConnect, onDisconnect, onRefresh, onDelete)
     }
 }

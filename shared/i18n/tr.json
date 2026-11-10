@@ -205,7 +205,7 @@
   "shield_cosmetic_unavailable": "Görsel filtre modülü kullanılamıyor",
   "shield_cosmetic_scope": "Yalnızca bilinen reklam kutularını gizler; reklam isteklerini engellemez. Bazı siteler yanlış görünebilir. Site korumasını kapatarak o sitede devre dışı bırakabilirsin.",
   "vpn_title": "VPN — Yalnız EYMEN Browser",
-  "vpn_subtitle": "Kendi WireGuard sunucunuzu kullanın. Otomatik sunucu sağlanmaz.",
+  "vpn_subtitle": "Ücretsiz sağlayıcı hesabıyla veya kendi WireGuard dosyanızla bağlanın.",
   "vpn_import": "WireGuard .conf dosyası içe aktar",
   "vpn_connect": "Android VPN izniyle bağlan",
   "vpn_disconnect": "VPN tünelini kapat",
@@ -479,5 +479,16 @@
   "license_kotlin_note": "Programlama dili ve çalışma zamanı",
   "license_wireguard_note": "VPN tünel kitaplığı",
   "license_zxing_note": "Çevrimdışı QR kod üretme ve okuma",
-  "license_desugar_note": "Eski Android sürümleri için Java desteği"
+  "license_desugar_note": "Eski Android sürümleri için Java desteği",
+  "vpn_free_title": "Ücretsiz VPN ile başla",
+  "vpn_free_summary": "Proton VPN Free ile kendi VPS sunucunuza veya başka bir VPN uygulamasına gerek yok. İlk kurulumda bir kez ücretsiz Proton hesabı oluşturmanız gerekir.",
+  "vpn_free_step_account": "1. Resmî Proton sitesinde ücretsiz hesabınızı oluşturun veya giriş yapın. Free planını seçin.",
+  "vpn_free_step_config": "2. Downloads → WireGuard configuration bölümünde Android ve ücretsiz sunucuyu seçin. Create, ardından Download ile yeni .conf dosyasını indirin.",
+  "vpn_free_step_import": "3. Eymen Browser İndirilenler listesinden dosyayı açıp içe aktarmayı onaylayın. Sonra Bağlan düğmesiyle Android VPN iznini verin. Sonraki bağlantılarda dosyayı yeniden seçmeniz gerekmez.",
+  "vpn_free_open": "Proton VPN hesabını aç",
+  "vpn_free_provider_note": "Hesap işlemleri account.protonvpn.com üzerinden yapılır. Trafik Proton VPN sunucularından geçer; sağlayıcının koşulları ve gizlilik politikası geçerlidir. Dosyayı başka tarayıcıda indirdiyseniz aşağıdaki içe aktarma düğmesini kullanın.",
+  "vpn_import_title": "VPN dosyasını içe aktar",
+  "vpn_import_download_confirmation": "%1$s dosyası kişisel VPN erişim anahtarları içerir. Mevcut profilinizin yerine bu dosya doğrulanarak cihazda şifreli saklansın mı? VPN kendiliğinden açılmaz. İçe aktardıktan sonra İndirilenler klasöründeki dosya kopyasını silebilirsiniz.",
+  "vpn_import_confirm": "İçe aktar",
+  "vpn_import_requires_closed": "Dosya içe aktarmadan önce VPN bağlantısını kapatın ve devam eden işlemin bitmesini bekleyin."
 }

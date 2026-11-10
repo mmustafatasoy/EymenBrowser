@@ -566,6 +566,7 @@ class MainActivity : ComponentActivity() {
                             arrayOf("text/plain", "application/octet-stream", "*/*")
                         )
                     },
+                    onSetup = ::openFreeVpnSetup,
                     onConnect = ::requestVpnConsent,
                     onDisconnect = vpn::disconnect,
                     onRefresh = vpn::refreshState,
@@ -1812,6 +1813,41 @@ class MainActivity : ComponentActivity() {
             }.show()
     }
 
+    private fun openFreeVpnSetup() {
+        if (childMode.enabled) { notice(R.string.child_blocked); return }
+        val privateMode = activeTab?.privateMode == true
+        hideSettings()
+        // The account belongs to the user. No provider password, API token or
+        // shared tunnel key is collected by the VPN module or bundled in APKs.
+        createTab(privateMode, "https://account.protonvpn.com/")
+    }
+
+    private fun confirmImportDownloadedVpnConfiguration(file: SavedDownload) {
+        if (vpn.importing || vpn.status !in listOf(
+                EymenVpnStatus.NO_CONFIGURATION, EymenVpnStatus.READY,
+                EymenVpnStatus.DISCONNECTED
+            )) {
+            notice(R.string.vpn_import_requires_closed)
+            return
+        }
+        val uri = Uri.parse(file.uri)
+        if (uri.scheme != "content") { notice(R.string.download_open_error); return }
+        BrowserDialogs.builder(this)
+            .setTitle(R.string.vpn_import_title)
+            .setMessage(getString(R.string.vpn_import_download_confirmation, file.name))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.vpn_import_confirm) { _, _ ->
+                if (childMode.enabled) { notice(R.string.child_blocked); return@setPositiveButton }
+                hideDownloads()
+                showSettings()
+                performSettingsAction(SettingsAction.VPN)
+                // The same size, route, DNS, Keystore and active-tunnel guards
+                // apply as for a file explicitly chosen with Android SAF.
+                vpn.importConfig(uri)
+            }
+            .show()
+    }
+
     private fun requestVpnConsent() {
         if (!vpn.configPresent) {
             Toast.makeText(this, "Önce kendi WireGuard .conf dosyanı içe aktar.", Toast.LENGTH_LONG).show()
@@ -1992,6 +2028,10 @@ class MainActivity : ComponentActivity() {
 
     private fun openDownloadedFile(file: SavedDownload) {
         if (childMode.enabled) { notice(R.string.child_blocked); return }
+        if (file.name.endsWith(".conf", ignoreCase = true)) {
+            confirmImportDownloadedVpnConfiguration(file)
+            return
+        }
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(Uri.parse(file.uri), file.mimeType)

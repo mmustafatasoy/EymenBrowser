@@ -2,6 +2,13 @@
 
 Son güncelleme: 2026-11-10
 
+## Güncel çalışma — ücretsiz VPN kurulumu (2026-11-10)
+
+- Kullanıcıda VPN hesabı veya VPS yok; ücretsiz çözüm istendi. `feat/free-vpn-setup` dalında Proton VPN Free için tek seferlik hesap/yapılandırma rehberi ve resmî hesap sayfasını açan düğme eklendi. S-005 bu açık kullanıcı isteğini kaydeder.
+- İndirilen .conf dosyasını listeden açma → açık onay → aynı güvenli doğrulama ve Keystore içe aktarması → VPN ekranı akışı hazırlandı. Profil kendiliğinden bağlanmaz; Android'in gerçek VPN onayı ayrı kalır. Başarılı kurulumdan sonra mevcut profil yeniden seçilmeden Bağlan kullanılabilir.
+- Hesabı kullanıcı resmî sağlayıcı sitesinde açmalıdır. Bu çalışma hesapsız sunucu sağladığı, tüm ülkelere eriştiği veya gerçek sunucuyla saha kabulünün bittiği anlamına gelmez. [Kurulum ve kaynaklar](ANDROID_VPN_UCRETSIZ_KURULUM.md).
+- Yerel üretim/güncellik/şartname denetimi, bütün check_*.py ve kozmetik JS testleri geçti. Android derlemesi ve yeni içe aktarma UI kabulü CI üzerinde sırada. CI yeşil olmadan main'e ürün kodu taşınmaz; son yayımlanmış sürüm v1.0.21, sonraki manuel sürüm varsayılanı 1.0.22'dir.
+
 ## Güncel devam — v1.0.21 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
 **Devam notunun 1, 2 ve 3. adımları tamamlandı. Sıradaki iş 4. adım: gerçek cihazda VPN ve imzalı gerçek sürümle uygulama içi güncelleme kabulü.** Aşağıdaki Claude notu başlangıç durumunu ve değişmeyen kapsam kurallarını korur.

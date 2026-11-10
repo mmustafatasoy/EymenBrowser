@@ -1,7 +1,7 @@
 name: EymenBrowser Android background download acceptance
 on:
   push:
-    branches: [main, fix/v1.0.21-privacy-load-acceptance]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup]
     paths:
       - '.github/workflows/android-download-audit.yml'
       - 'android/app-telefon/src/androidTest/**'

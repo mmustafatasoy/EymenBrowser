@@ -40,3 +40,10 @@ Burada kayıt yoksa şartnameden sapma yoktur. Yazılım aracı onay almadan sap
 - Yalnız Android telefonun mevcut paylaş/Hakkında akışları düzenlenir. Çevrimdışı QR oluşturma mevcut ZXing bağımlılığını kullanır; yeni motor, kitaplık, hesap, telemetri veya platform eklenmez. Chrome/Chromium tasarım referansıdır; Chromium motoru kullanıldığı veya Google ile bağlantı olduğu iddia edilmez.
 - E-posta yalnız kullanıcının düğmesiyle düzenlenebilir taslak olarak açılır; tarama geçmişi, site adresi, hata günlüğü ve VPN yapılandırması otomatik eklenmez. Destek/iletişim/gizlilik sayfaları ve destek@atasoyyazilim.com adresi yayıncının çalışan sitesinden doğrulandı.
 - Native izin/PIN/onay kararları ve orijinal üretim imzası korunur. Gerçek kullanılan dağıtımların lisans metinleri yerel dosyalardan okunur; zorunlu upstream kaynak/telif bildirimleri saklanır. Bu çalışma mağaza onayı veya tüm özelliklerin tamamlandığı anlamına gelmez.
+
+## S-005 — Ücretsiz VPN sağlayıcısıyla ilk kurulum
+
+- Tarih: 2026-11-10. **Kullanıcı doğrudan istedi:** VPN hesabı/VPS olmadığını belirterek “ikiside yok ücretsiz bir şey yap” dedi. Yalnız Android telefon VPN akışı ilerler.
+- Proton VPN Free hesabından kullanıcının kendi WireGuard dosyasını elde etmesi için uygulama içi kurulum rehberi ve resmî hesap sayfasına kullanıcının dokunmasıyla açılan bağlantı eklendi. Ücretsiz hesap açma işlemini kullanıcı sağlayıcı sitesinde yapar. Otomatik kayıt, ortak hesap, APK içine sunucu/özel anahtar veya belgelenmemiş sağlayıcı API'si eklenmez.
+- İndirilen .conf dosyası listeden açıldığında açık bir içe aktarma onayı istenir. Mevcut tek peer/çift yığın/DNS, sadece uygulama paketi, Android VPN izni ve Keystore şifreleme kuralları korunur. İçe aktarma VPN'i kendiliğinden başlatmaz; çocuk modu dosya açma kısıtı korunur.
+- Tasarım kaynakları, motor, bağımlılıklar, yayın akışı ve üretim imzası değişmez. Fiziksel sunucu bağlantısı ve sızıntı kabulü, hesap kurulmadan tamamlanmış sayılmaz. Uygulamanın Proton tarafından üretildiği veya ortaklık olduğu iddia edilmez.

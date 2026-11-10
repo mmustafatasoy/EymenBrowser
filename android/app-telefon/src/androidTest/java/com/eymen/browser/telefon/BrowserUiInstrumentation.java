@@ -25,6 +25,7 @@ import java.util.function.BooleanSupplier;
 public final class BrowserUiInstrumentation extends Instrumentation {
     private Activity activity;
     private Uri fixtureUri;
+    private Uri vpnFixtureUri;
     private static final String FIXTURE = "Arayüz testi.txt";
     private static final String OLD_URL = "https://example.com/eymen-ui-old?value=1";
     @Override public void onCreate(Bundle args) { super.onCreate(args); start(); }
@@ -134,9 +135,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             navigationAndSearch();
             realHistoryAndScrolling();
             polishedSharingAndInformation();
+            freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -145,6 +147,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         } finally {
             if (activity != null) runOnMainSync(() -> activity.finish());
             if (fixtureUri != null) getTargetContext().getContentResolver().delete(fixtureUri, null, null);
+            if (vpnFixtureUri != null) {
+                getTargetContext().getContentResolver().delete(vpnFixtureUri, null, null);
+                new EymenVpnConfigStore(getTargetContext()).clear();
+            }
             new DownloadRegistry(getTargetContext()).clearListOnly();
             getTargetContext().getSharedPreferences("eymen_child_mode", Context.MODE_PRIVATE).edit().clear().commit();
         }
@@ -488,6 +494,74 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             String name=String.valueOf(root.getPackageName());if("android".equals(name)||"com.android.intentresolver".equals(name))return true;
         }return false;
     }
+    private void freeVpnSetup() throws Exception {
+        Context app = getTargetContext();
+        EymenVpnConfigStore store = new EymenVpnConfigStore(app);
+        require(!store.exists(), "VPN setup starts without a provider profile");
+        openSettingsItem(R.string.vpn_title);
+        await(() -> find(label(R.string.vpn_free_title), false) != null, "free VPN account setup is available without a profile");
+        capture("vpn-free-setup.png", true);
+        scrollClick(label(R.string.vpn_free_open));
+        await(() -> uiCheck(() -> {
+            String url = String.valueOf(((androidx.compose.runtime.MutableState<?>)controller("currentUrl")).getValue());
+            return url.startsWith("https://account.protonvpn.com/") || url.startsWith("https://account.proton.me/");
+        }), "setup opens the official provider account in the browser");
+        require(!store.exists(), "opening the provider website never creates credentials");
+
+        // Ephemeral test-only keys and an RFC 5737 endpoint: no real VPN peer
+        // is contacted, and importing must never start a VPN or ask for consent.
+        com.wireguard.crypto.KeyPair client = new com.wireguard.crypto.KeyPair();
+        String config = "[Interface]\nPrivateKey = " + client.getPrivateKey().toBase64()
+            + "\nAddress = 10.91.0.2/32, fd91:1:2::2/128\nDNS = 10.91.0.1\n"
+            + "ExcludedApplications = " + app.getPackageName() + "\n[Peer]\nPublicKey = "
+            + new com.wireguard.crypto.KeyPair().getPublicKey().toBase64()
+            + "\nEndpoint = 192.0.2.1:51820\nAllowedIPs = 0.0.0.0/0, ::/0\n";
+        android.content.ContentValues values = new android.content.ContentValues();
+        String filename = "eymen-ui-vpn.CONF";
+        values.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename);
+        values.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream");
+        values.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS);
+        values.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1);
+        vpnFixtureUri = app.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        require(vpnFixtureUri != null, "create test-only VPN download");
+        byte[] bytes = config.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        try (java.io.OutputStream output = app.getContentResolver().openOutputStream(vpnFixtureUri)) {
+            require(output != null, "open VPN fixture output"); output.write(bytes);
+        } finally { java.util.Arrays.fill(bytes, (byte)0); }
+        values.clear(); values.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0);
+        app.getContentResolver().update(vpnFixtureUri, values, null, null);
+        new DownloadRegistry(app).record(new SavedDownload(vpnFixtureUri.toString(), filename,
+            "application/octet-stream", config.length(), System.currentTimeMillis()));
+        click(label(R.string.browser_menu)); scrollClick(label(R.string.downloads));
+        click(filename);
+        await(() -> find(label(R.string.vpn_import_title), false) != null, "opening a conf download asks before importing");
+        require(!store.exists(), "displaying the import confirmation does not modify the profile");
+        click(label(android.R.string.cancel));
+        require(!store.exists(), "cancelling a downloaded profile leaves VPN unconfigured");
+        click(filename); click(label(R.string.vpn_import_confirm));
+        await(() -> store.exists() && find(label(R.string.vpn_status_ready), false) != null,
+            "confirmed download is imported and VPN settings show a ready disconnected profile");
+        require(find(label(R.string.vpn_free_title), false) == null, "free provider setup hides after a profile exists");
+        com.wireguard.config.Interface loaded = store.load().getInterface();
+        require(loaded.getKeyPair().getPublicKey().equals(client.getPublicKey()), "the imported device key is preserved");
+        require(loaded.getIncludedApplications().size() == 1
+            && loaded.getIncludedApplications().contains(app.getPackageName())
+            && loaded.getExcludedApplications().isEmpty(), "untrusted exclusions are replaced by browser-only routing");
+        byte[] encrypted = java.nio.file.Files.readAllBytes(new File(app.getNoBackupFilesDir(), "eymen-wg-v1.bin").toPath());
+        require(!new String(encrypted, java.nio.charset.StandardCharsets.UTF_8).contains(client.getPrivateKey().toBase64()),
+            "VPN private key is absent from the encrypted profile file");
+        java.util.Arrays.fill(encrypted, (byte)0);
+        require(android.net.VpnService.prepare(app) != null, "profile import never obtains Android VPN permission");
+        capture("vpn-profile-ready.png", true);
+        scrollClick(label(R.string.vpn_remove)); click(label(android.R.string.ok));
+        await(() -> !store.exists(), "deleting the VPN profile removes encrypted configuration");
+        sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+        openSettingsItem(R.string.vpn_title);
+        await(() -> find(label(R.string.vpn_free_title), false) != null, "removing the profile restores free setup");
+        sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+        new DownloadRegistry(app).clearListOnly();
+    }
+
     private void advancedSettings() throws Exception {
         BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");
         java.util.concurrent.atomic.AtomicReference<String> pageTitle = new java.util.concurrent.atomic.AtomicReference<>("");
