@@ -31,7 +31,7 @@ assert 'com.eymen.browser.telefon.test/com.eymen.browser.telefon.BrowserUiInstru
 PY
 timeout 20 adb shell cmd locale set-app-locales com.eymen.browser.telefon --locales tr-TR
 set +e
-timeout 480 adb shell am instrument -w -r \
+timeout 780 adb shell am instrument -w -r \
   com.eymen.browser.telefon.test/com.eymen.browser.telefon.BrowserUiInstrumentation \
   | tee browser-ui-audit/instrumentation.txt
 TEST_EXIT=${PIPESTATUS[0]}

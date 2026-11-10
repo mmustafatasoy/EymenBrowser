@@ -502,7 +502,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
                     progress.onPageStart(s, url);
                 }
                 @Override public void onPageStop(org.mozilla.geckoview.GeckoSession s, boolean success) {
-                    if (testPageLoading.getAndSet(false) && success) completedLoads.incrementAndGet();
+                    // The publisher page from the previous section may still be
+                    // loading; its cancelled stop must not consume the marker set
+                    // by the real https://example.com/ start.
+                    if (success && testPageLoading.getAndSet(false)) completedLoads.incrementAndGet();
                     progress.onPageStop(s, success);
                 }
             });

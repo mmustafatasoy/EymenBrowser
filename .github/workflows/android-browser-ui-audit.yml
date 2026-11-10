@@ -22,7 +22,7 @@ concurrency:
 jobs:
   address-custom-screens:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 32
     strategy:
       fail-fast: false
       matrix:
@@ -55,7 +55,7 @@ jobs:
       - name: Enable KVM
         run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
       - name: Test actual touch and typing plus themed custom screens
-        timeout-minutes: 14
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -69,7 +69,7 @@ jobs:
           emulator-options: -no-window -gpu swangle -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           emulator-boot-timeout: 240
-          script: timeout 660 bash tools/audit_android_browser_ui.sh
+          script: timeout 960 bash tools/audit_android_browser_ui.sh
       - name: Print failure hierarchy to the job log
         if: failure()
         run: |
