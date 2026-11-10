@@ -13,6 +13,8 @@ Android 15/16 emülatöründe dener. Fiziksel telefon kabulünün yerine geçmez
 - Android'in kaynak izni başlangıçta kapalı olmalıdır. Sistem ayarındaki izin
   ve PackageInstaller son onayı gerçek ekran dokunuşlarıyla verilir. Yeni APK
   `adb install`, sessiz kurulum veya imza/izin denetimini kapatarak yüklenmez.
+- Güncellemenin sonunda kurulum ekranındaki gerçek **Aç** düğmesine basılır;
+  tarayıcıya dönüş ve veri koruma denetimleri bundan sonra yapılır.
 - Yer imi, ilk kurulum ve Bing arama motoru seçimi gerçek arayüzden kaydedilir;
   imzalı güncellemeden sonra aynı arayüzden tekrar doğrulanır. Üretim uygulamasının
   özel dosyalarına/prefs'lerine ayrı sürücüden erişilmez.

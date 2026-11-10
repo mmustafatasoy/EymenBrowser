@@ -112,13 +112,16 @@ public final class SignedUpdateInstrumentation extends Instrumentation {
             require(versionCode() == sourceCode, "native installer still waits for final approval");
             capture("install-confirmation.png"); tap(installerPositive());
             await(() -> versionCode() == targetCode, 120000, "real PackageInstaller replaces the signed app");
-            verifyInstalled(targetCode); capture("install-complete.png");
+            verifyInstalled(targetCode);
+            await(() -> installerOpen() != null && installerOpen().isEnabled(), 45000,
+                "native installer offers Open after successful update");
+            capture("install-complete.png");
 
             String installer = pm().getInstallSourceInfo(BROWSER).getInstallingPackageName();
             // Android may retain installer attribution across updates. The
             // actual approval, version transition and installed APK digest
             // establish this flow; attribution is recorded as diagnostics.
-            launchBrowser();
+            tap(installerOpen());
             await(() -> find(label("browser_menu"), BROWSER) != null, 45000, "updated production app reopens without first-run setup");
             require(find(label("start"), BROWSER) == null, "setup state survives signed update");
             loadBrowserResources();
@@ -229,6 +232,14 @@ public final class SignedUpdateInstrumentation extends Instrumentation {
                     || (pkg+":id/install_button").equals(id)
                     || "Update".equalsIgnoreCase(text) || "Install".equalsIgnoreCase(text)) return node;
             }
+        }
+        return null;
+    }
+    private AccessibilityNodeInfo installerOpen() {
+        for (AccessibilityNodeInfo node : nodes()) {
+            String pkg=String.valueOf(node.getPackageName());
+            if ((pkg.equals("com.android.packageinstaller") || pkg.equals("com.google.android.packageinstaller"))
+                && "Open".equalsIgnoreCase(String.valueOf(node.getText()))) return node;
         }
         return null;
     }
