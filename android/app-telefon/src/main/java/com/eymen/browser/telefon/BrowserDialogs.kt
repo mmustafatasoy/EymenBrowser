@@ -52,7 +52,7 @@ internal object BrowserDialogs {
                     view.post {
                         if (!dialog.isShowing) return@post
                         dialog.window?.apply {
-                            setDimAmount(T.telefon_dialog_perde)
+                            setDimAmount(T.telefon_dialog_perde.toFloat())
                             setBackgroundDrawable(GradientDrawable().apply {
                                 setColor(p.background.toArgb()); cornerRadius = px(T.telefon_dialog_kose).toFloat()
                             })

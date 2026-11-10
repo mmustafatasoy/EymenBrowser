@@ -79,7 +79,7 @@ internal class BrowserShareController(private val activity: ComponentActivity,
         }
         popup.window?.apply {
             setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
-            setGravity(Gravity.BOTTOM);setDimAmount(T.telefon_dialog_perde)
+            setGravity(Gravity.BOTTOM);setDimAmount(T.telefon_dialog_perde.toFloat())
         }
         popup.show()
         popup.window?.setLayout(min(activity.resources.displayMetrics.widthPixels,
