@@ -492,20 +492,22 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         BrowserSettingsServices services = (BrowserSettingsServices) controller("settingsServices");
         java.util.concurrent.atomic.AtomicReference<String> pageTitle = new java.util.concurrent.atomic.AtomicReference<>("");
         java.util.concurrent.atomic.AtomicInteger completedLoads = new java.util.concurrent.atomic.AtomicInteger();
-        java.util.concurrent.atomic.AtomicBoolean testPageLoading = new java.util.concurrent.atomic.AtomicBoolean();
         org.mozilla.geckoview.GeckoSession page = currentSession();
         runOnMainSync(() -> {
             org.mozilla.geckoview.GeckoSession.ProgressDelegate progress = page.getProgressDelegate();
             page.setProgressDelegate(new org.mozilla.geckoview.GeckoSession.ProgressDelegate() {
                 @Override public void onPageStart(org.mozilla.geckoview.GeckoSession s, String url) {
-                    testPageLoading.set("https://example.com/".equals(url));
                     progress.onPageStart(s, url);
                 }
                 @Override public void onPageStop(org.mozilla.geckoview.GeckoSession s, boolean success) {
-                    // The publisher page from the previous section may still be
-                    // loading; its cancelled stop must not consume the marker set
-                    // by the real https://example.com/ start.
-                    if (success && testPageLoading.getAndSet(false)) completedLoads.incrementAndGet();
+                    // Replacing the still-starting publisher page can commit
+                    // example.com without another PageStart. Count a successful
+                    // stop only for the actual browser location, which also
+                    // follows Gecko's LocationChange; cancelled/other pages do
+                    // not satisfy the initial load or the privacy reload check.
+                    if (success && "https://example.com/".equals(
+                            ((androidx.compose.runtime.MutableState<?>) controller("currentUrl")).getValue()))
+                        completedLoads.incrementAndGet();
                     progress.onPageStop(s, success);
                 }
             });

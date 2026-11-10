@@ -1,7 +1,7 @@
 name: EymenBrowser - Android telefon arayuz ve kaynak denetimi
 on:
   push:
-    branches: [main]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance]
   workflow_dispatch:
 env:
   PYTHONIOENCODING: utf-8

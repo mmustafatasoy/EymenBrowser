@@ -24,6 +24,15 @@ Sıradaki adımlar (bu sırayla, başka iş ekleme):
 
 Yapılmayacaklar: main'e doğrudan ürün kodu değişikliği (önce dal + CI), release workflow'unu düzenleme, imza anahtarına dokunma, test adımlarını silerek "yeşil" yapma.
 
+### 2026-11-10 — Devam notu adım 1: tekrarlanan UI yükleme beklemesi
+
+- `c292feb` kaynak/derleme #42830815229 ve arka plan indirme #42830815237 başarılıdır. Görsel #42830815008, yalnız başarısız API36 işinin tek yeniden denemesiyle başarılı oldu (attempt 2); ilk sistem başlatıcısı örtüsü kabul sayılmadı.
+- UI #42830815029 API36 ilk iş #129880017962 ve tekrar #129913960516 aynı `advancedSettings` HTTPS tamamlama beklemesinde durdu. API35 ilk işi de aynı yerde durdu; ikinci API35 sonucu henüz bekleniyor. Kaynakta ürün çökmesi kanıtı yok; bu başarısız işler kabul edilmedi.
+- İlk API36 tam logcat ve gerçek PNG incelendi: destek sayfasının `PageStart` bildirimini doğrudan `https://example.com/` konum bildirimi ve başarılı sayfa sonu izliyor; arada ikinci `PageStart` yok. HTTPS belge ve gerçek adres görünür. Testte yalnız tam eşleşen `PageStart` ile kurulan bayrak bu geçişi hiç sayamıyordu.
+- `fix/v1.0.21-privacy-load-acceptance` dalında test, başarılı sayfa sonunu Gecko konumunu izleyen gerçek `currentUrl` ile eşler. Gerçek `Example Domain` başlığı, ilk başarılı yükleme ve gizlilik değişiminden sonraki yeni başarılı yeniden yükleme ayrı ayrı zorunlu kalır; iptal/başka adres sayılmaz. Ürün kodu, test adımları ve tasarım değiştirilmedi.
+- Main'e geçmeden dört kabulü aynı dalda çalıştırabilmek için yalnız üç mevcut `push` dal filtresine bu düzeltme dalının tam adı eklendi; görsel workflow zaten dal filtresi kullanmıyor. Yayın workflow'u ve üretim imzasına dokunulmadı.
+- Yerel tema/çeviri üretimi, `generate.py --check`, `verify.py`, bütün `check_*.py` ve kozmetik JS testleri geçti. Yeni dalın Android/JVM, API35/36 UI, görsel ve indirme CI sonuçları henüz denenmedi; yeşil olmadan main'e geçiş/yayın yok. Sıradaki iş bu dört sonucu doğrulamak; son kararlı sürüm v1.0.20'dir.
+
 ### Kodlama yapısı ve referanslar (bu kurallardan çıkılmaz)
 
 Referans sırası (çelişkide üstteki kazanır):
