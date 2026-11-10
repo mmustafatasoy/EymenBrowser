@@ -24,6 +24,38 @@ Sıradaki adımlar (bu sırayla, başka iş ekleme):
 
 Yapılmayacaklar: main'e doğrudan ürün kodu değişikliği (önce dal + CI), release workflow'unu düzenleme, imza anahtarına dokunma, test adımlarını silerek "yeşil" yapma.
 
+### Kodlama yapısı ve referanslar (bu kurallardan çıkılmaz)
+
+Referans sırası (çelişkide üstteki kazanır):
+1. `docs/SARTNAME.md` — şartname; özellik listesi, mimari, aşama planı, test/yayın kuralları. Sapma gerekiyorsa önce `docs/SAPMA.md` şablonuyla kayıt ve kullanıcı onayı.
+2. `docs/KARARLAR.md` — alınmış kararlar; geri alınmaz, yeni karar tarihli satır olarak eklenir.
+3. `design/tokens.json` + `design/kaynak/*.html` + `design/ekranlar/*.png` — tek görsel kaynak. Değiştirilmez. Renk/ölçü/simge koda elle yazılmaz; `python3 tools/generate.py` ile üretilen `EymenTokens.kt` / `EymenPaths.kt` / `strings.xml` kullanılır (`T.xxx`, `EymenPaths.xxx`, `R.string.xxx`).
+4. `shared/i18n/tr.json` ve `en.json` — tüm kullanıcı metinleri buradan; koda sabit Türkçe/İngilizce metin yazılmaz. Yeni metin → iki dosyaya da ekle → generate.py → `--check` geçmeli.
+5. `versions.toml` — sürüm kilitleri (Gradle 9.3.1, AGP 9.1.1, Kotlin 2.4.20, GeckoView 159 stable, compileSdk 37 / target 35 / min 26, Java 17). Bağımlılık eklerken/yükseltirken önce burası, sonra `tools/verify.py` geçmeli.
+6. `docs/ANDROID_*.md` — her alt sistemin mevcut sözleşmesi (VPN V110–V112, banka uyumu V113–V114, indirme V115, sekme V107–V108, gizlilik V109–V110, güncelleme `ANDROID_RELEASE_UPDATES.md`). İlgili dosyayı okumadan o alana dokunma.
+
+Kod düzeni:
+- Platform: yalnız `android/app-telefon` aktif. `app-tv`, `ios/`, `desktop/` iskelet; kullanıcı istemeden geliştirilmez.
+- Dil/UI: Kotlin + Jetpack Compose (`compose_bom` kilitli). Material bileşeni yok; proje kendi `ScreenText`, `SettingsActionRow`, `SettingsRows`, `ListPageHeader`, `EymenVector`, `BrowserDialogs.builder(...)` bileşenlerini kullanır. Yeni ekran bu bileşenlerle yazılır, yeni bileşen `BrowserListUi.kt` / `BrowserScreenUi.kt` içine eklenir.
+- Dosya yerleşimi: her alan kendi dosyasında (`BrowserShare.kt`, `BrowserHistory.kt`, `EymenWireGuardVpn.kt`, `BrowserUpdateManager.kt`...). `MainActivity.kt` yalnız bağlama/yönlendirme; yeni iş mantığı oraya değil, ilgili dosyaya veya yeni `*Controller`/`*Policy` dosyasına. Saf karar mantığı (`*Policy.kt`) Android bağımlılığı olmadan yazılır ve `src/test` altında JVM birim testi alır.
+- Motor: GeckoView; `GeckoMotorDenemesi` üzerinden. WebView kullanılmaz. HTTPS doğrulaması `GeckoMotorDenemesi.verifiedHttpsUrl` üzerinden.
+- Dialog/popup: `AlertDialog.Builder` yerine `BrowserDialogs.builder`. Float bekleyen API'lere token verirken `.toFloat()` (telefon_dialog_perde gibi Double tokenlar).
+- Gizlilik/çocuk modu: dış paylaşım, pano, indirme, VPN kararları `ChildModePolicy` / `HistoryPolicy` / `EymenHandshakePolicy` üzerinden; bu politikalar atlanmaz.
+- Lisans/kaynak: yeni üçüncü taraf bağımlılık → `assets/licenses/` + `index.json` + `OPEN_SOURCE_NOTICES.txt`; `check_publishing_polish.py` geçmeli.
+
+Test ve doğrulama (her değişiklikte, bu sırayla):
+1. `python3 tools/generate.py && python3 tools/generate.py --check && python3 tools/verify.py` ve `tools/check_*.py` hepsi + `node tools/test_cosmetic_extension.mjs`.
+2. Yeni davranış için: JVM testi `app-telefon/src/test` (saf mantık) ve/veya `BrowserUiInstrumentation.java` içine yeni bölüm; `checks` listesine adı eklenir. Gerçek dokunma/klavye/ağ ile test edilir, mock'lanmaz.
+3. Statik `check_*.py` denetimleri kaynak metni okur; bir denetim kırılırsa denetim değil kod düzeltilir (gerçekten yanlış bir denetimse SAPMA kaydı).
+4. CI: dört iş (kaynak/derleme `phase0.yml`, UI `android-browser-ui-audit.yml`, görsel `android-visual-audit.yml`, indirme `android-download-audit.yml`) API 35 ve 36'da yeşil olmadan sürüm istenmez.
+5. Zamanlama hataları: önce bir kez rerun; aynı yerde iki kez kırılırsa gerçek hata. Log için workflow'daki "Print failure hierarchy" adımına bak.
+
+Git/yayın:
+- Commit mesajı İngilizce, `type(scope): ...` biçimi (`fix(android):`, `test(android):`, `docs:`, `ci(android):`); gövdede neden.
+- Ürün kodu önce dalda, CI yeşil olunca main'e fast-forward. Doküman/CI ayarı doğrudan main'e olabilir.
+- Sürüm `android-stable-release.yml` ile manuel; versionCode = major*10000+minor*100+patch; yayımlanmış etiket tekrar yayımlanmaz.
+- Her sürüm sonrası `docs/DURUM.md` "Güncel yayın" + README sürüm notu güncellenir; "tüm 64 özellik bitti" gibi doğrulanmamış iddia yazılmaz.
+
 
 ## v1.0.21 — Paylaşım ve ürün düzeni: geliştirme / kabul bekliyor
 
