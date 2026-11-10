@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-11-10
 
-## Güncel devam — ücretsiz VPN kurulumu ana dalda, v1.0.22 yayına hazır (2026-11-10)
+## Güncel devam — v1.0.22 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
 - Kullanıcıda VPN hesabı veya VPS yok; ücretsiz çözüm istendi. `feat/free-vpn-setup` dalında Proton VPN Free için tek seferlik hesap/yapılandırma rehberi ve resmî hesap sayfasını açan düğme eklendi. S-005 bu açık kullanıcı isteğini kaydeder.
 - İndirilen .conf dosyasını listeden açma → açık onay → aynı güvenli doğrulama ve Keystore içe aktarması → VPN ekranı akışı hazırlandı. Profil kendiliğinden bağlanmaz; Android'in gerçek VPN onayı ayrı kalır. Başarılı kurulumdan sonra mevcut profil yeniden seçilmeden Bağlan kullanılabilir.
@@ -12,10 +12,12 @@ Son güncelleme: 2026-11-10
 - İlk API35 işi **130021599045**, yeni VPN adımlarından önce `first page really completed` beklemesinde durdu. PNG'de boş/yüklenmekte olan belge, logcat'te ilgili HTTPS sayfasının PageStart'ı var; zaman sınırına kadar tamamlanma yok. Aynı kaynağın API36 tam kabulü geçti. Kod/test koşulu değişmeden yalnız başarısız API35 işi bir kez yeniden başlatıldı (**130083086711**); bu tekrar bütün UI adımları ve zorunlu PNG kontrolleriyle `completed/success` oldu. İlk başarısızlık kabul sayılmaz; kod/test koşulları değiştirilmedi.
 - Başarılı API35 artefaktı **13798715066** de indirildi; ZIP/PNG bütünlüğü, `eymen_browser_ui_audit=passed` ve `INSTRUMENTATION_CODE: -1` kontrol edildi. İki API'nin gerçek ücretsiz kurulum/profil ekranları açılıp incelendi. Eski başarısız **13790326115** kabul yerine kullanılmadı.
 - Dört kabulün tamamı aynı `aa0260c0c975b51691da5c83690553925e886ae9` kaynağında başarılı olduktan sonra main, `c1092e9c4203700a12b3254acc684c7c2f42dcbe` üzerinden bu kaynağa fast-forward edildi. Bu kabul kaydı yalnız belge değişikliğidir; ürün/test/tasarım/yayın workflow'u/imza değişmez.
-- **Sıradaki iş:** mevcut manuel imzalı yayın akışını main / **1.0.22** ile çalıştırmak. [Yayın ekranı](https://github.com/mmustafatasoy/EymenBrowser/actions/workflows/android-stable-release.yml). Bu oturumdaki GitHub bağlantısı manuel workflow_dispatch başlatma aracı sunmuyor; CLI oturumu da yetkilendirilmiş değil. Kullanıcı aynı mevcut Run workflow adımını başlatmalıdır; imza veya akış değişikliği gerekmez.
-- **Son yayımlanmış sürüm hâlâ v1.0.21; v1.0.22 APK henüz yayımlanmadı.** Yayımdan sonra etiket/run/üç APK hash'i ve README kaydedilir, sonraki manuel varsayılan 1.0.23 ayrı sürüm kaydıyla güncellenir. Ücretsiz Proton hesabını kullanıcı resmî sitede açar; gerçek sunucu handshake/IP/DNS/IPv6/WebRTC ve uygulama içi güncelleme fiziksel kabulü hâlâ denenmedi.
+- **Yayın tamamlandı:** kullanıcı mevcut manuel akışı çalıştırdı. [İmzalı üretim #42897747763](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42897747763) ve iş **130115270595** `completed/success`. [v1.0.22](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.22) 2026-11-10 **23:45:09 Türkiye** (20:45:09 UTC) yayımlandı; etiket hedefi/yayın kaynağı `4f8cec35ee6061d78f7cd4c3fe503c4b71f75189`. Üç APK ve checksum dosyası yüklendi; yayın taslak veya ön sürüm değildir.
+- Üretimde orijinal sertifika, üç ABI imza/16 KiB hizalama/500 MiB sınırı, SHA-256 ve önceki v1.0.21 ile paket/sürüm/imza metadata uyumu geçti; versionCode **10021 → 10022**. Bu APK metadata doğrulaması fiziksel telefonda üstüne kurulum veya uygulama içi güncelleme uçtan uca kabulü değildir.
+- **Son kararlı sürüm v1.0.22.** Yayın/etiket/run/üç APK hash'i aşağıya ve README'ye kaydedildi. Yalnız sonraki manuel sürüm varsayılanı **1.0.23** olarak ilerletildi; yayın davranışı veya üretim imzası değişmez. v1.0.22 tekrar yayımlanmaz.
+- **Sıradaki kabul:** kullanıcı ücretsiz Proton hesabını resmî sitede açıp kişisel WireGuard dosyasını uygulamaya aktarır; gerçek sunucu handshake/IP/DNS/IPv6/WebRTC ve v1.0.21 → v1.0.22 uygulama içi güncelleme fiziksel cihazda denenir. Bu saha kabulleri hâlâ denenmedi; tüm sitelerin açıldığı veya tüm 64 özelliğin tamamlandığı iddia edilmez.
 
-## Güncel devam — v1.0.21 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
+## Önceki devam — v1.0.21 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
 **Devam notunun 1, 2 ve 3. adımları tamamlandı. Sıradaki iş 4. adım: gerçek cihazda VPN ve imzalı gerçek sürümle uygulama içi güncelleme kabulü.** Aşağıdaki Claude notu başlangıç durumunu ve değişmeyen kapsam kurallarını korur.
 
@@ -101,7 +103,17 @@ Git/yayın:
 - Yeni gerçek Android 15/16 kabulü: tam URL/pano, gizli panonun işareti, paylaşılan PNG'yi yeniden QR decode, Android metin/görsel paylaşım ekranı, lisans arama/okuma/Geri, Hakkında/site/gizlilik/destek ve yalnız e-posta düzenleyicisi. Önceki adres/geri/geçmiş/çerez/indirme/eklentiler/PIN/dil/toolbar kabulü birlikte korunur. Kaynak lisans hash/bildirim ve dosya sağlayıcı denetimi eklendi.
 - **Kabul/yayın sonucu:** yukarıdaki `a589059` kaynağında dört CI ve Android 15/16 emülatör kabulü başarılıdır. İmzalı v1.0.21 üretim #42845289034 ile yayımlandı. Nihai uzak VPN yapılandırması/gerçek cihaz denetimi ve gerçek sürümle uygulama içi güncelleme ayrı kabul gerektirir.
 
-## Güncel yayın — v1.0.21
+## Güncel yayın — v1.0.22
+
+- **[v1.0.22 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.22)** — 2026-11-10 **23:45:09 Türkiye** (20:45:09 UTC). [İmzalı üretim #42897747763](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42897747763) `completed/success`; yayın kaynağı/etiket hedefi `4f8cec35ee6061d78f7cd4c3fe503c4b71f75189`.
+- **S-005 ücretsiz VPN kurulumu:** resmî Proton VPN Free hesabı için tek seferlik rehber ve hesap bağlantısı; indirilen .conf dosyasını açık onayla aynı doğrulama/Keystore yolundan VPN'e aktarma. Hesabı kullanıcı açar; kişisel sunucu yapılandırması olmadan VPN kendiliğinden bağlanmaz. Önceki paylaşım, adres/Geri-İleri, geçmiş, çocuk modu, indirme ve güvenlik davranışları korunur.
+- Doğrulanan ürün/test kaynağı `aa0260c0c975b51691da5c83690553925e886ae9`; yayın commit'i yalnız kabul belgesi ekler. Kaynak/JVM/üç ABI #42870905998, Android 15/16 UI #42870905563, iki API görsel #42870905329 ve indirme #42870905962 başarılıdır. Başarılı UI artefaktları **13798715066** (API35) ve **13790526716** (API36) incelendi; ilk başarısız API35 kaydı kabul sayılmadı.
+- Orijinal sertifika kimliği, üç ABI imza/16 KiB hizalama/500 MiB sınırı ve SHA-256 kontrolleri geçti. Önceki v1.0.21 ile paket/sertifika ve artan versionCode (`10021 → 10022`) metadata uyumu doğrulandı; fiziksel kurulum/güncelleme veya uzak VPN kabulü değildir.
+- **ARM64:** `EymenBrowser-Android-Phone-arm64-v8a.apk`, **205513884 bayt**; SHA-256 `79d88fda6bd5eadee168fd5e8a88536c694fd2f142619e41bd009c52ba44b739`.
+- **ARMv7:** **166089590 bayt**; SHA-256 `af5ac7e7477033efc4956cc91791c54a8912e9aa4af3d428ca73c0e79c7a77e2`. **x86_64:** **225370585 bayt**; SHA-256 `3c7dc1abc9b42501af963e50a6961d7d65c98c34fb6c24d9aae29e6b4b66c5d1`. Üç APK ve `SHA256SUMS.txt` yayımlanmış/yüklenmiş olarak doğrulandı; yayın taslak/ön sürüm değildir.
+- Sonraki manuel sürüm varsayılanı **1.0.23**. Fiziksel cihazda ücretsiz hesapla gerçek VPN bağlantısı/sızıntı ve v1.0.21 → v1.0.22 uygulama içi güncelleme kabulü sıradadır; bu saha kontrolleri henüz denenmedi.
+
+## Önceki yayın — v1.0.21
 
 - **[v1.0.21 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.21)** — 2026-11-10 **18:35:44 Türkiye** (15:35:44 UTC). [İmzalı üretim #42845289034](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42845289034) `completed/success`; kaynak/etiket hedefi `98e743d1a03ccaabfc125626ff0e4979333e9b52`.
 - S-004 kapsamındaki gerçek paylaşım paneli, tam URL/pano, çevrimdışı QR ve Android paylaşım ekranı; yayıncı Hakkında/yardım/gizlilik, aranabilir çevrimdışı lisanslar ve ortak açık/koyu native onay görünümü bu sürümdedir. Önceki adres, geri/ileri, geçmiş, çocuk modu, indirme ve güvenlik davranışları korunur.
