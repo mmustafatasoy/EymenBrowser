@@ -27,4 +27,4 @@ Android 15/16 emülatöründe dener. Fiziksel telefon kabulünün yerine geçmez
 
 İş akışı: `.github/workflows/android-signed-update-audit.yml`.
 Üretim yayın workflow'u ve yayımlanmış v1.0.22 değişmez.
-Bu kabul ilk eklendiğinde **henüz çalıştırılmadı**; sonuç `DURUM.md`'ye kaydedilir.
+**Kabul başarılı:** `b85a57311bf6b043cd1d9252b0ef39fc24e56571` üzerinde #42904693106 iki API'de geçti. Gerçek üretim 10021 → 10022, imza, sistem izin/kurulum, ilk kurulum/Bing/yer imi koruması ve kurulu APK SHA-256 eşitliği doğrulandı. Artefaktlar: API35 13803703351, API36 13804597911. Fiziksel telefon kabulü açık kalır. Ayrıntılı kanıt ve sınırlar `DURUM.md` içindedir.

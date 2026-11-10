@@ -1,15 +1,21 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-10
+Son güncelleme: 2026-11-11
 
-## Güncel çalışma — imzalı uygulama içi güncelleme uçtan uca kabulü (2026-11-10)
+## Güncel devam — imzalı uygulama içi güncelleme kabulü geçti (2026-11-11)
 
-- Devam notundaki sıradaki güncelleme kabulü için `test/signed-update-acceptance` dalı açıldı. Yayımlanmış orijinal üretim v1.0.21 → v1.0.22 APK'larıyla Android 15/16 emülatöründe gerçek indirme/izin/kurulum ve veri koruma kabulü hazırlanıyor. [Kabul kapsamı](ANDROID_SIGNED_UPDATE_ACCEPTANCE.md).
+- Devam notundaki sıradaki güncelleme kabulü için `test/signed-update-acceptance` dalı açıldı. Yayımlanmış orijinal üretim v1.0.21 → v1.0.22 APK'larıyla Android 15/16 emülatöründe gerçek indirme/izin/kurulum ve veri koruma kabulü eklendi; aşağıdaki CI ile doğrulandı. [Kabul kapsamı](ANDROID_SIGNED_UPDATE_ACCEPTANCE.md).
 - Ayrı UI sürücüsü tarayıcının güncelleme sırasında kapanmasından etkilenmeden gerçek sistem ekranlarını izler. İlk üretim APK'sı dışında yeni sürüm adb ile yüklenmez; tarayıcının güncelleyicisi indirir, Android'in kaynak izni ve kurulum onayı gerçek dokunuşlarla verilir. Üretim APK'sı/anahtarı/imzası, yayın workflow'u ve ürün kaynakları değişmez.
 - Yer imi, Bing tercihi ve ilk kurulum durumu arayüzden önce/sonra karşılaştırılır. Kurulan APK'nin genel program dosyası yayımlanmış hedef SHA-256'sıyla birebir eşleşmelidir. Özel tarayıcı dosyaları veya VPN anahtarları okunmaz. CI işi üretim Secrets'ı kullanmaz.
-- Python/Bash/YAML/XML sözdizimi, ortak kaynak güncelliği ve şartname denetimi yerelde geçti. Bağımsız Android sürücüsü ilk CI koşusunda derlendi; tam yükseltme/veri koruma kabulü aşağıdaki test düzeltmesinden sonra yeni kaynakta beklenir. CI başarılı olmadan birleştirme/kabul kaydı yok. Son kararlı sürüm v1.0.22; gerçek telefon VPN ve güncelleme kabulü ayrıca açık kalır. Kullanıcının ücretsiz Proton hesabını kurması gerekir.
+- Python/Bash/YAML/XML sözdizimi, ortak kaynak güncelliği ve şartname denetimi yerelde geçti. Bağımsız Android sürücüsü derlendi; tam yükseltme/veri koruma kabulü aşağıdaki test düzeltmesinden sonra iki API üzerinde geçti. CI başarılı olmadan birleştirme/kabul kaydı yok. Son kararlı sürüm v1.0.22; gerçek telefon VPN ve güncelleme kabulü ayrıca açık kalır. Kullanıcının ücretsiz Proton hesabını kurması gerekir.
 - İlk CI [#42903257657](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42903257657), API35 **130134527631** ve API36 **130134527949** bağımsız sürücüyü derledi. İki API'de de gerçek üretim 1.0.21 ilk kurulumu, ön plan güncelleme önerisini iptal, indirme, Android kaynak izni/son kurulum onayı, 10021 → 10022 yükseltmesi ve orijinal üretim sertifikası geçti. Test kurulum sonrasında yeniden açılış beklemesinde durdu; tam kabul verilmedi.
 - Artefakt **13803129381** (API35) ve **13803508538** (API36) indirildi. PNG/hierarchy, Android'in “App installed / OPEN” sonucunda kaldığını gösterir. Sürücü kurulum sonrası **Aç** düğmesine basmayı atlıyordu; artık gerçek Aç düğmesine dokunur ve aynı veri/kurulu APK kontrollerinin tamamını sürdürür. Üretim APK'sı veya kabul koşulları değiştirilmez. Yeni kaynağın iki API sonucu sıradadır; ilk başarısız sonuçlar kabul sayılmaz.
+
+- **Tam kabul başarılı:** kaynak `b85a57311bf6b043cd1d9252b0ef39fc24e56571`, [#42904693106](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42904693106) `completed/success`; API35 iş **130139501279**, API36 iş **130139501510**. İkisinde de `eymen_signed_update_audit=passed`, `INSTRUMENTATION_CODE: -1` ve zorunlu PNG/metadata/kurulu APK kontrolleri geçti.
+- Yayımlanmış orijinal üretim 1.0.21 → 1.0.22, tarayıcının gerçek HTTPS indirmesi, Android kaynak izni, PackageInstaller güncelleme/Aç düğmeleri üzerinden kuruldu. Kaynak/son APK debug değildir; orijinal sertifika SHA-256 `febdab91097eaff90bf87c8d4a68186ef9fd67cc0a8efce6eb21d4a0bd9cb232`. Gerçek son kurulu x86_64 APK SHA-256 `3c7dc1abc9b42501af963e50a6961d7d65c98c34fb6c24d9aae29e6b4b66c5d1`, iki API'de de yayımlanmış dosyayla birebir eşleşti.
+- İlk kurulum durumu, Bing tercihi ve gerçek kaydedilmiş yer imi güncelleme sonrasında korundu; kayıtlı yer imi aynı tam URL'yi açtı. Aynı kurulu sürüm yeniden indirme/kurulum için sunulmadı. Başarılı artefaktlar **13803703351** (API35), **13804597911** (API36) indirildi; ZIP/PNG, kurulu paket/sertifika/hash metadata'sı ve gerçek önce/sonra ekranları incelendi.
+- Bu sonuç **Android 15/16 emülatöründedir**; fiziksel telefon kabulü veya uzak VPN/IP/DNS/IPv6/WebRTC kabulü değildir. Son yayımlanmış sürüm v1.0.22; test altyapısı yeni üretim APK'sı/yayını gerektirmez.
+- Kabulde bir metin hatası görüldü: kurulu v1.0.22'de daha yeni sürüm yokken `update_no_release` “kararlı sürüm yayımlanmadı” diyordu. Sonraki dar düzeltme TR/EN metnini “bu cihaz için daha yeni uyumlu sürüm bulunamadı” olarak düzeltecek; güncelleyicinin doğrulama/kurulum davranışı değişmez. Ürün metni ayrı dal + CI ile ilerler; henüz yayımlanmamıştır.
 
 ## Güncel devam — v1.0.22 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
