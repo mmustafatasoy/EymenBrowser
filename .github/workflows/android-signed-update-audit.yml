@@ -1,0 +1,87 @@
+name: EymenBrowser published signed in-app update acceptance
+on:
+  push:
+    branches: [main, test/signed-update-acceptance]
+    paths:
+      - '.github/workflows/android-signed-update-audit.yml'
+      - 'tools/signed-update-audit/**'
+      - 'tools/prepare_signed_update_audit.py'
+      - 'tools/audit_signed_android_update.sh'
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Published old stable release
+        default: v1.0.21
+        type: string
+        required: true
+      target_tag:
+        description: Published target (must be latest stable)
+        default: v1.0.22
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: eymen-real-signed-update-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  published-apk-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Pin published production APKs and existing build tool versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUDIT_SOURCE_TAG: ${{ inputs.source_tag || 'v1.0.21' }}
+          AUDIT_TARGET_TAG: ${{ inputs.target_tag || 'v1.0.22' }}
+        run: python3 tools/prepare_signed_update_audit.py
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '${{ env.EY_AUDIT_JAVA }}'}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '${{ env.EY_AUDIT_GRADLE }}'}
+      - name: Build independent UI driver only
+        run: |
+          if [ ! -d "$ANDROID_HOME/platforms/android-${EY_AUDIT_COMPILE_SDK}" ] && [ ! -d "$ANDROID_HOME/platforms/android-${EY_AUDIT_COMPILE_SDK}.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-${EY_AUDIT_COMPILE_SDK}.0"
+          fi
+          gradle -p tools/signed-update-audit --no-daemon assembleDebug
+          gradle --stop
+      - name: Enable emulator KVM
+        run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Real production download, source consent, native install and preserved data
+        timeout-minutes: 18
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: default
+          arch: x86_64
+          profile: Nexus 5X
+          emulator-build: 15507667
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-options: -no-window -gpu swangle -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          emulator-boot-timeout: 240
+          script: timeout 900 bash tools/audit_signed_android_update.sh
+      - name: Print acceptance failure evidence
+        if: failure()
+        run: |
+          cat signed-update-audit/instrumentation.txt signed-update-audit/hierarchy.txt 2>/dev/null || true
+          tail -100 signed-update-audit/logcat.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EymenBrowser-signed-update-API${{ matrix.api }}
+          path: |
+            signed-update-audit/*.png
+            signed-update-audit/*.json
+            signed-update-audit/*.txt
+          if-no-files-found: warn

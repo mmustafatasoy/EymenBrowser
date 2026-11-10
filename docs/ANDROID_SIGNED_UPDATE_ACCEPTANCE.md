@@ -1,0 +1,28 @@
+# Yayımlanmış imzalı APK ile gerçek uygulama içi güncelleme kabulü
+
+Bu kabul, devam notundaki güncelleme işini iki yayımlanmış üretim APK'sıyla
+Android 15/16 emülatöründe dener. Fiziksel telefon kabulünün yerine geçmez.
+
+- Kaynak: v1.0.21, hedef: en son kararlı v1.0.22. Etiket, boyut, SHA-256 ve
+  üretim sertifikası sabitlenir. Son kararlı sürüm değişmişse test bu çifti kabul etmez.
+- Tarayıcının kaynakları değiştirilmez, APK tekrar imzalanmaz ve debug tarayıcı
+  kullanılmaz. `tools/signed-update-audit` yalnız ayrı bir UI sürücüsüdür;
+  tarayıcının güncelleme sırasında kapanmasından etkilenmeden sonucu izler.
+- Gerçek ilk kurulumdan sonra ön plana gelişte sunulan güncellemenin iptali,
+  manuel yeniden kontrol ve tarayıcının kendi HTTPS indirmesi denenir.
+- Android'in kaynak izni başlangıçta kapalı olmalıdır. Sistem ayarındaki izin
+  ve PackageInstaller son onayı gerçek ekran dokunuşlarıyla verilir. Yeni APK
+  `adb install`, sessiz kurulum veya imza/izin denetimini kapatarak yüklenmez.
+- Yer imi, ilk kurulum ve Bing arama motoru seçimi gerçek arayüzden kaydedilir;
+  imzalı güncellemeden sonra aynı arayüzden tekrar doğrulanır. Üretim uygulamasının
+  özel dosyalarına/prefs'lerine ayrı sürücüden erişilmez.
+- Son kurulu APK'nin yalnız genel program dosyası alınarak yayımlanmış hedefin
+  boyutu/SHA-256'sıyla birebir eşleştirilir. Yüklü sürümün tekrar sunulmaması da denenir.
+- Sürücü fiziksel cihazda veya zaten tarayıcı kurulmuş bir emülatörde çalışmayı
+  reddeder. İmza Secrets'ına, VPN hesabına ya da kişisel anahtara ihtiyacı yoktur.
+- CI kanıtı: gerçek izin/kurulum/önce-sonra PNG'leri, paket sürümü/sertifika
+  metadata'sı, yüklü APK hash'i ve instrumentation sonucu. Başarısız sonuç kabul edilmez.
+
+İş akışı: `.github/workflows/android-signed-update-audit.yml`.
+Üretim yayın workflow'u ve yayımlanmış v1.0.22 değişmez.
+Bu kabul ilk eklendiğinde **henüz çalıştırılmadı**; sonuç `DURUM.md`'ye kaydedilir.

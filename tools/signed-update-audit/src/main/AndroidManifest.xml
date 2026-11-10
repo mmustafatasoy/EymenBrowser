@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.eymen.browser.telefon" />
+    </queries>
+    <application android:label="Eymen signed update audit"
+        android:allowBackup="false" android:usesCleartextTraffic="false" />
+    <instrumentation
+        android:name=".SignedUpdateInstrumentation"
+        android:targetPackage="com.eymen.browser.updateaudit"
+        android:label="Published APK update acceptance" />
+</manifest>

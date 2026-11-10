@@ -2,6 +2,13 @@
 
 Son güncelleme: 2026-11-10
 
+## Güncel çalışma — imzalı uygulama içi güncelleme uçtan uca kabulü (2026-11-10)
+
+- Devam notundaki sıradaki güncelleme kabulü için `test/signed-update-acceptance` dalı açıldı. Yayımlanmış orijinal üretim v1.0.21 → v1.0.22 APK'larıyla Android 15/16 emülatöründe gerçek indirme/izin/kurulum ve veri koruma kabulü hazırlanıyor. [Kabul kapsamı](ANDROID_SIGNED_UPDATE_ACCEPTANCE.md).
+- Ayrı UI sürücüsü tarayıcının güncelleme sırasında kapanmasından etkilenmeden gerçek sistem ekranlarını izler. İlk üretim APK'sı dışında yeni sürüm adb ile yüklenmez; tarayıcının güncelleyicisi indirir, Android'in kaynak izni ve kurulum onayı gerçek dokunuşlarla verilir. Üretim APK'sı/anahtarı/imzası, yayın workflow'u ve ürün kaynakları değişmez.
+- Yer imi, Bing tercihi ve ilk kurulum durumu arayüzden önce/sonra karşılaştırılır. Kurulan APK'nin genel program dosyası yayımlanmış hedef SHA-256'sıyla birebir eşleşmelidir. Özel tarayıcı dosyaları veya VPN anahtarları okunmaz. CI işi üretim Secrets'ı kullanmaz.
+- Python/Bash/YAML/XML sözdizimi, ortak kaynak güncelliği ve şartname denetimi yerelde geçti. Gerçek Android derlemesi ve imzalı yükseltme kabulü henüz çalıştırılmadı; dal CI işi sıradadır. CI başarılı olmadan birleştirme/kabul kaydı yok. Son kararlı sürüm v1.0.22; gerçek telefon VPN ve güncelleme kabulü ayrıca açık kalır. Kullanıcının ücretsiz Proton hesabını kurması gerekir.
+
 ## Güncel devam — v1.0.22 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
 - Kullanıcıda VPN hesabı veya VPS yok; ücretsiz çözüm istendi. `feat/free-vpn-setup` dalında Proton VPN Free için tek seferlik hesap/yapılandırma rehberi ve resmî hesap sayfasını açan düğme eklendi. S-005 bu açık kullanıcı isteğini kaydeder.
