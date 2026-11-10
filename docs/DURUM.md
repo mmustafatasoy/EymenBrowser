@@ -2,9 +2,9 @@
 
 Son güncelleme: 2026-11-10
 
-## Güncel devam — v1.0.21 kabulü geçti, manuel yayın bekliyor (2026-11-10)
+## Güncel devam — v1.0.21 yayımlandı, gerçek cihaz kabulü sırada (2026-11-10)
 
-**Devam notunun 1. adımı tamamlandı. Sıradaki iş yalnız 2. adım: main'den imzalı v1.0.21 yayını.** Aşağıdaki Claude notu başlangıç durumunu ve değişmeyen kapsam kurallarını korur.
+**Devam notunun 1, 2 ve 3. adımları tamamlandı. Sıradaki iş 4. adım: gerçek cihazda VPN ve imzalı gerçek sürümle uygulama içi güncelleme kabulü.** Aşağıdaki Claude notu başlangıç durumunu ve değişmeyen kapsam kurallarını korur.
 
 - Doğrulanan kaynak `a5890592c3fa3cf9bfc4139af71ea201d84aaa2d`; `fix/v1.0.21-privacy-load-acceptance` dalındaki dört kabul tamamlandıktan sonra main, `68016b0` üzerinden bu commit'e **fast-forward** edildi. Ürün/tasarım/yayın workflow'u/imza değişmedi; testin sayfa yükleme takibi ve bu dalı çalıştıran dar CI filtreleri düzeltildi.
 - **Kaynak/JVM/üç ABI:** [#42842111336](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42842111336) `completed/success`.
@@ -12,9 +12,9 @@ Son güncelleme: 2026-11-10
 - **İki API görsel/sistem alanı:** [#42842111661](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42842111661) `completed/success`. **Arka plan indirme:** [#42842111239](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42842111239) `completed/success`.
 - Başarılı UI artefaktları **13775619063** (API35) ve **13777281799** (API36) indirildi; paylaşım, Hakkında, lisans, açık/koyu onay, gizlilik, eklenti, çocuk modu ve dil PNG'leri açılıp incelendi. API36 QR yakalaması hazırlık karesini içerir; gerçek paylaşılan QR PNG'sinin tam bağlantıya çözüldüğü iki API'de de doğrulandı. Bu sonuçlar tüm ekranlara piksel kabulü veya fiziksel cihaz kabulü vermez.
 - Eski `c292feb` UI tekrarında API35 geçti, API36 aynı yükleme beklemesinde tekrar durdu. Bu eski koşu başarısızdır ve yeni kaynağın yerine kabul sayılmadı. Yeni başarılı kaynak yukarıdadır.
-- **Yayın erişimi:** bağlı GitHub araçları başarısız işleri yeniden çalıştırabiliyor, ancak yeni `workflow_dispatch` başlatma aracı sağlamıyor. Yerel `gh` oturumu ve paylaşılan tarayıcıda GitHub oturumu açık değil. Bu nedenle v1.0.21 yayını henüz başlatılmadı; bunun yerine yayın workflow'u/tetikleyicisi değiştirilmedi.
-- Hazır manuel işlem: [Android signed stable release](https://github.com/mmustafatasoy/EymenBrowser/actions/workflows/android-stable-release.yml) → **Run workflow** → **main**, version **1.0.21**. Yetkili bir `gh` oturumunda eşdeğeri: `gh workflow run android-stable-release.yml --repo mmustafatasoy/EymenBrowser --ref main -f version=1.0.21`. Production onayı istenirse kullanıcı onaylar.
-- **Son yayımlanmış kararlı sürüm hâlâ v1.0.20.** v1.0.21 Release/run/APK SHA-256 henüz yok; README ve manuel sürüm varsayılanı yayın olmuş gibi güncellenmedi. Yayın gerçekten başarılı olunca orijinal notun 3. adımındaki etiket/run/APK SHA-256, README ve sonraki sürüm 1.0.22 kaydı tamamlanmalı. Ancak ardından 4. adımdaki gerçek cihaz VPN ve imzalı gerçek sürümle uygulama içi güncelleme kabulüne geçilir.
+- **Yayın tamamlandı:** kullanıcı tarafından mevcut manuel akış başlatıldı. [İmzalı üretim #42845289034](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42845289034) `completed/success`; [v1.0.21](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.21) 2026-11-10 **18:35:44 Türkiye** (15:35:44 UTC) yayımlandı. Yayın kaynağı/etiket hedefi `98e743d1a03ccaabfc125626ff0e4979333e9b52`. Üç APK ve checksum dosyası `uploaded`; yayın `draft=false`, `prerelease=false`.
+- İmzalı üretimde orijinal sertifika, üç ABI, 16 KiB hizalama, 500 MiB sınırı, checksum ve önceki v1.0.20 ile paket/sürüm/imza metadata uyumu geçti. Mevcut manuel yayın akışı korunur; sonraki varsayılan sürüm **1.0.22**. Yayımlanmış v1.0.21 yeniden yayımlanmaz.
+- **Son kararlı sürüm v1.0.21.** Etiket/run/APK SHA-256 aşağıdaki Güncel yayın bölümüne kaydedildi; README ve sonraki manuel sürüm varsayılanı 1.0.22 güncellendi. Fiziksel VPN, uzak DNS/IPv6/WebRTC ve gerçek uygulama içi güncelleme uçtan uca kabulü henüz denenmedi; bu sonuçlar emülatör/metadata doğrulamasıyla tamamlanmış sayılmaz.
 
 ## v1.0.21 devam notu (2026-11-10, Claude oturumu) — ÖNCE BUNU OKU, PLANDAN SAPMA
 
@@ -80,15 +80,25 @@ Git/yayın:
 - Her sürüm sonrası `docs/DURUM.md` "Güncel yayın" + README sürüm notu güncellenir; "tüm 64 özellik bitti" gibi doğrulanmamış iddia yazılmaz.
 
 
-## v1.0.21 — Paylaşım ve ürün düzeni: kabul tamam / imzalı yayın bekliyor
+## v1.0.21 — Paylaşım ve ürün düzeni: yayımlandı
 
 - S-004 kapsamında: sayfa başlığı/URL önizlemeli paylaş paneli; tam bağlantı kopyalama, çevrimdışı QR oluşturma, yalnız okunabilir content URI ile QR görseli ve gerçek Android paylaşım ekranı. Gizli sekme panosu Android sensitive işareti taşır; çocuk modu dış paylaşımı engellemeyi sürdürür.
 - Hakkında yayıncı/sürüm/site/gizlilik/geri bildirim/lisans satırları içerir. Yardım gerçek destek merkezi ve kullanıcı tarafından gözden geçirilen e-posta taslağına gider; otomatik veri gönderimi yok. Uygulamada GitHub tanıtım metni eklenmedi.
 - Altı bileşen grubu için aranabilir çevrimdışı lisans sayfası; Gecko'nun dağıtılan gerçek tam credits belgesi ve PDF/font bildirimleri, Apache/MIT/BSD metinleri, desugar_jdk_libs için doğru GPLv2 + Classpath Exception. Native uyarı/PIN pencereleri ortak token tabanlı açık/koyu görünüm kullanır; izin kararları korunur.
 - Yeni gerçek Android 15/16 kabulü: tam URL/pano, gizli panonun işareti, paylaşılan PNG'yi yeniden QR decode, Android metin/görsel paylaşım ekranı, lisans arama/okuma/Geri, Hakkında/site/gizlilik/destek ve yalnız e-posta düzenleyicisi. Önceki adres/geri/geçmiş/çerez/indirme/eklentiler/PIN/dil/toolbar kabulü birlikte korunur. Kaynak lisans hash/bildirim ve dosya sağlayıcı denetimi eklendi.
-- **Kabul sonucu:** yukarıdaki `a589059` kaynağında dört CI ve Android 15/16 emülatör kabulü başarılıdır. İmzalı v1.0.21 henüz yayımlanmadı; sıradaki iş mevcut manuel yayın akışıdır, son kararlı v1.0.20 aşağıdadır. Nihai uzak VPN yapılandırması/gerçek cihaz denetimi ve mağaza yayın şartları ayrı kabul gerektirir.
+- **Kabul/yayın sonucu:** yukarıdaki `a589059` kaynağında dört CI ve Android 15/16 emülatör kabulü başarılıdır. İmzalı v1.0.21 üretim #42845289034 ile yayımlandı. Nihai uzak VPN yapılandırması/gerçek cihaz denetimi ve gerçek sürümle uygulama içi güncelleme ayrı kabul gerektirir.
 
-## Güncel yayın — v1.0.20
+## Güncel yayın — v1.0.21
+
+- **[v1.0.21 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.21)** — 2026-11-10 **18:35:44 Türkiye** (15:35:44 UTC). [İmzalı üretim #42845289034](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42845289034) `completed/success`; kaynak/etiket hedefi `98e743d1a03ccaabfc125626ff0e4979333e9b52`.
+- S-004 kapsamındaki gerçek paylaşım paneli, tam URL/pano, çevrimdışı QR ve Android paylaşım ekranı; yayıncı Hakkında/yardım/gizlilik, aranabilir çevrimdışı lisanslar ve ortak açık/koyu native onay görünümü bu sürümdedir. Önceki adres, geri/ileri, geçmiş, çocuk modu, indirme ve güvenlik davranışları korunur.
+- Doğrulanan ürün/test kaynağı `a5890592c3fa3cf9bfc4139af71ea201d84aaa2d`; yayın commit'i yalnız güncel durum belgesi ekler. Kaynak/JVM/üç ABI #42842111336, Android 15/16 UI #42842111518, iki API görsel #42842111661 ve indirme #42842111239 başarılıdır. UI iş kimlikleri ve artefakt sınırları yukarıdadır.
+- Üretimde orijinal sertifika kimliği, üç ABI imza/16 KiB hizalama/500 MiB sınırı, SHA-256 ve önceki v1.0.20 ile paket/sürüm/imza metadata uyumu geçti. Bu metadata kontrolü fiziksel telefonda üstüne kurulum veya BrowserUpdateManager uçtan uca kabulü değildir.
+- **ARM64:** `EymenBrowser-Android-Phone-arm64-v8a.apk`, **205506716 bayt**; SHA-256 `d4df8c25213638a4a745c826cd4e419400710240b52362298c6f78ec237c0e13`.
+- **ARMv7:** **166082422 bayt**; SHA-256 `efca36c76d40d78ed989a7bf6556b505a050b20c6cf9a57c456a1671ffef75aa`. **x86_64:** **225363417 bayt**; SHA-256 `e89b107bf84860819d6d4b427a47eaa975942e9e4fc3e999444da8ef40e2b477`. Üç APK ve `SHA256SUMS.txt` yayımlanmış/yüklenmiş olarak doğrulandı; yayın taslak/ön sürüm değildir.
+- Sonraki manuel sürüm varsayılanı **1.0.22**. Sıradaki kabul, orijinal devam notunun 4. adımıdır: fiziksel cihazda kullanıcıya ait VPN yapılandırması ve v1.0.20 → v1.0.21 gerçek uygulama içi güncelleme. Bu iki kabul henüz denenmedi; tüm 64 özelliğin bittiği iddia edilmez.
+
+## Önceki yayın — v1.0.20
 
 - **[v1.0.20 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.20)** — 2026-11-07 19:01:45 Türkiye (16:01:45 UTC). [İmzalı üretim #42388423055](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42388423055) başarılı. Etiket `03104d0a16b1f866516133ecbd42189206525c36` yayın isteği commit'ine bağlıdır.
 - **Arama/adres:** ortak 16sp metin, kutu boyunca dokunma alanı; ilk fiziksel dokunuşta mevcut adresin tamamını seçme ve IME composition korunur. Arama için native Ara, URL için Git eylemi son editör değerini gönderir.

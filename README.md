@@ -5,7 +5,7 @@ Bu depo **docs/SARTNAME.md** şartnamesiyle ve **docs/DURUM.md** ilerleme kaydı
 Aşama 0: Boş Android/TV Compose, SwiftUI (iOS) ve React + castLabs Electron (masaüstü) iskeletleri,
 `design/tokens.json` kaynaklı tema/simge üretimi, `shared/i18n` çevirileri ve GitHub Actions denetimleri.
 
-> **2026-11-07 güncel durum:** S-001/S-002/S-003 kapsamında yalnız Android telefon geliştiriliyor. Son kararlı imzalı sürüm **[v1.0.20](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.20)**. Adres seçimi/native Ara-Git, menü ve Android Geri/İleri, yeni sekmeden dönüş ve küçük ters harekette çubuğun açık kalması düzeltildi. Ayarlar, gerçek geçmiş, çerez, indirme, eklenti ve çocuk modu kabulleri Android 15/16 emülatörlerinde geçti. Üç ABI orijinal üretim imzasıyla yayımlandı. Fiziksel telefon, gerçek banka/uzak VPN ve diğer açık kabuller için **[güncel durum kaydını](docs/DURUM.md)** esas al. TV, bilgisayar ve Apple çalışmaları beklemededir.
+> **2026-11-10 güncel durum:** S-001/S-002/S-003/S-004 kapsamında yalnız Android telefon geliştiriliyor. Son kararlı imzalı sürüm **[v1.0.21](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.21)**. Sayfa paylaşımı, tam bağlantı/pano, çevrimdışı QR ve Android paylaşım ekranı; yayıncı Hakkında/yardım/gizlilik, aranabilir yerel lisanslar ve açık/koyu onay pencereleri düzenlendi. Önceki adres/Geri-İleri, geçmiş, çerez, indirme, eklenti ve çocuk modu kabulleriyle birlikte Android 15/16 emülatörlerinde geçti. Üç ABI orijinal üretim imzasıyla yayımlandı; imza/hizalama/boyut/SHA-256 ve v1.0.20 ile güncelleme metadata uyumu doğrulandı. Gerçek cihaz VPN ve uygulama içi güncelleme kabulü için **[güncel durum kaydını](docs/DURUM.md)** esas al. TV, bilgisayar ve Apple çalışmaları beklemededir.
 
 ## Klasörler
 
