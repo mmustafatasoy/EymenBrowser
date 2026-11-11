@@ -2,6 +2,15 @@
 
 Son güncelleme: 2026-11-11
 
+## Güncel devam — VPN sonraya bırakıldı, 1.0.22 → 1.0.23 güncelleme kabulü
+
+- Kullanıcı “Sen sıradaki Aşamaya geç vpn işine bakıcaz” diyerek VPN saha denemesini sonraya bıraktı. Yalnız Android telefonun mevcut uygulama içi güncelleme kabulü ilerler; yeni ürün özelliği veya platform kapsamı açılmaz.
+- Son kontrolde main'deki tam UI #42964202923, API35 **130337513846** başarılı; API36 **130337514068** gizli kopyalamanın pano işareti assertion'ında başarısızdır. Artefakt **13830233812** indirildi, ZIP SHA-256 günlükteki `daa872b910144483515136feabc70f8c7e23a575d70d31af72fe962fbaa50bf6` ile eşleşti. Gerçek hata PNG'sinde paylaş paneli hâlâ açık; logcat 05:22:02'de Android'in `clipboardoverlay.EditTextActivity` ekranının açıldığını gösterir. Bu kanıt doğru kopyalama eyleminin tamamlandığını doğrulamaz; doğrudan gizlilik açığı ya da başarılı kabul sayılmaz.
+- Devam notunun zamanlama kuralıyla yalnız başarısız API36 işi aynı kaynakta bir kez yeniden başlatıldı (**130357687744**); sonucu beklenir. İlk başarısızlık tarihçeden kaldırılmaz. Henüz ürün veya UI test kodu değiştirilmedi.
+- `test/v1.0.23-update-acceptance` dalında bağımsız imzalı güncelleme testinin kaynak/hedef varsayılanları artık yayımlanmış **v1.0.22 → v1.0.23**; hem manuel girdiler hem otomatik CI/Python varsayılanları aynı çifti seçer. Katı en-son-kararlı hedef, gerçek indirme, imza/hash/paket, kaynak izni, Android kurulum/Aç onayı ve veri/yer imi koruma koşulları korunur.
+- Dalın kendi kaynak/JVM/üç ABI CI'ını main öncesi çalıştırmak için phase0 filtresine yalnız bu dalın tam adı eklendi. Üretim yayın akışı, üretim APK'sı/imzası ve tasarım değişmez. Yerel üretim/güncellik/şartname, 11 check_*.py, kozmetik JS, Python/Bash/YAML sözdizimi ve diff denetimleri geçti. Bu çiftin iki API kabulü henüz denenmedi; yeşil olmadan ana dala alınmaz. Son yayımlanmış sürüm **v1.0.23**, sıradaki manuel üretim varsayılanı **1.0.24** kalır.
+- **Sıradaki iş:** yerel denetimleri ve iki API gerçek imzalı yükseltme sonuçlarını doğrula; başarılı olursa ana dala fast-forward et ve kanıtları kaydet. Başarısız API36 UI tekrarının sonucunu ayrıca kaydet; tekrar aynı yerde kırılırsa test hedefi/tamamlanma beklemesini kanıta göre düzelt. Fiziksel telefon VPN ve güncelleme kabulü emülatör sonucu ile kapatılmaz.
+
 ## Güncel devam — v1.0.23 yayımlandı (2026-11-11)
 
 - Kullanıcı mevcut manuel imzalı yayın akışını çalıştırdı. [Üretim #42968182639](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42968182639), iş **130350199640**, `completed/success`. [v1.0.23](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.23) 2026-11-11 **08:51:37 Türkiye** (05:51:37 UTC) yayımlandı; kaynak/etiket hedefi `df928a7ea2058080a1ba1174440a6ace7bb55359`.

@@ -3,7 +3,7 @@
 Bu kabul, devam notundaki güncelleme işini iki yayımlanmış üretim APK'sıyla
 Android 15/16 emülatöründe dener. Fiziksel telefon kabulünün yerine geçmez.
 
-- Kaynak: v1.0.21, hedef: en son kararlı v1.0.22. Etiket, boyut, SHA-256 ve
+- Kaynak: v1.0.22, hedef: en son kararlı v1.0.23. Etiket, boyut, SHA-256 ve
   üretim sertifikası sabitlenir. Son kararlı sürüm değişmişse test bu çifti kabul etmez.
 - Tarayıcının kaynakları değiştirilmez, APK tekrar imzalanmaz ve debug tarayıcı
   kullanılmaz. `tools/signed-update-audit` yalnız ayrı bir UI sürücüsüdür;
@@ -26,5 +26,10 @@ Android 15/16 emülatöründe dener. Fiziksel telefon kabulünün yerine geçmez
   metadata'sı, yüklü APK hash'i ve instrumentation sonucu. Başarısız sonuç kabul edilmez.
 
 İş akışı: `.github/workflows/android-signed-update-audit.yml`.
-Üretim yayın workflow'u ve yayımlanmış v1.0.22 değişmez.
-**Kabul başarılı:** `b85a57311bf6b043cd1d9252b0ef39fc24e56571` üzerinde #42904693106 iki API'de geçti. Gerçek üretim 10021 → 10022, imza, sistem izin/kurulum, ilk kurulum/Bing/yer imi koruması ve kurulu APK SHA-256 eşitliği doğrulandı. Artefaktlar: API35 13803703351, API36 13804597911. Fiziksel telefon kabulü açık kalır. Ayrıntılı kanıt ve sınırlar `DURUM.md` içindedir.
+Üretim yayın workflow'u ve yayımlanmış APK'lar değişmez.
+
+**Güncel çift 1.0.22 → 1.0.23:** Android 15/16 kabulü henüz denenmedi;
+test dalının CI sonucu beklenir. Son kurulu sürüm kontrolü artık 1.0.23'teki
+düzeltilmiş TR/EN durum metnini gerçek üretim APK'sından okur.
+
+**Önceki çiftin kabulü başarılı:** `b85a57311bf6b043cd1d9252b0ef39fc24e56571` üzerinde #42904693106 iki API'de geçti. Gerçek üretim 10021 → 10022, imza, sistem izin/kurulum, ilk kurulum/Bing/yer imi koruması ve kurulu APK SHA-256 eşitliği doğrulandı. Artefaktlar: API35 13803703351, API36 13804597911. Fiziksel telefon kabulü açık kalır. Ayrıntılı kanıt ve sınırlar `DURUM.md` içindedir.

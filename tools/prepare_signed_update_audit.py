@@ -55,8 +55,8 @@ def asset(release, tag):
 
 
 def main():
-    source_tag = os.environ.get("AUDIT_SOURCE_TAG", "v1.0.21")
-    target_tag = os.environ.get("AUDIT_TARGET_TAG", "v1.0.22")
+    source_tag = os.environ.get("AUDIT_SOURCE_TAG", "v1.0.22")
+    target_tag = os.environ.get("AUDIT_TARGET_TAG", "v1.0.23")
     if release_code(source_tag) >= release_code(target_tag):
         raise ValueError("Target must be newer than source")
     source = asset(fetch_release("tags/" + source_tag), source_tag)

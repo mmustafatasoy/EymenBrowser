@@ -1,7 +1,7 @@
 name: EymenBrowser published signed in-app update acceptance
 on:
   push:
-    branches: [main, test/signed-update-acceptance]
+    branches: [main, test/signed-update-acceptance, test/v1.0.23-update-acceptance]
     paths:
       - '.github/workflows/android-signed-update-audit.yml'
       - 'tools/signed-update-audit/**'
@@ -11,12 +11,12 @@ on:
     inputs:
       source_tag:
         description: Published old stable release
-        default: v1.0.21
+        default: v1.0.22
         type: string
         required: true
       target_tag:
         description: Published target (must be latest stable)
-        default: v1.0.22
+        default: v1.0.23
         type: string
         required: true
 permissions:
@@ -39,8 +39,8 @@ jobs:
       - name: Pin published production APKs and existing build tool versions
         env:
           GH_TOKEN: ${{ github.token }}
-          AUDIT_SOURCE_TAG: ${{ inputs.source_tag || 'v1.0.21' }}
-          AUDIT_TARGET_TAG: ${{ inputs.target_tag || 'v1.0.22' }}
+          AUDIT_SOURCE_TAG: ${{ inputs.source_tag || 'v1.0.22' }}
+          AUDIT_TARGET_TAG: ${{ inputs.target_tag || 'v1.0.23' }}
         run: python3 tools/prepare_signed_update_audit.py
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '${{ env.EY_AUDIT_JAVA }}'}
