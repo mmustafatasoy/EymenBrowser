@@ -6,7 +6,7 @@ on:
         description: Stable semantic version (example 1.0.0)
         type: string
         required: true
-        default: "1.0.23"
+        default: "1.0.24"
 permissions:
   contents: write
 concurrency:

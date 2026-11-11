@@ -2,7 +2,15 @@
 
 Son güncelleme: 2026-11-11
 
-## Güncel devam — imzalı güncelleme kabulü ve durum mesajı düzeltmesi tamamlandı
+## Güncel devam — v1.0.23 yayımlandı (2026-11-11)
+
+- Kullanıcı mevcut manuel imzalı yayın akışını çalıştırdı. [Üretim #42968182639](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42968182639), iş **130350199640**, `completed/success`. [v1.0.23](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.23) 2026-11-11 **08:51:37 Türkiye** (05:51:37 UTC) yayımlandı; kaynak/etiket hedefi `df928a7ea2058080a1ba1174440a6ace7bb55359`.
+- Üç APK ve `SHA256SUMS.txt` yüklenmiş, yayın taslak/ön sürüm değildir. Orijinal üretim sertifikası, üç ABI imza/16 KiB hizalama/500 MiB sınırı ve SHA-256 kapıları geçti. Gerçek önceki v1.0.22 ile paket/sertifika ve artan versionCode (**10022 → 10023**) metadata uyumu doğrulandı.
+- Bu sürüm, daha yeni uyumlu sürüm yokken gösterilen TR/EN durum mesajı düzeltmesini içerir. Doğrulanan ürün kaynağı `228ce259c8eb1c7cfa204a49242c8406be5b084f`; kaynak/JVM/üç ABI #42906704016 ve iki API görsel/sistem alanı #42906704164 başarılıdır. Önceki imzalı 1.0.21 → 1.0.22 emülatör kabulü aşağıda tarihsel kanıtlarıyla korunur; 1.0.22 → 1.0.23 için yeni uçtan uca veya fiziksel cihaz kabulü iddia edilmez.
+- Yayın kaydı/üç APK hash'i aşağıya ve README'ye işlendi. Yalnız sonraki manuel sürüm varsayılanı **1.0.24** olarak ilerletildi; yayın davranışı ve üretim imzası değişmez. Yayımlanmış v1.0.23 tekrar üretilmez.
+- **Sıradaki kabul:** kullanıcının ücretsiz Proton hesabı ve kişisel WireGuard dosyasıyla fiziksel telefonda gerçek VPN handshake/IP/DNS/IPv6/WebRTC kontrolü ve fiziksel telefonda gerçek uygulama içi güncelleme. Bu saha kabulleri hâlâ açıktır. Yeni imzalı güncelleme emülatör kabulü istenirse ayrı test workflow'unun kaynak/hedef girdileri v1.0.22 → v1.0.23 seçilmelidir; eski v1.0.21 → v1.0.22 varsayılanı artık en son kararlı hedef koşulunu sağlamaz.
+
+## Önceki devam — imzalı güncelleme kabulü ve durum mesajı düzeltmesi tamamlandı
 
 - Yayımlanmış gerçek üretim 1.0.21 → 1.0.22 uygulama içi güncellemesi Android 15/16 emülatöründe geçti. Sistem kaynak izni/kurulum/Aç onayı, ilk kurulum/Bing/yer imi koruması, üretim sertifikası ve kurulu APK hash eşitliği doğrulandı. Test altyapısı/kabul kaydı `cd7490e95e602b786095ae1551e34299172bfbf2` ile ana dala alındı; ayrıntılı kanıtlar aşağıdadır.
 - Kabulün `current-version.png` ekranında kurulu son sürümün “kararlı sürüm yayımlanmadı” dediği doğrulandı. `fix/update-current-message` dalı mevcut `update_no_release` TR/EN metnini “bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı” anlamına düzeltti; ortak çıktılar yeniden üretildi.
@@ -128,7 +136,17 @@ Git/yayın:
 - Yeni gerçek Android 15/16 kabulü: tam URL/pano, gizli panonun işareti, paylaşılan PNG'yi yeniden QR decode, Android metin/görsel paylaşım ekranı, lisans arama/okuma/Geri, Hakkında/site/gizlilik/destek ve yalnız e-posta düzenleyicisi. Önceki adres/geri/geçmiş/çerez/indirme/eklentiler/PIN/dil/toolbar kabulü birlikte korunur. Kaynak lisans hash/bildirim ve dosya sağlayıcı denetimi eklendi.
 - **Kabul/yayın sonucu:** yukarıdaki `a589059` kaynağında dört CI ve Android 15/16 emülatör kabulü başarılıdır. İmzalı v1.0.21 üretim #42845289034 ile yayımlandı. Nihai uzak VPN yapılandırması/gerçek cihaz denetimi ve gerçek sürümle uygulama içi güncelleme ayrı kabul gerektirir.
 
-## Güncel yayın — v1.0.22
+## Güncel yayın — v1.0.23
+
+- **[v1.0.23 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.23)** — 2026-11-11 **08:51:37 Türkiye** (05:51:37 UTC). [İmzalı üretim #42968182639](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42968182639) ve iş **130350199640** `completed/success`; kaynak/etiket hedefi `df928a7ea2058080a1ba1174440a6ace7bb55359`.
+- Daha yeni uyumlu kararlı sürüm yokken gösterilen güncelleme durum metni TR/EN düzeltildi. Ücretsiz Proton kurulumu ve önceki tarayıcı işlevleri korunur; yeni ürün davranışı veya VPN saha kabulü eklenmez. Ürün kaynağı `228ce259c8eb1c7cfa204a49242c8406be5b084f`, kaynak/JVM/üç ABI #42906704016 ve iki API görsel/sistem alanı #42906704164 başarılıdır.
+- Orijinal üretim sertifikası SHA-256 `febdab91097eaff90bf87c8d4a68186ef9fd67cc0a8efce6eb21d4a0bd9cb232`; üç ABI imza/16 KiB hizalama/500 MiB sınırı ve SHA-256 kontrolleri geçti. Önceki v1.0.22 ile paket/sertifika ve artan versionCode (`10022 → 10023`) metadata uyumu doğrulandı.
+- **ARM64:** [EymenBrowser-Android-Phone-arm64-v8a.apk](https://github.com/mmustafatasoy/EymenBrowser/releases/download/v1.0.23/EymenBrowser-Android-Phone-arm64-v8a.apk), **205513840 bayt**; SHA-256 `ab47915cfaf1b347762d93b16a35aab70deffab7aea12fde1d18b0d41fc875b5`.
+- **ARMv7:** [EymenBrowser-Android-Phone-armeabi-v7a.apk](https://github.com/mmustafatasoy/EymenBrowser/releases/download/v1.0.23/EymenBrowser-Android-Phone-armeabi-v7a.apk), **166089546 bayt**; SHA-256 `4c774a3294dd33bb2b4dfe3e623590307e54b021d8006131164e725b424d8916`.
+- **x86_64:** [EymenBrowser-Android-Phone-x86_64.apk](https://github.com/mmustafatasoy/EymenBrowser/releases/download/v1.0.23/EymenBrowser-Android-Phone-x86_64.apk), **225370541 bayt**; SHA-256 `128b15df7060ebcd699e293f17f338469126a13efbab8d7c2998feaa214878d1`.
+- Üç APK ve `SHA256SUMS.txt` `uploaded`; yayın `draft=false`, `prerelease=false`. Sonraki manuel sürüm varsayılanı **1.0.24**. Fiziksel cihaz VPN ve uygulama içi güncelleme kabulü henüz denenmedi; daha önceki 1.0.21 → 1.0.22 emülatör kabulü bu yeni sürüm çifti için uçtan uca kabul yerine kullanılmaz.
+
+## Önceki yayın — v1.0.22
 
 - **[v1.0.22 yayımlandı](https://github.com/mmustafatasoy/EymenBrowser/releases/tag/v1.0.22)** — 2026-11-10 **23:45:09 Türkiye** (20:45:09 UTC). [İmzalı üretim #42897747763](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42897747763) `completed/success`; yayın kaynağı/etiket hedefi `4f8cec35ee6061d78f7cd4c3fe503c4b71f75189`.
 - **S-005 ücretsiz VPN kurulumu:** resmî Proton VPN Free hesabı için tek seferlik rehber ve hesap bağlantısı; indirilen .conf dosyasını açık onayla aynı doğrulama/Keystore yolundan VPN'e aktarma. Hesabı kullanıcı açar; kişisel sunucu yapılandırması olmadan VPN kendiliğinden bağlanmaz. Önceki paylaşım, adres/Geri-İleri, geçmiş, çocuk modu, indirme ve güvenlik davranışları korunur.
