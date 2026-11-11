@@ -2,12 +2,15 @@
 
 Son güncelleme: 2026-11-11
 
-## Güncel çalışma — kurulu sürüm güncelken gösterilen mesaj düzeltmesi
+## Güncel devam — imzalı güncelleme kabulü ve durum mesajı düzeltmesi tamamlandı
 
-- Yayımlanmış 1.0.21 → 1.0.22 gerçek imzalı yükseltme Android 15/16'da geçti ve test altyapısı/kabul kaydı `cd7490e95e602b786095ae1551e34299172bfbf2` ile ana dala alındı. Aşağıdaki kanıtlar ve fiziksel cihaz sınırı korunur.
-- Kabulün `current-version.png` ekranında bir metin hatası doğrulandı: kurulu 1.0.22 son kararlı sürümken “kararlı sürüm yayımlanmadı” gösteriliyordu. `fix/update-current-message` dalı yalnız mevcut `update_no_release` TR/EN metnini “bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı” anlamına getirir; ortak çıktılar yeniden üretilir.
-- Yeni sürüm arama/indirme, SHA-256/paket/sertifika doğrulaması, izin veya kurulum davranışı değişmez. Ürün kodu/tasarım, üretim imzası ve yayın workflow'u değişmez. Bu dar metin düzeltmesinin kaynak/JVM/Android derleme CI'sını ana daldan önce çalıştırmak için yalnız mevcut phase0 dal filtresine tam dal adı eklenir.
-- Kaynak/çeviri/güncelleme sözleşmesi denetimi ve diff bütünlüğü yerelde geçti; yeni dal kaynak/JVM/üç ABI CI'sı sıradadır. Başarılı olmadan main'e alınmaz. Son yayımlanmış sürüm v1.0.22; düzeltme bir sonraki 1.0.23 sürümü içindir ve henüz yayımlanmamıştır. Canlı VPN ve fiziksel telefon kabulü açık kalır.
+- Yayımlanmış gerçek üretim 1.0.21 → 1.0.22 uygulama içi güncellemesi Android 15/16 emülatöründe geçti. Sistem kaynak izni/kurulum/Aç onayı, ilk kurulum/Bing/yer imi koruması, üretim sertifikası ve kurulu APK hash eşitliği doğrulandı. Test altyapısı/kabul kaydı `cd7490e95e602b786095ae1551e34299172bfbf2` ile ana dala alındı; ayrıntılı kanıtlar aşağıdadır.
+- Kabulün `current-version.png` ekranında kurulu son sürümün “kararlı sürüm yayımlanmadı” dediği doğrulandı. `fix/update-current-message` dalı mevcut `update_no_release` TR/EN metnini “bu cihaz için yüklenebilir daha yeni bir kararlı sürüm bulunamadı” anlamına düzeltti; ortak çıktılar yeniden üretildi.
+- **Mesaj düzeltmesi kaynağı:** `228ce259c8eb1c7cfa204a49242c8406be5b084f`. Yerel kaynak/çeviri/güncelleme sözleşmesi/diff denetimleri geçti. [Kaynak/JVM/üç ABI #42906704016](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42906704016) `completed/success`; Android işi **130146442854**, kaynak işi **130146443467** başarılı. Bekleyen iOS/masaüstü işleri kapsam gereği çalıştırılmadı.
+- [İki API görsel/sistem alanı #42906704164](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/42906704164) `completed/success`; API35 **130146445477**, API36 **130146444553** başarılıdır. Metin düzeltmesi yeni bir runtime davranışı veya test iddiası eklemez.
+- Bu iki CI başarılı olduktan sonra main, `cd7490e95e602b786095ae1551e34299172bfbf2` üzerinden `228ce259c8eb1c7cfa204a49242c8406be5b084f` kaynağına fast-forward edildi. Güncelleme arama/indirme, SHA-256/paket/sertifika, izin/kurulum davranışı, tasarım, üretim imzası ve yayın workflow'u değişmez. Mevcut phase0 dal filtresine yalnız bu düzeltme dalının tam adı eklendi. Bu kabul güncellemesi yalnız belgedir.
+- **Son yayımlanmış sürüm v1.0.22.** Durum mesajı düzeltmesi bir sonraki **1.0.23** sürümüne hazırdır; 1.0.23 henüz yayımlanmadı. Mevcut manuel yayın akışının main / 1.0.23 varsayılanı korunur; yayımlanmış v1.0.22 tekrar üretilmez.
+- **Sıradaki kabul:** kullanıcının ücretsiz Proton hesabı ve kişisel WireGuard dosyasıyla telefonda gerçek VPN bağlantısı, handshake ve IP/DNS/IPv6/WebRTC kontrolü. Fiziksel telefonda uygulama içi güncelleme kabulü de ayrıca açık kalır. Emülatör sonuçları fiziksel telefon veya uzak VPN saha kabulü yerine kullanılmaz.
 
 ## Güncel devam — imzalı uygulama içi güncelleme kabulü geçti (2026-11-11)
 
