@@ -65,6 +65,10 @@
 "theme_night" = "Night theme";
 "menu_current_page" = "Reload current page";
 "tab_all" = "All";
+"tabs_search_hint" = "Search tabs by title or address";
+"tabs_search_results" = "Tabs found: %1$d";
+"tabs_search_empty" = "No matching open tabs";
+"tabs_search_empty_hint" = "Try another title or address.";
 "tab_groups_pending" = "Groups";
 "tab_group_new" = "New group";
 "tab_group_assign" = "Move to group";

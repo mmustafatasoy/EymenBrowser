@@ -187,6 +187,7 @@ class MainActivity : ComponentActivity() {
     private var addressBottom by mutableStateOf(true)
     private var searchEngine by mutableStateOf("Google")
     private var overviewShowing by mutableStateOf(false)
+    private var overviewSearchEpoch by mutableStateOf(0)
     // Compose observes this so only the home logo/search reflow when popup opens.
     private var menuShowing by mutableStateOf(false)
     private var addressEditing = false
@@ -436,6 +437,7 @@ class MainActivity : ComponentActivity() {
                 undoAvailable = lastClosedNormalTab != null,
                 undoCount = recentlyClosedNormal.size,
                 day = dayMode.value,
+                searchEpoch = overviewSearchEpoch,
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
                 onCloseAll = ::closeAllOfType,
@@ -663,6 +665,7 @@ class MainActivity : ComponentActivity() {
                     downloadsShowing -> hideDownloads()
                     shieldShowing -> hideShield()
                     menuShowing -> hideBrowserMenu()
+                    overviewShowing && imeVisible -> hideBrowserKeyboard()
                     overviewShowing -> hideTabs()
                     videoFullScreen -> activeTab?.gecko?.exitFullScreen()
                     imeVisible || addressEditing -> hideBrowserKeyboard()
@@ -1193,6 +1196,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hideTabs() {
+        if (overviewShowing) {
+            if (::root.isInitialized) hideBrowserKeyboard()
+            overviewSearchEpoch++
+        }
         overviewShowing = false
         if (::tabsLayer.isInitialized) tabsLayer.visibility = View.GONE
         updateOverlayAccessibility()

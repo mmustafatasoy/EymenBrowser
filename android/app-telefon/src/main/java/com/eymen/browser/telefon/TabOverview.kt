@@ -18,6 +18,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected as semanticSelected
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,6 +74,7 @@ internal fun TabOverview(
     activePrivate: Boolean,
     openDevices: Boolean,
     day: Boolean,
+    searchEpoch: Int,
     groups: List<TabGroupPreview>,
     undoAvailable: Boolean,
     undoCount: Int,
@@ -98,6 +103,9 @@ internal fun TabOverview(
     }
     // Normal groups are never applied to private sessions, nor to devices.
     var selectedGroupId by remember { mutableStateOf<Long?>(null) }
+    // A close or privacy-context switch must not reuse an earlier search/IME value.
+    var searchQuery by remember(searchEpoch, section) { mutableStateOf("") }
+    val searchActive = TabSearchPolicy.query(searchQuery).isNotEmpty()
     LaunchedEffect(groups.map { it.id }) {
         if (selectedGroupId != null && groups.none { it.id == selectedGroupId }) {
             selectedGroupId = null
@@ -110,11 +118,12 @@ internal fun TabOverview(
     val selected = if (day) T.gunduz_vurgu else T.gece_vurgu
     val selectedText = if (day) T.gunduz_vurguUstu else T.gece_vurguUstu
     val outline = if (day) T.gunduz_cizgi else T.gece_cizgi
-    val visible = tabs.filter { tab ->
+    val scopedTabs = tabs.filter { tab ->
         tab.privateMode == (section == TabSection.PRIVATE) &&
             (section != TabSection.NORMAL ||
                 selectedGroupId == null || tab.groupId == selectedGroupId)
     }
+    val visible = scopedTabs.filter { TabSearchPolicy.matches(it.title, it.url, searchQuery) }
     val activeIndex = visible.indexOfFirst { it.selected }.coerceAtLeast(0)
     val selectedGroup = groups.firstOrNull { it.id == selectedGroupId }
 
@@ -149,21 +158,39 @@ internal fun TabOverview(
                                 } else Color.Transparent,
                                 RoundedCornerShape(12.dp)
                             )
-                            .clickable { section = value },
+                            .semantics { semanticSelected = section == value }
+                            .clickable(role = Role.Tab) { section = value },
                         contentAlignment = Alignment.Center
                     ) {
                         TabLabel(label, 14, if (section == value) text else muted, section == value)
                     }
                 }
             }
+            val dismissLabel = stringResource(R.string.back)
             Box(
-                Modifier.width(44.dp).height(48.dp).clickable(onClick = onDismiss),
+                Modifier.width(44.dp).height(48.dp)
+                    .semantics { contentDescription = dismissLabel }
+                    .clickable(role = Role.Button, onClick = onDismiss),
                 contentAlignment = Alignment.Center
             ) {
                 TabLabel("×", 26, text)
             }
         }
         Spacer(Modifier.height(16.dp))
+
+        if (section != TabSection.DEVICES) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = T.telefon_ekran_kenar.dp),
+                verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
+                // Recreate the editor when switching privacy contexts; never transfer composition text.
+                key(searchEpoch, section) {
+                    ListSearch(searchQuery, stringResource(R.string.tabs_search_hint),
+                        browserScreenPalette(day)) { searchQuery = TabSearchPolicy.boundedInput(it) }
+                }
+                if (searchActive) ScreenText(stringResource(R.string.tabs_search_results, visible.size),
+                    muted, T.telefon_liste_ikincil)
+            }
+            Spacer(Modifier.height(T.telefon_ekran_kucukBosluk.dp))
+        }
 
         if (section == TabSection.NORMAL) {
             // Real, editable groups of the currently open normal GeckoSessions.
@@ -313,13 +340,15 @@ internal fun TabOverview(
                 if (visible.isEmpty()) {
                     Spacer(Modifier.height(72.dp))
                     TabLabel(
-                        if (section == TabSection.PRIVATE)
+                        if (searchActive) stringResource(R.string.tabs_search_empty)
+                        else if (section == TabSection.PRIVATE)
                             stringResource(R.string.private_tabs_empty)
                         else stringResource(R.string.normal_tabs_empty),
                         16, text, true
                     )
                     Spacer(Modifier.height(8.dp))
-                    TabLabel(stringResource(R.string.tab_add_hint), 14, muted)
+                    TabLabel(stringResource(if (searchActive) R.string.tabs_search_empty_hint
+                        else R.string.tab_add_hint), 14, muted)
                 } else {
                     visible.chunked(2).forEach { pair ->
                         Row(
@@ -479,7 +508,9 @@ internal fun TabOverview(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
-                Modifier.height(48.dp).clickable {
+                Modifier.height(48.dp).clickable(
+                    enabled = section != TabSection.DEVICES && selectedGroupId == null && !searchActive
+                ) {
                     if (section != TabSection.DEVICES && selectedGroupId == null)
                         onCloseAll(section == TabSection.PRIVATE)
                 }.padding(horizontal = 8.dp),
@@ -487,7 +518,7 @@ internal fun TabOverview(
             ) {
                 TabLabel(
                     stringResource(R.string.close_all_tabs), 15,
-                    if (section == TabSection.DEVICES || selectedGroupId != null) muted else text
+                    if (section == TabSection.DEVICES || selectedGroupId != null || searchActive) muted else text
                 )
             }
             Box(

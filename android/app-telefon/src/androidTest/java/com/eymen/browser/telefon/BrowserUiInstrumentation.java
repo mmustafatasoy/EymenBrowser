@@ -135,10 +135,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             navigationAndSearch();
             realHistoryAndScrolling();
             polishedSharingAndInformation();
+            openTabSearch();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -488,6 +489,107 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(()->"https://atasoyyazilim.com/destek/".equals(text(field(label(R.string.address_edit_label)))),"support action opens the publisher's real support center");
     }
     private void openShare() throws Exception {click(label(R.string.browser_menu));scrollClick(label(R.string.menu_share));}
+
+    private org.mozilla.geckoview.GeckoSession searchTabPage(boolean privateMode, String url, String pageTitle) throws Exception {
+        menuNavigation(privateMode ? R.string.private_tab : R.string.menu_new_normal_tab_accessibility);
+        org.mozilla.geckoview.GeckoSession page = currentSession();
+        java.util.concurrent.atomic.AtomicReference<String> title = new java.util.concurrent.atomic.AtomicReference<>("");
+        runOnMainSync(() -> {
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session, String value) {
+                    title.set(value); original.onTitleChange(session, value);
+                }
+            });
+            page.loadUri(url);
+        });
+        await(() -> "Example Domain".equals(title.get()) && url.equals(text(field(label(R.string.address_edit_label)))),
+            "real HTTPS document loaded for tab search");
+        runOnMainSync(() -> page.loadUri("javascript:void(document.title=" + org.json.JSONObject.quote(pageTitle) + ")"));
+        await(() -> pageTitle.equals(title.get()), "actual document title ready for tab search");
+        return page;
+    }
+
+    private int realTabCount() {
+        return uiInt(() -> ((java.util.List<?>) controller("tabs")).size());
+    }
+
+    private void openTabSearch() throws Exception {
+        String alphaUrl = "https://example.com/?eymen-tab-search=alpha";
+        String betaUrl = "https://example.com/?eymen-tab-search=beta";
+        String alphaTitle = "Eymen Sekme Deneyi İzmir", betaTitle = "Eymen Sekme Deneyi Ankara";
+        String secretTitle = "Eymen Sekme Deneyi Gizli";
+        org.mozilla.geckoview.GeckoSession alpha = searchTabPage(false, alphaUrl, alphaTitle);
+        org.mozilla.geckoview.GeckoSession beta = searchTabPage(false, betaUrl, betaTitle);
+        org.mozilla.geckoview.GeckoSession secret = searchTabPage(true,
+            "https://example.com/?eymen-tab-search=private", secretTitle);
+        int count = realTabCount();
+        String hint = label(R.string.tabs_search_hint);
+
+        click(label(R.string.tabs));
+        await(() -> field(hint) != null, "tab overview has a real search editor");
+        tap(field(hint));
+        await(this::softwareKeyboardVisible, "tab search opens the actual on-screen keyboard");
+        sendStringSync("eymen sekme deneyi");
+        await(() -> "eymen sekme deneyi".equals(text(field(hint))) &&
+            find(activity.getString(R.string.tabs_search_results, 1), false) != null,
+            "physical typing finds only the private matching tab");
+        systemBack();
+        await(() -> field(hint) != null && !softwareKeyboardVisible(),
+            "Back hides the tab search keyboard without closing its results");
+        require(find(secretTitle, false) != null && find(alphaTitle, false) == null && find(betaTitle, false) == null,
+            "private results never include matching normal titles");
+        capture("tabs-search-private.png", true);
+        search(hint, "eymen-tab-search=alpha");
+        await(() -> find(label(R.string.tabs_search_empty), false) != null,
+            "a normal-only address cannot appear in private search");
+
+        click(label(R.string.tabs));
+        await(() -> field(hint) != null && text(field(hint)).isEmpty(),
+            "switching to normal tabs discards the private search text");
+        search(hint, "eymen sekme deneyi");
+        await(() -> find(activity.getString(R.string.tabs_search_results, 2), false) != null,
+            "normal search finds the two real normal pages");
+        require(find(secretTitle, false) == null && find(alphaTitle, false) != null && find(betaTitle, false) != null,
+            "normal results exclude the matching private tab");
+        search(hint, "izmir");
+        await(() -> find(alphaTitle, false) != null && find(betaTitle, false) == null &&
+            find(activity.getString(R.string.tabs_search_results, 1), false) != null,
+            "Turkish title search ignores case without changing tab order");
+        capture("tabs-search-title.png", true);
+        search(hint, "EXAMPLE.COM/?EYMEN-TAB-SEARCH=BETA");
+        await(() -> find(betaTitle, false) != null && find(alphaTitle, false) == null,
+            "actual URL path and query are searchable independently of the page title");
+        search(hint, "no-such-open-tab-acceptance");
+        await(() -> find(label(R.string.tabs_search_empty), false) != null,
+            "unmatched query shows an honest empty result");
+        AccessibilityNodeInfo closeAll = find(label(R.string.close_all_tabs), false);
+        require(closeAll != null, "close-all action remains visible while filtered");
+        tap(closeAll); waitForIdleSync();
+        require(realTabCount() == count && uiCheck(() -> alpha.isOpen() && beta.isOpen() && secret.isOpen()),
+            "touching disabled Close all cannot close hidden or private tabs");
+        capture("tabs-search-empty.png", true);
+        click(label(R.string.search_clear));
+        await(() -> field(hint) != null && text(field(hint)).isEmpty(), "clear restores the current normal scope");
+        search(hint, "izmir"); click(alphaTitle);
+        await(() -> currentSession() == alpha && alphaUrl.equals(text(field(label(R.string.address_edit_label)))) &&
+            field(hint) == null && !softwareKeyboardVisible(), "result opens its existing real session and hides the keyboard");
+        require(realTabCount() == count, "search and result selection never create or remove a tab");
+        click(label(R.string.tabs));
+        await(() -> field(hint) != null && text(field(hint)).isEmpty(), "closing and reopening overview forgets its search");
+        click(label(R.string.back));
+
+        openSettingsItem(R.string.settings_appearance); click(label(R.string.theme_night));
+        click(label(R.string.back)); click(label(R.string.back));
+        click(label(R.string.tabs));
+        search(hint, "eymen sekme deneyi");
+        await(() -> find(activity.getString(R.string.tabs_search_results, 2), false) != null,
+            "the same normal scope remains searchable in night theme");
+        capture("tabs-search-dark.png", false);
+        click(label(R.string.back));
+        openSettingsItem(R.string.settings_appearance); click(label(R.string.theme_day));
+        click(label(R.string.back)); click(label(R.string.back));
+    }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
             AccessibilityNodeInfo root=window.getRoot();if(window.getType()!=AccessibilityWindowInfo.TYPE_APPLICATION||root==null||!root.refresh())continue;

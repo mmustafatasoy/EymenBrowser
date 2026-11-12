@@ -66,6 +66,10 @@
     <string name="theme_night">Gece teması</string>
     <string name="menu_current_page">Mevcut sayfayı yenile</string>
     <string name="tab_all">Tümü</string>
+    <string name="tabs_search_hint">Başlık veya adresle sekme ara</string>
+    <string name="tabs_search_results">Bulunan sekme: %1$d</string>
+    <string name="tabs_search_empty">Eşleşen açık sekme bulunamadı</string>
+    <string name="tabs_search_empty_hint">Başka bir başlık veya adresle aramayı dene.</string>
     <string name="tab_groups_pending">Gruplar</string>
     <string name="tab_group_new">Yeni grup</string>
     <string name="tab_group_assign">Gruba ekle</string>

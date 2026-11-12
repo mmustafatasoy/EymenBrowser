@@ -1,6 +1,15 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-11
+Son güncelleme: 2026-11-12
+
+## Güncel devam — yeni yazılım adımı: açık sekmelerde arama
+
+- Kullanıcı gerçek cihaz sürüm sorgusunda beklemek yerine “Yeni adıma geç” dedi. Gerçek cihaz güncelleme ve VPN saha kabulleri açık kalırken mevcut S-001/Android Aşama 2 planının **özellik 4 — açık sekmelerde arama** kısmına geçildi. Sekme grupları/geri yükleme zaten kodda bulunduğundan yeniden yazılmadı; başka platform, hizmet veya şartname dışı özellik açılmaz.
+- `feat/tab-search` dalı `4520087209c766acbd23e08badc3a529b844f527` üzerinden açıldı. T06'ya mevcut ortak arama bileşeniyle başlık/tam URL araması, sonuç sayısı ve doğru boş sonuç eklendi. Mevcut normal/gizli ve grup filtresi aramadan önce uygulanır; sorgu sadece RAM'dedir, bölüm değişince/ekran kapatılınca sıfırlanır. Sonuç var olan GeckoSession'a geçer; arama yeni gezinme/sekme oluşturmaz.
+- Filtreli aramada Tümünü kapat pasiftir; gizlenen sekmeler yanlışlıkla kapatılmaz. Klavye açıkken Geri önce klavyeyi kapatır. TR/EN dört metin ortak i18n kaynağındadır; yeni stil değeri, tasarım dosyası, bağımlılık, üretim imzası veya yayın akışı değişikliği yoktur. [Sözleşme](ANDROID_TAB_SEARCH.md).
+- Yedi saf JVM testi ve gerçek HTTPS normal/gizli sekmeler, gerçek ekran klavyesi, Türkçe başlık/URL, kapsam izolasyonu, boş sonuç, toplu kapatma koruması, var olan oturuma dönüş ve sorgu sıfırlama UI kabulü eklendi. Açık/koyu dört yeni PNG zorunludur; önceki testler korunur. Yeni adımlar için bounded instrumentation 780→900 s, host 960→1080 s; UI iş/step sınırı 34/22 dk oldu.
+- Aynı dalda main öncesi dört kabulü çalıştırmak için phase0/UI/indirme push filtrelerine yalnız bu dalın tam adı eklendi; görsel workflow'un mevcut kapsamı bu değişiklikleri zaten izler. Yerel üretim/güncellik/şartname, 11 check_*.py, kozmetik JS, Bash/JSON/YAML sözdizimi ve diff denetimleri geçti. JVM/üç ABI ve iki API tam UI/görsel/indirme sonuçları henüz denenmedi; başarılı olmadan ana dala birleştirme/yayın yok.
+- **Sıradaki iş:** kaynak/i18n/şartname denetimleri, yedi JVM testi/üç ABI ve Android 15/16 UI/görsel ile indirme kabulünü doğrula; gerçek hata varsa düzelt, kanıtlı emülatör/ağ arızasında yalnız başarısız işi bir kez yeniden dene. Son kararlı **v1.0.23**; sonraki manuel sürüm varsayılanı **1.0.24**, henüz yayımlanmadı. Fiziksel cihaz/VPN kabulü bu sonuçlarla kapatılmaz.
 
 ## Güncel devam — VPN sonraya bırakıldı, 1.0.22 → 1.0.23 güncelleme kabulü
 

@@ -66,6 +66,10 @@
     <string name="theme_night">Night theme</string>
     <string name="menu_current_page">Reload current page</string>
     <string name="tab_all">All</string>
+    <string name="tabs_search_hint">Search tabs by title or address</string>
+    <string name="tabs_search_results">Tabs found: %1$d</string>
+    <string name="tabs_search_empty">No matching open tabs</string>
+    <string name="tabs_search_empty_hint">Try another title or address.</string>
     <string name="tab_groups_pending">Groups</string>
     <string name="tab_group_new">New group</string>
     <string name="tab_group_assign">Move to group</string>
