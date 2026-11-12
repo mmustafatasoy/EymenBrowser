@@ -35,7 +35,10 @@ Açık/koyu dört yeni PNG zorunludur; önceki kabuller silinmez. Yeni adımlar 
 instrumentation 900 s, host betiği 1080 s sınırında kalır.
 
 Yerel kaynak/i18n/şartname, 11 regresyon denetimi ve kozmetik JS kontrolü geçti.
-JVM/üç ABI, Android 15/16 tam UI/görsel ve indirme CI sonuçları henüz denenmedi.
+İlk adayda JVM/üç ABI, Android 15/16 görsel ve indirme CI geçti. Tam UI'da
+arkadaki Gecko belge başlığının sonuç sanılması, gerçek arama editörünün
+Compose üst katmanında arama yapan test düzeltmesiyle giderilir. Gizli/normal
+sonuç dışlama koşulları korunur; son kaynağın dört CI sonucu beklenir.
 Fiziksel Android 8/11/14/16, gerçek cihazda
 güncelleme ve VPN saha kabulü ayrıca açıktır. Son kararlı sürüm v1.0.23'tür;
 bu özellik henüz yayımlanmamıştır.

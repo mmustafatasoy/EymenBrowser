@@ -532,46 +532,46 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(this::softwareKeyboardVisible, "tab search opens the actual on-screen keyboard");
         sendStringSync("eymen sekme deneyi");
         await(() -> "eymen sekme deneyi".equals(text(field(hint))) &&
-            find(activity.getString(R.string.tabs_search_results, 1), false) != null,
+            tabResult(activity.getString(R.string.tabs_search_results, 1)) != null,
             "physical typing finds only the private matching tab");
         systemBack();
         await(() -> field(hint) != null && !softwareKeyboardVisible(),
             "Back hides the tab search keyboard without closing its results");
-        require(find(secretTitle, false) != null && find(alphaTitle, false) == null && find(betaTitle, false) == null,
+        require(tabResult(secretTitle) != null && tabResult(alphaTitle) == null && tabResult(betaTitle) == null,
             "private results never include matching normal titles");
         capture("tabs-search-private.png", true);
         search(hint, "eymen-tab-search=alpha");
-        await(() -> find(label(R.string.tabs_search_empty), false) != null,
+        await(() -> tabResult(label(R.string.tabs_search_empty)) != null,
             "a normal-only address cannot appear in private search");
 
         click(label(R.string.tabs));
         await(() -> field(hint) != null && text(field(hint)).isEmpty(),
             "switching to normal tabs discards the private search text");
         search(hint, "eymen sekme deneyi");
-        await(() -> find(activity.getString(R.string.tabs_search_results, 2), false) != null,
+        await(() -> tabResult(activity.getString(R.string.tabs_search_results, 2)) != null,
             "normal search finds the two real normal pages");
-        require(find(secretTitle, false) == null && find(alphaTitle, false) != null && find(betaTitle, false) != null,
+        require(tabResult(secretTitle) == null && tabResult(alphaTitle) != null && tabResult(betaTitle) != null,
             "normal results exclude the matching private tab");
         click(label(R.string.tab_next) + " ›");
         await(() -> currentSession() == alpha && field(hint) == null,
             "Next from an excluded active tab selects the first matching existing session");
         click(label(R.string.tabs));
         search(hint, "izmir");
-        await(() -> find(alphaTitle, false) != null && find(betaTitle, false) == null &&
-            find(activity.getString(R.string.tabs_search_results, 1), false) != null,
+        await(() -> tabResult(alphaTitle) != null && tabResult(betaTitle) == null &&
+            tabResult(activity.getString(R.string.tabs_search_results, 1)) != null,
             "Turkish title search ignores case without changing tab order");
         capture("tabs-search-title.png", true);
         search(hint, "EXAMPLE.COM/?EYMEN-TAB-SEARCH=BETA");
-        await(() -> find(betaTitle, false) != null && find(alphaTitle, false) == null,
+        await(() -> tabResult(betaTitle) != null && tabResult(alphaTitle) == null,
             "actual URL path and query are searchable independently of the page title");
         click(label(R.string.tab_next) + " ›");
         await(() -> currentSession() == beta && field(hint) == null,
             "quick switching can activate a single result when the current tab is excluded");
         click(label(R.string.tabs));
         search(hint, "no-such-open-tab-acceptance");
-        await(() -> find(label(R.string.tabs_search_empty), false) != null,
+        await(() -> tabResult(label(R.string.tabs_search_empty)) != null,
             "unmatched query shows an honest empty result");
-        AccessibilityNodeInfo closeAll = find(label(R.string.close_all_tabs), false);
+        AccessibilityNodeInfo closeAll = tabResult(label(R.string.close_all_tabs));
         require(closeAll != null, "close-all action remains visible while filtered");
         tap(closeAll); waitForIdleSync();
         require(realTabCount() == count && uiCheck(() -> alpha.isOpen() && beta.isOpen() && secret.isOpen()),
@@ -591,7 +591,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(label(R.string.back)); click(label(R.string.back));
         click(label(R.string.tabs));
         search(hint, "eymen sekme deneyi");
-        await(() -> find(activity.getString(R.string.tabs_search_results, 2), false) != null,
+        await(() -> tabResult(activity.getString(R.string.tabs_search_results, 2)) != null,
             "the same normal scope remains searchable in night theme");
         capture("tabs-search-dark.png", false);
         click(label(R.string.back));
@@ -957,8 +957,22 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         String value = text(node);
         return desc.equals(label) || value.equals(label) || value.startsWith(label + "\n");
     }
+    private AccessibilityNodeInfo tabResult(String label) {
+        // UiAutomation also exposes the covered Gecko document. Anchor to the
+        // actual search editor's Compose overlay, so a page title underneath
+        // cannot masquerade as a tab card or invalidate scope-isolation checks.
+        AccessibilityNodeInfo scope = field(label(R.string.tabs_search_hint));
+        while (scope != null && !"androidx.compose.ui.platform.ComposeView".equals(String.valueOf(scope.getClassName())))
+            scope = scope.getParent();
+        require(scope != null, "tab result checks require the actual tab overview overlay");
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        queue.add(scope);
+        return find(queue, label, false);
+    }
     private AccessibilityNodeInfo find(String label, boolean editable) {
-        ArrayDeque<AccessibilityNodeInfo> queue = roots();
+        return find(roots(), label, editable);
+    }
+    private AccessibilityNodeInfo find(ArrayDeque<AccessibilityNodeInfo> queue, String label, boolean editable) {
         java.util.List<AccessibilityNodeInfo> editors = new java.util.ArrayList<>();
         java.util.List<Rect> markers = new java.util.ArrayList<>();
         while (!queue.isEmpty()) {
