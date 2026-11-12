@@ -552,6 +552,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "normal search finds the two real normal pages");
         require(find(secretTitle, false) == null && find(alphaTitle, false) != null && find(betaTitle, false) != null,
             "normal results exclude the matching private tab");
+        click(label(R.string.tab_next) + " ›");
+        await(() -> currentSession() == alpha && field(hint) == null,
+            "Next from an excluded active tab selects the first matching existing session");
+        click(label(R.string.tabs));
         search(hint, "izmir");
         await(() -> find(alphaTitle, false) != null && find(betaTitle, false) == null &&
             find(activity.getString(R.string.tabs_search_results, 1), false) != null,
@@ -560,6 +564,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         search(hint, "EXAMPLE.COM/?EYMEN-TAB-SEARCH=BETA");
         await(() -> find(betaTitle, false) != null && find(alphaTitle, false) == null,
             "actual URL path and query are searchable independently of the page title");
+        click(label(R.string.tab_next) + " ›");
+        await(() -> currentSession() == beta && field(hint) == null,
+            "quick switching can activate a single result when the current tab is excluded");
+        click(label(R.string.tabs));
         search(hint, "no-such-open-tab-acceptance");
         await(() -> find(label(R.string.tabs_search_empty), false) != null,
             "unmatched query shows an honest empty result");

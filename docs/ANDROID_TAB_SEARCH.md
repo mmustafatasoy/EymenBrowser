@@ -16,6 +16,9 @@ sekme kaydı korunur. [Önceki sekme sözleşmesi](ANDROID_TABS_V108.md).
 - Bir sonuca dokunmak var olan gerçek sekmeyi etkinleştirir; yeni sekme veya
   yeni gezinme oluşturmaz. Klavye açıkken Geri önce klavyeyi kapatır; sonuçlar
   korunur. Aramayı temizleme mevcut bölüm/grup kapsamına geri döner.
+- Hızlı geçiş yalnız eşleşen sekmeleri kullanır. Etkin sekme aramanın dışında
+  kalırsa seçili konum 0 gösterilir; Sonraki ilk, Önceki son eşleşmeye geçer.
+  Tek eşleşme de etkin sekmeden farklıysa açılabilir.
 - Filtreli aramada Tümünü kapat pasiftir; görünmeyen sekmeler kapatılmaz.
   Tek tek kapatma, gerçek sekme sırası ve normal sekmelerin geri alınması
   önceki sözleşmeyi izler.

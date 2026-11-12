@@ -124,7 +124,8 @@ internal fun TabOverview(
                 selectedGroupId == null || tab.groupId == selectedGroupId)
     }
     val visible = scopedTabs.filter { TabSearchPolicy.matches(it.title, it.url, searchQuery) }
-    val activeIndex = visible.indexOfFirst { it.selected }.coerceAtLeast(0)
+    val activeIndex = visible.indexOfFirst { it.selected }
+    val canSwitch = visible.isNotEmpty() && (visible.size > 1 || activeIndex < 0)
     val selectedGroup = groups.firstOrNull { it.id == selectedGroupId }
 
     // MainActivity reserves statusBars/displayCutout for the ENTIRE
@@ -279,21 +280,22 @@ internal fun TabOverview(
             ) {
                 TabLabel(
                     stringResource(R.string.tab_quick_switch) +
-                        " ${if (visible.isEmpty()) 0 else activeIndex + 1}/${visible.size}",
+                        " ${if (activeIndex < 0) 0 else activeIndex + 1}/${visible.size}",
                     12, muted
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     TabLabel(
                         "‹ " + stringResource(R.string.tab_prev),
-                        13, if (visible.size > 1) text else muted,
-                        modifier = Modifier.clickable(enabled = visible.size > 1) {
-                            onOpen(visible[(activeIndex - 1 + visible.size) % visible.size].id)
+                        13, if (canSwitch) text else muted,
+                        modifier = Modifier.clickable(enabled = canSwitch) {
+                            if (activeIndex < 0) onOpen(visible.last().id)
+                            else onOpen(visible[(activeIndex - 1 + visible.size) % visible.size].id)
                         }
                     )
                     TabLabel(
                         stringResource(R.string.tab_next) + " ›",
-                        13, if (visible.size > 1) text else muted,
-                        modifier = Modifier.clickable(enabled = visible.size > 1) {
+                        13, if (canSwitch) text else muted,
+                        modifier = Modifier.clickable(enabled = canSwitch) {
                             onOpen(visible[(activeIndex + 1) % visible.size].id)
                         }
                     )
