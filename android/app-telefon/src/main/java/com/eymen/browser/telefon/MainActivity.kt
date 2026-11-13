@@ -2194,11 +2194,22 @@ class MainActivity : ComponentActivity() {
             return
         }
         try {
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(file.uri), file.mimeType)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val uri=Uri.parse(file.uri)
+            if(PdfOpenPolicy.isPdf(file.name,file.mimeType)) {
+                // Keep the reader in Eymen instead of jumping to an arbitrary
+                // PDF handler, which looked like an app exit on some phones.
+                if(uri.scheme!="content") {notice(R.string.download_open_error);return}
+                startActivity(Intent(this,BrowserPdfViewerActivity::class.java).apply {
+                    setDataAndType(uri,"application/pdf")
+                    putExtra(BrowserPdfViewerActivity.TITLE,file.name.take(120))
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                })
+            } else {
+                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri,file.mimeType)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                })
             }
-            startActivity(intent)
         } catch (_: Exception) {
             notice(R.string.download_open_error)
         }
