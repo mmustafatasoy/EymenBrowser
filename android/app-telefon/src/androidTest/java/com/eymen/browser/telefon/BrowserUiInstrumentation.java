@@ -152,10 +152,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             privateLockWithRealAndroidCredential();
             secureDnsAndNativePrint();
             fullPageCaptureAndDarkPages();
+            inactiveTabKeepsFormAndSession();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,real_inactive_Gecko_tab_visibility_memory_cycle_form_and_RAM_state_preserved,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -992,6 +993,37 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> find("Example Domain",false)!=null,"disabling the effect reloads the page without the optional style");
         require(currentSession()==page && uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM),"disabling restores system content preference and preserves the same session");
     }
+    private void inactiveTabKeepsFormAndSession() throws Exception {
+        org.mozilla.geckoview.GeckoSession page=searchTabPage(false,"https://example.com/?eymen-memory-audit=1","Eymen memory fixture");
+        java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original=contentDelegate(page);
+        runOnMainSync(() -> {
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session,String value){title.set(value);original.onTitleChange(session,value);}
+            });
+            String html="<h1>Eymen tab memory</h1><textarea aria-label='Eymen tab memory note'></textarea>";
+            page.loadUri("javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";window.__eymenMemoryToken='same live document';document.addEventListener('visibilitychange',()=>document.title=document.hidden?'Eymen memory hidden':'Eymen memory visible');document.title='Eymen memory visible';}())");
+        });
+        await(() -> field("Eymen tab memory note")!=null,"real web text area is available");
+        tap(field("Eymen tab memory note"));sendStringSync("Eymen note kept");
+        await(() -> "Eymen note kept".equals(text(field("Eymen tab memory note"))),"real keyboard writes a form value before tab deactivation");
+        if(softwareKeyboardVisible())systemBack();
+        searchTabPage(false,"https://example.com/?eymen-memory-other=1","Eymen other memory page");
+        await(() -> "Eymen memory hidden".equals(title.get()),"releasing the display makes the real background document hidden");
+        require(uiCheck(page::isOpen) && currentSession()!=page,"inactive tab releases the visible engine surface while keeping its actual session");
+        // Gecko 159 schedules its native compositor memory-pressure signal at
+        // ten seconds after deactivation. Exercise that real period as well.
+        Thread.sleep(11000);
+        click(label(R.string.tabs));search(label(R.string.tabs_search_hint),"eymen-memory-audit=1");
+        await(() -> tabResult("Eymen memory hidden")!=null,"inactive tab remains searchable by its real address");
+        tap(tabResult("Eymen memory hidden"));
+        await(() -> currentSession()==page && "Eymen memory visible".equals(title.get()),"selecting the inactive card resumes the same actual Gecko document");
+        require("Eymen note kept".equals(text(field("Eymen tab memory note"))),"user-entered form text survives the native inactive-memory cycle");
+        runOnMainSync(() -> page.loadUri("javascript:void(document.title=window.__eymenMemoryToken==='same live document'?'Eymen memory RAM preserved':'Eymen memory RAM lost')"));
+        await(() -> "Eymen memory RAM preserved".equals(title.get()),"JavaScript RAM state survives without a hidden reload or tab replacement");
+        if(softwareKeyboardVisible())systemBack();capture("tab-memory-restored.png",true);
+        runOnMainSync(() -> page.setContentDelegate(original));
+    }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
             AccessibilityNodeInfo root=window.getRoot();if(window.getType()!=AccessibilityWindowInfo.TYPE_APPLICATION||root==null||!root.refresh())continue;
@@ -1282,6 +1314,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         while(!condition.getAsBoolean()){if(SystemClock.elapsedRealtime()>until)throw new AssertionError("Timed out: "+name);Thread.sleep(100);}
     }
     private org.mozilla.geckoview.GeckoSession currentSession() {
+        if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper()){
+            try{return browserView().getSession();}catch(Exception error){throw new RuntimeException(error);}
+        }
         java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession> result = new java.util.concurrent.atomic.AtomicReference<>();
         runOnMainSync(() -> { try { result.set(browserView().getSession()); } catch (Exception e) { throw new RuntimeException(e); } });
         return result.get();
@@ -1331,6 +1366,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         tapAt(point[0], point[1]);
     }
     private boolean uiCheck(BooleanSupplier condition) {
+        if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper())return condition.getAsBoolean();
         java.util.concurrent.atomic.AtomicBoolean result = new java.util.concurrent.atomic.AtomicBoolean();
         runOnMainSync(() -> result.set(condition.getAsBoolean()));
         return result.get();
