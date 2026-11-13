@@ -1,7 +1,7 @@
 name: EymenBrowser address and custom screens acceptance
 on:
   push:
-    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools]
     paths:
       - '.github/workflows/android-browser-ui-audit.yml'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/**'

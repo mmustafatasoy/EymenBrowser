@@ -163,6 +163,9 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { refreshSystemPreferences() }
 
+    private val bookmarkImportLauncher=registerForActivityResult(ActivityResultContracts.OpenDocument()){uri ->if(uri!=null)bookmarks.importFile(uri)}
+    private val bookmarkJsonLauncher=registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri ->if(uri!=null)bookmarks.exportFile(uri,false)}
+    private val bookmarkHtmlLauncher=registerForActivityResult(ActivityResultContracts.CreateDocument("text/html")){uri ->if(uri!=null)bookmarks.exportFile(uri,true)}
     private val vpnImportLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -639,11 +642,15 @@ class MainActivity : ComponentActivity() {
             if (libraryMode == BrowserLibrary.BOOKMARKS) {
                 BookmarksScreen(bookmarks,libraryShowing,dayMode.value,
                     ::hideLibrary,{url -> hideLibrary();openUrl(url)},
-                    {editBookmarkFolder(null)},::showBookmarkFolderActions,::showBookmarkActions)
+                    {editBookmarkFolder(null)},::showBookmarkFolderActions,::showBookmarkActions,::importBookmarks,::exportBookmarks)
+            } else if(libraryMode==BrowserLibrary.READING) {
+                ReadingListScreen(bookmarks,libraryShowing,dayMode.value,::hideLibrary) {item ->
+                    bookmarks.markReading(item.id,true);hideLibrary();openUrl(item.url)
+                }
             } else {
             val items = when (libraryMode) {
                 BrowserLibrary.HISTORY -> history.entries
-                BrowserLibrary.BOOKMARKS -> emptyList()
+                BrowserLibrary.BOOKMARKS, BrowserLibrary.READING -> emptyList()
                 BrowserLibrary.RECENT_TABS -> recentlyClosedNormal.asReversed().mapNotNull { it.safeUrl }
                     .distinct().mapIndexed { index,url -> HistoryEntry(index.toLong(),url,
                         history.entries.firstOrNull { it.url == url }?.title ?: HistoryPolicy.title("",url),0L) }
@@ -653,6 +660,7 @@ class MainActivity : ComponentActivity() {
                 onDelete = { item ->
                     when (libraryMode) {
                         BrowserLibrary.HISTORY -> history.delete(item.id)
+                        BrowserLibrary.READING -> bookmarks.deleteReading(item.id)
                         BrowserLibrary.BOOKMARKS -> bookmarks.entries.firstOrNull {it.url==item.url}?.let {bookmarks.delete(it.id)}
                         BrowserLibrary.RECENT_TABS -> recentlyClosedNormal.removeAll { it.safeUrl == item.url }
                     }
@@ -2108,6 +2116,10 @@ class MainActivity : ComponentActivity() {
             MenuAction.SITE_CONTROLS -> showShield()
             MenuAction.HELP -> openSettingsPage(BrowserSettingsPage.FEEDBACK)
             MenuAction.BOOKMARKS -> showBookmarks()
+            MenuAction.READING_LIST -> showLibrary(BrowserLibrary.READING)
+            MenuAction.READING_ADD -> activeTab?.takeIf{!it.home}?.let{tab ->
+                bookmarks.addReading(tab.url,tab.title);showLibrary(BrowserLibrary.READING)
+            }
             MenuAction.HISTORY -> showRecentPages()
             MenuAction.DOWNLOADS -> showDownloads()
             MenuAction.PRIVATE -> createTab(privateMode = true)
@@ -2158,6 +2170,16 @@ class MainActivity : ComponentActivity() {
         bookmarkRevision++
     }
 
+    private fun importBookmarks() {
+        BrowserDialogs.builder(this).setTitle(R.string.bookmark_import).setMessage(R.string.bookmark_import_note)
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.bookmark_import){_,_ ->
+                bookmarkImportLauncher.launch(arrayOf("application/json","text/html","text/plain","application/octet-stream"))}.show()
+    }
+    private fun exportBookmarks() {
+        BrowserDialogs.builder(this).setTitle(R.string.bookmark_export).setItems(arrayOf(getString(R.string.bookmark_json_format),getString(R.string.bookmark_html_format))){_,format ->
+            if(format==0)bookmarkJsonLauncher.launch("EymenBrowser-bookmarks.json") else bookmarkHtmlLauncher.launch("EymenBrowser-bookmarks.html")
+        }.setNegativeButton(android.R.string.cancel,null).show()
+    }
     private fun editBookmarkFolder(folder: BookmarkFolder?) {
         bookmarks.clearError()
         val field=EditText(this).apply {

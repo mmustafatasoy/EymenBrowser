@@ -26,6 +26,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private Activity activity;
     private Uri fixtureUri;
     private Uri vpnFixtureUri;
+    private final java.util.List<Uri> libraryFixtures=new java.util.ArrayList<>();
     private static final String FIXTURE = "Arayüz testi.txt";
     private static final String OLD_URL = "https://example.com/eymen-ui-old?value=1";
     @Override public void onCreate(Bundle args) { super.onCreate(args); start(); }
@@ -41,6 +42,13 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             new DownloadRegistry(app).clearListOnly();
             app.getSharedPreferences("eymen_browser_bookmarks", Context.MODE_PRIVATE).edit()
                 .putStringSet("urls", new java.util.HashSet<>(java.util.Arrays.asList("https://example.net/legacy-bookmark"))).commit();
+            app.deleteDatabase("browser-bookmarks.db");
+            try(android.database.sqlite.SQLiteDatabase db=app.openOrCreateDatabase("browser-bookmarks.db",Context.MODE_PRIVATE,null)) {
+                db.execSQL("CREATE TABLE folders (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL UNIQUE COLLATE NOCASE)");
+                db.execSQL("CREATE TABLE bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT,url TEXT NOT NULL UNIQUE,title TEXT NOT NULL,folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL)");
+                db.execSQL("CREATE TABLE metadata (key TEXT PRIMARY KEY)");
+                db.execSQL("INSERT INTO bookmarks(url,title) VALUES(?,?)",new Object[]{"https://example.org/v1-library","V1 kitaplık başlığı"});db.setVersion(1);
+            }
             createFixture(app);
             AccessibilityServiceInfo info = getUiAutomation().getServiceInfo();
             info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
@@ -140,10 +148,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             openTabSearch();
             bookmarkLibrary();
             mediaAndSystemTheme();
+            libraryTransferAndReading();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -151,6 +160,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             result.putString("stack", android.util.Log.getStackTraceString(error));
         } finally {
             if (activity != null) runOnMainSync(() -> activity.finish());
+            for(Uri uri:libraryFixtures)getTargetContext().getContentResolver().delete(uri,null,null);
             if (fixtureUri != null) getTargetContext().getContentResolver().delete(fixtureUri, null, null);
             if (vpnFixtureUri != null) {
                 getTargetContext().getContentResolver().delete(vpnFixtureUri, null, null);
@@ -751,6 +761,69 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         androidMediaController().getTransportControls().stop();
         await(() -> mediaNotification()==null,"private media stops and removes its Android notification");
         menuNavigation(R.string.menu_new_normal_tab_accessibility);
+    }
+    private Uri libraryFile(String name,String mime,String text) throws Exception {
+        android.content.ContentValues values=new android.content.ContentValues();
+        values.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME,name);values.put(android.provider.MediaStore.MediaColumns.MIME_TYPE,mime);
+        values.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,android.os.Environment.DIRECTORY_DOWNLOADS);values.put(android.provider.MediaStore.MediaColumns.IS_PENDING,1);
+        Uri uri=getTargetContext().getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,values);
+        require(uri!=null,"real local transfer fixture allocated");libraryFixtures.add(uri);
+        try(java.io.OutputStream stream=getTargetContext().getContentResolver().openOutputStream(uri)){require(stream!=null,"real fixture output opened");stream.write(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));}
+        values.clear();values.put(android.provider.MediaStore.MediaColumns.IS_PENDING,0);getTargetContext().getContentResolver().update(uri,values,null,null);return uri;
+    }
+    private String libraryText(Uri uri) throws Exception {
+        try(java.io.InputStream stream=getTargetContext().getContentResolver().openInputStream(uri)){
+            require(stream!=null,"actual exported file can be read");return BookmarkExchange.INSTANCE.read(stream);
+        }
+    }
+    private void libraryTransferAndReading() throws Exception {
+        BrowserBookmarks store=bookmarkStore();
+        require(uiCheck(() -> store.getEntries().stream().anyMatch(x -> x.getUrl().equals("https://example.org/v1-library") && x.getTitle().equals("V1 kitaplık başlığı"))),
+            "real SQLite version-1 upgrade preserves an existing titled bookmark");
+        String imported="https://example.org/?eymen-import=1";
+        org.json.JSONObject data=new org.json.JSONObject().put("format","eymen-bookmarks").put("version",1)
+            .put("folders",new org.json.JSONArray().put(new org.json.JSONObject().put("key","imported").put("name","İçe Aktarılanlar")))
+            .put("bookmarks",new org.json.JSONArray().put(new org.json.JSONObject().put("url",imported).put("title","İçe Aktarım Deneyi").put("folder","imported")));
+        Uri source=libraryFile("Eymen-bookmarks-import.json","application/json",data.toString());
+        runOnMainSync(() -> store.importFile(source));
+        await(() -> uiCheck(() -> !store.getLoading() && store.getImportAdded()==1 && store.getEntries().stream().anyMatch(x -> x.getUrl().equals(imported) && x.getFolderId()!=null)),"real JSON file imports title and folder atomically");
+        int count=uiInt(() -> store.getEntries().size());
+        runOnMainSync(() -> store.importFile(source));
+        await(() -> uiCheck(() -> !store.getLoading() && store.getImportAdded()==0 && store.getImportSkipped()==1),"duplicate import preserves the existing entry");
+        Uri json=libraryFile("Eymen-export.json","application/json","");
+        runOnMainSync(() -> store.exportFile(json,false));
+        await(() -> uiCheck(() -> !store.getLoading() && Integer.valueOf(R.string.bookmark_export_done).equals(store.getNotice())),"JSON export finished through real ContentResolver");
+        org.json.JSONObject exported=new org.json.JSONObject(libraryText(json));
+        require(exported.getJSONArray("bookmarks").length()==count && exported.getJSONArray("folders").length()==1,"JSON export contains the actual saved library and folder");
+        org.json.JSONObject invalid=new org.json.JSONObject(data.toString()).put("version",999);
+        Uri bad=libraryFile("Eymen-invalid.json","application/json",invalid.toString());
+        runOnMainSync(() -> store.importFile(bad));
+        await(() -> uiCheck(() -> !store.getLoading() && Integer.valueOf(R.string.bookmark_import_invalid).equals(store.getError())),"unknown JSON version is rejected");
+        require(uiInt(() -> store.getEntries().size())==count,"failed import transaction preserves every existing bookmark");
+        Uri html=libraryFile("Eymen-export.html","text/html","");
+        runOnMainSync(() -> store.exportFile(html,true));
+        await(() -> uiCheck(() -> !store.getLoading() && Integer.valueOf(R.string.bookmark_export_done).equals(store.getNotice())),"HTML export finished");
+        String markup=libraryText(html);
+        require(markup.contains("NETSCAPE-Bookmark-file-1") && markup.contains("<H3>") && markup.contains(imported),"HTML export contains real portable anchors and folder structure");
+        Uri links=libraryFile("Eymen-browser-import.html","text/html","<DL><DT><A HREF='https://example.net/html-import'>HTML Başlık</A><DT><A HREF='javascript:alert(1)'>Unsafe</A></DL>");
+        runOnMainSync(() -> store.importFile(links));
+        await(() -> uiCheck(() -> !store.getLoading() && store.getImportAdded()==1 && store.getImportSkipped()==1),"HTML imports only its real safe HTTPS bookmark without executing content");
+        String url="https://example.com/?eymen-reading=1",title="Eymen Okuma Deneyi";
+        searchTabPage(false,url,title);click(label(R.string.browser_menu));scrollClick(label(R.string.reading_add));
+        await(() -> field(label(R.string.reading_search))!=null && uiCheck(() -> !store.getLoading() && store.getReading().stream().anyMatch(x -> x.getUrl().equals(url) && !x.getRead())),"explicit reading-list action stores a real unread page");
+        click(activity.getString(R.string.reading_mark_read,title));
+        await(() -> uiCheck(() -> !store.getLoading() && store.getReading().stream().anyMatch(x -> x.getUrl().equals(url) && x.getRead())),"read state persisted");
+        click(label(R.string.reading_unread));await(() -> find(label(R.string.reading_empty),false)!=null,"unread filter excludes the read page");
+        click(label(R.string.reading_read));search(label(R.string.reading_search),"okuma");
+        await(() -> find(activity.getString(R.string.reading_open,title),false)!=null,"saved title is searchable in the selected reading state");
+        capture("reading-list.png",true);
+        click(activity.getString(R.string.reading_mark_unread,title));click(label(R.string.tab_all));
+        click(activity.getString(R.string.reading_open,title));
+        await(() -> url.equals(text(field(label(R.string.address_edit_label)))) && uiCheck(() -> store.getReading().stream().anyMatch(x -> x.getUrl().equals(url) && x.getRead())),"opening saved page uses its actual address and marks it read");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.reading_list));
+        await(() -> field(label(R.string.reading_search))!=null,"reading list reopened");
+        click(activity.getString(R.string.reading_remove,title));await(() -> uiCheck(() -> !store.getLoading() && store.getReading().isEmpty()),"removing a reading entry preserves browser bookmarks");
+        require(uiInt(() -> store.getEntries().size())==count+1,"reading-list deletion never deletes a bookmark");click(label(R.string.back));
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){

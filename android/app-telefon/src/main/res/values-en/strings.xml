@@ -532,4 +532,23 @@ My issue or suggestion:
     <string name="media_play">Play</string>
     <string name="media_pause">Pause</string>
     <string name="media_stop">Stop</string>
+    <string name="bookmark_import">Import bookmarks</string>
+    <string name="bookmark_export">Export bookmarks</string>
+    <string name="bookmark_import_note">An Eymen Browser JSON backup preserves titles and folders. Valid HTTPS links in HTML files are imported without folders. Existing bookmarks are kept. Maximum file size is 8 MB.</string>
+    <string name="bookmark_json_format">JSON — backup with titles and folders</string>
+    <string name="bookmark_html_format">HTML — share with other browsers</string>
+    <string name="bookmark_import_done">Added: %1$d · Skipped/existing: %2$d</string>
+    <string name="bookmark_export_done">Bookmarks were saved to your selected file.</string>
+    <string name="bookmark_import_invalid">The file could not be read or is unsupported. Your existing entries are preserved. Choose a JSON backup or bookmark HTML file.</string>
+    <string name="bookmark_transfer_too_large">The bookmark file exceeds the 8 MB limit. Your entries have not changed.</string>
+    <string name="reading_list">Reading list</string>
+    <string name="reading_add">Add to reading list</string>
+    <string name="reading_search">Search reading list</string>
+    <string name="reading_read">Read</string>
+    <string name="reading_unread">Unread</string>
+    <string name="reading_mark_read">Mark as read: %1$s</string>
+    <string name="reading_mark_unread">Mark as unread: %1$s</string>
+    <string name="reading_remove">Remove from reading list: %1$s</string>
+    <string name="reading_open">Open saved page: %1$s</string>
+    <string name="reading_empty">There are no saved pages in this view.</string>
 </resources>

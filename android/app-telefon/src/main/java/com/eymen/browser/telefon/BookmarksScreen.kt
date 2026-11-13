@@ -22,7 +22,8 @@ import com.eymen.browser.tema.EymenTokens as T
 @Composable
 internal fun BookmarksScreen(store: BrowserBookmarks, visible: Boolean, dayMode: Boolean,
     onBack: () -> Unit, onOpen: (String) -> Unit, onNewFolder: () -> Unit,
-    onFolder: (BookmarkFolder) -> Unit, onItem: (BookmarkEntry) -> Unit) {
+    onFolder: (BookmarkFolder) -> Unit, onItem: (BookmarkEntry) -> Unit,
+    onImport: () -> Unit,onExport: () -> Unit) {
     val p=browserListPalette(dayMode)
     var query by remember(visible) {mutableStateOf("")}
     var selected by remember(visible) {mutableStateOf<Long?>(null)}
@@ -32,6 +33,8 @@ internal fun BookmarksScreen(store: BrowserBookmarks, visible: Boolean, dayMode:
     Column(Modifier.fillMaxSize().background(p.background)) {
         ListPageHeader(stringResource(R.string.bookmarks),p,onBack) {
             ListIconAction(stringResource(R.string.bookmark_new_folder),EymenPaths.klasor,p,onNewFolder)
+            ListIconAction(stringResource(R.string.bookmark_import),EymenPaths.indir,p,onImport)
+            ListIconAction(stringResource(R.string.bookmark_export),EymenPaths.paylas,p,onExport)
         }
         Box(Modifier.fillMaxWidth().padding(horizontal=T.telefon_ekran_kenar.dp,vertical=T.telefon_ekran_kucukBosluk.dp)) {
             ListSearch(query,stringResource(R.string.library_search_bookmarks),p) {query=TabSearchPolicy.boundedInput(it)}
@@ -47,6 +50,10 @@ internal fun BookmarksScreen(store: BrowserBookmarks, visible: Boolean, dayMode:
         }
         val folder=store.folders.firstOrNull {it.id==selected}
         if(folder!=null) SettingsActionRow(stringResource(R.string.bookmark_manage_folder,folder.name),p,{onFolder(folder)},icon=EymenPaths.ayarlar)
+        store.notice?.let {res ->
+            val message=if(res==R.string.bookmark_import_done)stringResource(res,store.importAdded,store.importSkipped) else stringResource(res)
+            ScreenText(message,p.muted,modifier=Modifier.padding(T.telefon_ekran_kenar.dp),maxLines=4)
+        }
         store.error?.let { ScreenText(stringResource(it),p.muted,modifier=Modifier.padding(T.telefon_ekran_kenar.dp),maxLines=4) }
         if(items.isEmpty()) ScreenText(stringResource(if(store.loading)R.string.history_loading else if(query.isNotBlank())R.string.history_no_results else R.string.library_bookmarks_empty),
             p.muted,modifier=Modifier.padding(T.telefon_ekran_kenar.dp),maxLines=4)

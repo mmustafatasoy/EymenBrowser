@@ -23,7 +23,7 @@ internal enum class MenuAction {
     BOOKMARKS, HISTORY, DOWNLOADS, PRIVATE, TRANSLATE, FIND,
     READER, DESKTOP, PDF, SHARE, SEND_TO_DEVICE, QR,
     EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS, TOOLS,
-    NEW_TAB, TAB_GROUP, RECENT_TABS, CLEAR_DATA, SITE_CONTROLS, HELP
+    READING_LIST, READING_ADD, NEW_TAB, TAB_GROUP, RECENT_TABS, CLEAR_DATA, SITE_CONTROLS, HELP
 }
 private data class MenuRow(val title: Int,val icon: String,val action: MenuAction,val needsPage: Boolean = false)
 private val groups = listOf(
@@ -35,8 +35,10 @@ private val groups = listOf(
         MenuRow(R.string.menu_site_controls,EymenPaths.ayarlar,MenuAction.SITE_CONTROLS,true)),
     listOf(MenuRow(R.string.downloads,EymenPaths.indir,MenuAction.DOWNLOADS),
         MenuRow(R.string.bookmarks,EymenPaths.yerImi,MenuAction.BOOKMARKS),
+        MenuRow(R.string.reading_list,EymenPaths.okuma,MenuAction.READING_LIST),
         MenuRow(R.string.library_recent_tabs,EymenPaths.cihazlar,MenuAction.RECENT_TABS)),
-    listOf(MenuRow(R.string.menu_share,EymenPaths.paylas,MenuAction.SHARE,true),
+    listOf(MenuRow(R.string.reading_add,EymenPaths.okuma,MenuAction.READING_ADD,true),
+        MenuRow(R.string.menu_share,EymenPaths.paylas,MenuAction.SHARE,true),
         MenuRow(R.string.menu_find,EymenPaths.ara,MenuAction.FIND,true),
         MenuRow(R.string.menu_translate,EymenPaths.cevir,MenuAction.TRANSLATE,true),
         MenuRow(R.string.menu_reader,EymenPaths.okuma,MenuAction.READER,true),

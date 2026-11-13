@@ -22,7 +22,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Date
 
-internal enum class BrowserLibrary { HISTORY, BOOKMARKS, RECENT_TABS }
+internal enum class BrowserLibrary { HISTORY, BOOKMARKS, RECENT_TABS, READING }
 
 @Composable
 internal fun HistoryScreen(visible: Boolean, mode: BrowserLibrary, entries: List<HistoryEntry>,
@@ -35,11 +35,13 @@ internal fun HistoryScreen(visible: Boolean, mode: BrowserLibrary, entries: List
         BrowserLibrary.HISTORY -> R.string.history
         BrowserLibrary.BOOKMARKS -> R.string.bookmarks
         BrowserLibrary.RECENT_TABS -> R.string.library_recent_tabs
+        BrowserLibrary.READING -> R.string.reading_list
     })
     val hint = stringResource(when (mode) {
         BrowserLibrary.HISTORY -> R.string.history_search_hint
         BrowserLibrary.BOOKMARKS -> R.string.library_search_bookmarks
         BrowserLibrary.RECENT_TABS -> R.string.library_search_tabs
+        BrowserLibrary.READING -> R.string.reading_search
     })
     val filtered = remember(entries,query) { entries.filter {
         query.isBlank() || it.title.contains(query,true) || it.url.contains(query,true)
@@ -60,6 +62,7 @@ internal fun HistoryScreen(visible: Boolean, mode: BrowserLibrary, entries: List
                     BrowserLibrary.HISTORY -> R.string.history_empty
                     BrowserLibrary.BOOKMARKS -> R.string.library_bookmarks_empty
                     BrowserLibrary.RECENT_TABS -> R.string.library_recent_empty
+                    BrowserLibrary.READING -> R.string.reading_empty
                 }
             ScreenText(stringResource(text),p.muted,modifier = Modifier.padding(T.telefon_ekran_kenar.dp),maxLines = 4)
         }
