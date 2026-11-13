@@ -21,7 +21,7 @@ import com.eymen.browser.tema.EymenTokens as T
 
 internal enum class MenuAction {
     BOOKMARKS, HISTORY, DOWNLOADS, PRIVATE, TRANSLATE, FIND,
-    READER, DESKTOP, PDF, SHARE, SEND_TO_DEVICE, QR,
+    READER, DESKTOP, PDF, PRINT, SHARE, SEND_TO_DEVICE, QR,
     EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS, TOOLS,
     READING_LIST, READING_ADD, NEW_TAB, TAB_GROUP, RECENT_TABS, CLEAR_DATA, SITE_CONTROLS, HELP
 }
@@ -43,6 +43,7 @@ private val groups = listOf(
         MenuRow(R.string.menu_translate,EymenPaths.cevir,MenuAction.TRANSLATE,true),
         MenuRow(R.string.menu_reader,EymenPaths.okuma,MenuAction.READER,true),
         MenuRow(R.string.menu_save_pdf,EymenPaths.belge,MenuAction.PDF,true),
+        MenuRow(R.string.print_page,EymenPaths.belge,MenuAction.PRINT,true),
         MenuRow(R.string.menu_desktop,EymenPaths.masaustu,MenuAction.DESKTOP,true)),
     listOf(MenuRow(R.string.menu_extensions,EymenPaths.eklenti,MenuAction.EXTENSIONS),
         MenuRow(R.string.menu_scan_qr,EymenPaths.qr,MenuAction.QR),

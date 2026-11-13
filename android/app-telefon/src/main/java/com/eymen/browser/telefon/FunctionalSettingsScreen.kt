@@ -52,6 +52,9 @@ internal fun PrivacySettingsScreen(services: BrowserSettingsServices, dayMode: B
     onBack: () -> Unit, onClear: (Boolean) -> Unit,privateLock:PrivateTabLock?=null) = SettingsPage(R.string.settings_shield, dayMode, onBack) { p ->
     if(privateLock!=null)SettingsToggle(stringResource(R.string.private_lock_title),stringResource(if(privateLock.available)R.string.private_lock_note else R.string.private_lock_device_required),
         privateLock.enabled,p){privateLock.changeEnabled(it)}
+    SettingsActionRow(stringResource(R.string.secure_dns_title),p,services::chooseSecureDns,
+        note=stringResource(when(services.secureDns){SecureDnsOption.SYSTEM->R.string.secure_dns_system;SecureDnsOption.CLOUDFLARE->R.string.secure_dns_cloudflare;SecureDnsOption.QUAD9->R.string.secure_dns_quad9}))
+    ScreenText(stringResource(R.string.secure_dns_note),p.muted,T.telefon_liste_ikincil,maxLines=Int.MAX_VALUE)
     listOf(
         Triple(PrivacyOption.COOKIE_REJECT, R.string.shield_cookie_dialog, R.string.shield_cookie_dialog_desc),
         Triple(PrivacyOption.FINGERPRINT, R.string.shield_fingerprint, R.string.shield_fingerprint_desc),

@@ -28,6 +28,7 @@ internal class BrowserSettingsServices(
 ) : GeckoSession.PermissionDelegate {
     private val prefs = activity.getSharedPreferences("eymen_browser_setup", 0)
     private val runtime get() = GeckoMotorDenemesi.getRuntime(activity)
+    var secureDns by mutableStateOf(SecureDnsOption.fromKey(prefs.getString("secure_dns","system")));private set
     var cookieReject by mutableStateOf(prefs.getBoolean("cookie_reject", false)); private set
     var fingerprint by mutableStateOf(prefs.getBoolean("fingerprint", false)); private set
     var httpsOnly by mutableStateOf(prefs.getBoolean("https_only", true)); private set
@@ -52,6 +53,11 @@ internal class BrowserSettingsServices(
     }
 
     fun apply() {
+        runtime.settings.setDohAutoselectEnabled(false)
+        val endpoint=secureDns.endpoint
+        if(endpoint==null)runtime.settings.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_DISABLED)
+        else runtime.settings.setTrustedRecursiveResolverUri(endpoint)
+            .setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_ONLY)
         val behavior = when (cookieMode) {
             "all" -> ContentBlocking.CookieBehavior.ACCEPT_ALL
             "first" -> ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY
@@ -69,6 +75,13 @@ internal class BrowserSettingsServices(
         runtime.settings.setFontSizeFactor(textPercent / 100f)
     }
 
+    fun chooseSecureDns() {
+        val options=SecureDnsOption.entries
+        val labels=arrayOf(activity.getString(R.string.secure_dns_system),activity.getString(R.string.secure_dns_cloudflare),activity.getString(R.string.secure_dns_quad9))
+        BrowserDialogs.builder(activity).setTitle(R.string.secure_dns_title).setSingleChoiceItems(labels,secureDns.ordinal){dialog,which ->
+            secureDns=options[which];prefs.edit().putString("secure_dns",secureDns.key).apply();apply();reload();dialog.dismiss()
+        }.setNegativeButton(android.R.string.cancel,null).show()
+    }
     fun setTextSize(percent: Int) {
         textPercent = percent.coerceIn(50, 300)
         prefs.edit().putInt("text_percent", textPercent).apply()

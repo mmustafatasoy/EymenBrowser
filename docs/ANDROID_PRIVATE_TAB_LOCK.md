@@ -29,8 +29,9 @@ oluşturulmaz/değiştirilmez.
 
 Gerçek etkinleştirme, arka plana geçiş, GeckoSession'ın ayrılması, kilitli
 başlık/adres dışlaması, doğrulamayı iptal, doğru doğrulama, aynı oturumun geri
-bağlanması, koruma bayrağı ve kapatma onayı UI testindedir. Ayar görüntüsü normal
-sekmede alınır; özel sayfa veya credential ekranı artefakta çekilmez.
+bağlanması, koruma bayrağı ve kapatma onayı UI testindedir. Planlı ayar görüntüsü normal
+sekmede alınır; kabul özel içerik veya PIN görüntüsü gerektirmez. Hata tanısı
+alınırsa bu yalnız sentetik ve geçici emülatör verisidir.
 Bu adayın derleme/UI ve gerçek telefon sonuçları henüz denenmedi.
 
 ## Birincil kaynaklar

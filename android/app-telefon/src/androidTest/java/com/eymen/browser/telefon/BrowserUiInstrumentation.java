@@ -150,10 +150,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             mediaAndSystemTheme();
             libraryTransferAndReading();
             privateLockWithRealAndroidCredential();
+            secureDnsAndNativePrint();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -703,7 +704,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             java.io.InputStream stream=new android.os.ParcelFileDescriptor.AutoCloseInputStream(result)) {
             byte[] buffer=new byte[4096];while(stream.read(buffer)!=-1){}
         }
-        await(() -> uiCheck(() -> activity.hasWindowFocus() && !activity.isInPictureInPictureMode()),"browser returned from real Android Home/PiP");
+        await(() -> {
+            // Android may show first-use immersive education while returning
+            // from PiP. Acknowledge it before requiring application focus.
+            dismissVisibleFullscreenEducation();
+            return uiCheck(() -> activity.hasWindowFocus() && !activity.isInPictureInPictureMode());
+        },"browser returned from real Android Home/PiP");
     }
     private org.mozilla.geckoview.GeckoSession prepareMedia(boolean privateMode, java.util.concurrent.atomic.AtomicInteger ticks) throws Exception {
         org.mozilla.geckoview.GeckoSession page=searchTabPage(privateMode,"https://example.com/?eymen-media-audit="+(privateMode?"private":"normal"),"Eymen media fixture");
@@ -732,23 +738,29 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "real VP8/Vorbis playback produces Gecko events and an Android media notification");
         return page;
     }
+    private boolean dismissVisibleFullscreenEducation() {
+        for(android.view.accessibility.AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();
+            if(root==null || !root.refresh() || window.getType()!=AccessibilityWindowInfo.TYPE_SYSTEM)continue;
+            ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();queue.add(root);
+            while(!queue.isEmpty()){
+                AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
+                String pkg=String.valueOf(node.getPackageName());
+                // Android 15 hosts this framework window in system_server
+                // (package android); newer builds can host it in SystemUI.
+                boolean systemPackage="android".equals(pkg)||"com.android.systemui".equals(pkg);
+                if(systemPackage && "android:id/ok".equals(node.getViewIdResourceName()) &&
+                    node.isVisibleToUser() && node.isClickable() && matches(node,"Got it")){
+                    tap(node);waitForIdleSync();return true;
+                }
+                for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
+            }
+        }
+        return false;
+    }
     private void dismissFullscreenEducation() throws Exception {
         long deadline=SystemClock.uptimeMillis()+1500;
-        while(SystemClock.uptimeMillis()<deadline){
-            for(android.view.accessibility.AccessibilityWindowInfo window:getUiAutomation().getWindows()){
-                AccessibilityNodeInfo root=window.getRoot();
-                if(root==null || !root.refresh() || !"com.android.systemui".contentEquals(root.getPackageName()))continue;
-                ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();queue.add(root);
-                while(!queue.isEmpty()){
-                    AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
-                    if(node.isVisibleToUser() && node.isClickable() && matches(node,"Got it")){
-                        tap(node);waitForIdleSync();return;
-                    }
-                    for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
-                }
-            }
-            Thread.sleep(50);
-        }
+        while(SystemClock.uptimeMillis()<deadline){if(dismissVisibleFullscreenEducation())return;Thread.sleep(50);}
     }
     private void mediaAndSystemTheme() throws Exception {
         openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_system));
@@ -775,7 +787,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         dismissFullscreenEducation();
         require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"Home leaves a playing fullscreen video");
         await(() -> uiCheck(() -> activity.isInPictureInPictureMode()) && uiCheck(() -> mediaController().isPlaying(page)),"actual Android PiP keeps the fullscreen video playing");
-        capture("media-pip.png",null);foregroundBrowser();dismissFullscreenEducation();systemBack();
+        capture("media-pip.png",null);foregroundBrowser();
+        require(uiCheck(() -> currentSession()==page),"returning from real PiP preserves the same Gecko session");
+        dismissFullscreenEducation();systemBack();
         await(() -> uiCheck(() -> !Boolean.TRUE.equals(controller("videoFullScreen"))) && find(label(R.string.browser_menu),false)!=null,
             "actual Android Back exits DOM fullscreen and restores usable browser controls after PiP");
         nativeMedia.getTransportControls().stop();
@@ -902,6 +916,36 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             if(ownCredential)shellComplete("locksettings clear --old 642857");
         }
     }
+    private boolean printSpoolerVisible() {
+        for(android.view.accessibility.AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();
+            if(root!=null && root.refresh() && "com.android.printspooler".equals(String.valueOf(root.getPackageName())))return true;
+        }return false;
+    }
+    private void secureDnsAndNativePrint() throws Exception {
+        openSettingsItem(R.string.settings_shield);click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_cloudflare));
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
+            "https://cloudflare-dns.com/dns-query".equals(runtime().getSettings().getTrustedRecursiveResolverUri())),"actual Gecko runtime uses selected Cloudflare DoH-only mode");
+        require("cloudflare".equals(prefs().getString("secure_dns","")),"resolver choice persisted");
+        capture("secure-dns.png",true);
+        click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_quad9));
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
+            "https://dns.quad9.net/dns-query".equals(runtime().getSettings().getTrustedRecursiveResolverUri())),"switching providers changes the actual runtime endpoint without enabling fallback");
+        click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_system));
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_DISABLED) &&
+            "system".equals(prefs().getString("secure_dns","")),"device DNS option restores the actual runtime's explicit DoH-off mode");
+        click(label(R.string.back));click(label(R.string.back));
+        String url="https://example.com/?eymen-print-audit=1";
+        org.mozilla.geckoview.GeckoSession page=searchTabPage(false,url,"Eymen Print Acceptance");
+        int files=new DownloadRegistry(getTargetContext()).items().size();
+        click(label(R.string.browser_menu));scrollClick(label(R.string.print_page));
+        awaitLong(this::printSpoolerVisible,"real page PDF reaches Android PrintSpooler preview",45000);
+        capture("native-print-preview.png",null);systemBack();
+        await(() -> !printSpoolerVisible() && uiCheck(activity::hasWindowFocus) && url.equals(text(field(label(R.string.address_edit_label)))),
+            "cancelling Android print restores the original browser page");
+        require(currentSession()==page && new DownloadRegistry(getTargetContext()).items().size()==files,
+            "print cancellation keeps the actual session and creates no user download record");
+    }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
             AccessibilityNodeInfo root=window.getRoot();if(window.getType()!=AccessibilityWindowInfo.TYPE_APPLICATION||root==null||!root.refresh())continue;
@@ -1020,12 +1064,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> "Eymen cookie rejected".equals(pageTitle.get()), "real bundled extension clicks explicit reject, without accepting");
         runOnMainSync(() -> page.loadUri("javascript:void(document.title=(document.cookie.includes('eymen_ui_cookie=')&&localStorage.getItem('eymen_ui_cookie'))?'Eymen storage seeded':'Eymen storage missing')"));
         await(() -> "Eymen storage seeded".equals(pageTitle.get()), "test cookie and DOM storage really exist before clearing");
-        click(label(R.string.shield_fingerprint));
+        scrollClick(label(R.string.shield_fingerprint));
         await(() -> Boolean.TRUE.equals(runtime().getSettings().getFingerprintingProtection()), "fingerprinting toggle changes actual Gecko runtime");
-        click(label(R.string.shield_fingerprint));
-        click(label(R.string.shield_https));
+        scrollClick(label(R.string.shield_fingerprint));
+        scrollClick(label(R.string.shield_https));
         await(() -> runtime().getSettings().getAllowInsecureConnections() == org.mozilla.geckoview.GeckoRuntimeSettings.ALLOW_ALL, "HTTPS-only setting changes real runtime");
-        click(label(R.string.shield_https));
+        scrollClick(label(R.string.shield_https));
         await(() -> runtime().getSettings().getAllowInsecureConnections() == org.mozilla.geckoview.GeckoRuntimeSettings.HTTPS_ONLY, "HTTPS-only restored");
         scrollClick(label(R.string.cookie_policy_first));
         await(() -> runtime().getSettings().getContentBlocking().getCookieBehavior() == org.mozilla.geckoview.ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY, "cookie policy changes real storage behavior");

@@ -552,7 +552,14 @@ export const messages = {
     "private_unlock_note": "Gizli sekmelerini görmek için telefonunun ekran kilidini doğrula. PIN veya parolan uygulamaya verilmez.",
     "private_locked_title": "Gizli sekmeler kilitli",
     "private_unlock": "Kilidi aç",
-    "private_return_normal": "Normal sekmelere dön"
+    "private_return_normal": "Normal sekmelere dön",
+    "secure_dns_title": "Güvenli DNS",
+    "secure_dns_system": "Cihazın DNS ayarı",
+    "secure_dns_cloudflare": "Cloudflare — DNS üzerinden HTTPS",
+    "secure_dns_quad9": "Quad9 — DNS üzerinden HTTPS",
+    "secure_dns_note": "Bu seçim tarayıcı sayfaları içindir; telefonun genel DNS ayarını değiştirmez. DoH seçiliyken genel alan adları için seçilen sağlayıcı kullanılır. Sağlayıcıya erişilemiyorsa sayfa açılmayabilir.",
+    "print_page": "Yazdır",
+    "print_failed": "Yazdırma ekranı açılamadı. Sayfanın yüklendiğinden ve cihazda yazdırma hizmeti bulunduğundan emin ol."
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1106,6 +1113,13 @@ export const messages = {
     "private_unlock_note": "Confirm your device screen lock to view private tabs. Your PIN or password is not shared with this app.",
     "private_locked_title": "Private tabs are locked",
     "private_unlock": "Unlock",
-    "private_return_normal": "Return to normal tabs"
+    "private_return_normal": "Return to normal tabs",
+    "secure_dns_title": "Secure DNS",
+    "secure_dns_system": "Device DNS settings",
+    "secure_dns_cloudflare": "Cloudflare — DNS over HTTPS",
+    "secure_dns_quad9": "Quad9 — DNS over HTTPS",
+    "secure_dns_note": "This choice applies to browser pages and does not change device-wide DNS settings. DoH uses the chosen resolver for public domains. Pages may not open if that resolver is unreachable.",
+    "print_page": "Print",
+    "print_failed": "The print screen could not be opened. Check that the page has loaded and a print service is available on the device."
   }
 } as const;

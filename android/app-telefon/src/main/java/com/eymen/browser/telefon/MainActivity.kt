@@ -350,6 +350,9 @@ class MainActivity : ComponentActivity() {
             insets
         }
         view = BrowserGeckoView(this).also { engine ->
+            engine.setActivityContextDelegate(object:GeckoView.ActivityContextDelegate {
+                override fun getActivityContext():Context? = if(canPrintSession(activeTab?.gecko))this@MainActivity else null
+            })
             engine.onBrowserTouch = { event -> if (::toolbarMotion.isInitialized) toolbarMotion.onTouch(event) }
             engine.onBrowserScrollInput = { if (::toolbarMotion.isInitialized) toolbarMotion.onScrollInput() }
         }
@@ -885,6 +888,7 @@ class MainActivity : ComponentActivity() {
         val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null,
             if(deferRestoreLoad)null else activeTab?.takeIf { it.privateMode==privateMode }?.id)
         installStandardWebPrompts(tab)
+        installPrintPolicy(tab)
         media.attach(session)
         tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
@@ -2182,7 +2186,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleMenuAction(action: MenuAction) {
-        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE)) {
+        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE, MenuAction.PRINT)) {
             notice(R.string.child_blocked); return
         }
         hideBrowserMenu()
@@ -2209,6 +2213,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.EXTENSIONS -> { showSettings(); handleSettingsAction(SettingsAction.EXTENSIONS) }
             MenuAction.TOOLS -> { showSettings(); handleSettingsAction(SettingsAction.TOOLS) }
             MenuAction.PDF -> saveCurrentPageAsPdf()
+            MenuAction.PRINT -> printCurrentPage()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
@@ -2368,6 +2373,46 @@ class MainActivity : ComponentActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun canPrintSession(session:GeckoSession?):Boolean {
+        val tab=activeTab ?: return false
+        if(!::childMode.isInitialized || childMode.enabled || !lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED))return false
+        if(tab.gecko!==session || tab.home || videoFullScreen || tab.privateMode && privateTabsLock.locked)return false
+        val original=if(tab.url.startsWith("about:reader?"))Uri.parse(tab.url).getQueryParameter("url") else tab.url
+        return GeckoMotorDenemesi.verifiedWebUrl(original)!=null
+    }
+
+    private fun printPdfStream(session:GeckoSession,stream:java.io.InputStream):GeckoResult<Boolean> {
+        val result=GeckoResult<Boolean>()
+        runOnUiThread {
+            if(!canPrintSession(session)) {try{stream.close()}catch(_:Exception){};result.complete(false)}
+            else {
+                try {
+                    val native=view.printDelegate?.onPrintWithStatus(stream)
+                    if(native==null){stream.close();result.complete(false);notice(R.string.print_failed)}
+                    else native.accept({value -> result.complete(value)},{error -> result.completeExceptionally(error)})
+                }catch(error:Exception){try{stream.close()}catch(_:Exception){};result.completeExceptionally(error)}
+            }
+        }
+        return result
+    }
+
+    private fun printCurrentPage() {
+        val session=activeTab?.gecko ?: return
+        if(!canPrintSession(session)){notice(R.string.print_failed);return}
+        session.saveAsPdf().accept({stream ->
+            if(stream==null)runOnUiThread{notice(R.string.print_failed)}
+            else printPdfStream(session,stream).accept({_ -> Unit},{_ -> runOnUiThread{if(!isFinishing && !isDestroyed)notice(R.string.print_failed)}})
+        },{_ -> runOnUiThread{notice(R.string.print_failed)}})
+    }
+
+    private fun installPrintPolicy(tab:BrowserTab) {
+        tab.gecko.printDelegate=object:GeckoSession.PrintDelegate {
+            override fun onPrint(session:GeckoSession){runOnUiThread{if(canPrintSession(session))printCurrentPage()}}
+            override fun onPrint(stream:java.io.InputStream){printPdfStream(tab.gecko,stream)}
+            override fun onPrintWithStatus(stream:java.io.InputStream):GeckoResult<Boolean> = printPdfStream(tab.gecko,stream)
+        }
     }
 
     private fun saveCurrentPageAsPdf() {

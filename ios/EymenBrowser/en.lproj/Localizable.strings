@@ -551,3 +551,10 @@
 "private_locked_title" = "Private tabs are locked";
 "private_unlock" = "Unlock";
 "private_return_normal" = "Return to normal tabs";
+"secure_dns_title" = "Secure DNS";
+"secure_dns_system" = "Device DNS settings";
+"secure_dns_cloudflare" = "Cloudflare — DNS over HTTPS";
+"secure_dns_quad9" = "Quad9 — DNS over HTTPS";
+"secure_dns_note" = "This choice applies to browser pages and does not change device-wide DNS settings. DoH uses the chosen resolver for public domains. Pages may not open if that resolver is unreachable.";
+"print_page" = "Print";
+"print_failed" = "The print screen could not be opened. Check that the page has loaded and a print service is available on the device.";
