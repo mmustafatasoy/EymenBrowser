@@ -924,15 +924,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private void secureDnsAndNativePrint() throws Exception {
         openSettingsItem(R.string.settings_shield);click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_cloudflare));
-        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecusiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
             "https://cloudflare-dns.com/dns-query".equals(runtime().getSettings().getTrustedRecursiveResolverUri())),"actual Gecko runtime uses selected Cloudflare DoH-only mode");
         require("cloudflare".equals(prefs().getString("secure_dns","")),"resolver choice persisted");
         capture("secure-dns.png",true);
         click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_quad9));
-        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecusiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_ONLY &&
             "https://dns.quad9.net/dns-query".equals(runtime().getSettings().getTrustedRecursiveResolverUri())),"switching providers changes the actual runtime endpoint without enabling fallback");
         click(label(R.string.secure_dns_title));click(label(R.string.secure_dns_system));
-        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecursiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_DISABLED) &&
+        await(() -> uiCheck(() -> runtime().getSettings().getTrustedRecusiveResolverMode()==org.mozilla.geckoview.GeckoRuntimeSettings.TRR_MODE_DISABLED) &&
             "system".equals(prefs().getString("secure_dns","")),"device DNS option restores the actual runtime's explicit DoH-off mode");
         click(label(R.string.back));click(label(R.string.back));
         String url="https://example.com/?eymen-print-audit=1";
