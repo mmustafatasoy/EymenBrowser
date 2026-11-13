@@ -416,7 +416,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         org.mozilla.geckoview.GeckoSession page=currentSession();
         java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
         runOnMainSync(()->{
-            org.mozilla.geckoview.GeckoSession.ContentDelegate original=page.getContentDelegate();
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original=contentDelegate(page);
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session,String value){title.set(value);original.onTitleChange(session,value);}
             });page.loadUri(expected);
@@ -495,11 +495,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     }
     private void openShare() throws Exception {click(label(R.string.browser_menu));scrollClick(label(R.string.menu_share));}
 
+    private org.mozilla.geckoview.GeckoSession.ContentDelegate contentDelegate(org.mozilla.geckoview.GeckoSession page) {
+        java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession.ContentDelegate> delegate=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(() -> delegate.set(page.getContentDelegate()));return delegate.get();
+    }
     private org.mozilla.geckoview.GeckoSession searchTabPage(boolean privateMode, String url, String pageTitle) throws Exception {
         menuNavigation(privateMode ? R.string.private_tab : R.string.menu_new_normal_tab_accessibility);
         org.mozilla.geckoview.GeckoSession page = currentSession();
         java.util.concurrent.atomic.AtomicReference<String> title = new java.util.concurrent.atomic.AtomicReference<>("");
-        org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original = contentDelegate(page);
         runOnMainSync(() -> {
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session, String value) {
@@ -695,7 +699,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             while((size=asset.read(block))!=-1)bytes.write(block,0,size);
             base64=bytes.toString("UTF-8").trim();
         }
-        org.mozilla.geckoview.GeckoSession.ContentDelegate original=page.getContentDelegate();
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original=contentDelegate(page);
         String html="<video id='fixture' style='position:fixed;inset:0;width:100%;height:100%' loop playsinline src='data:video/webm;base64,"+base64+"'></video><button id='play' style='position:fixed;inset:0;width:100%;height:100%;z-index:1'>Eymen media play</button>";
         String js="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";const v=document.getElementById('fixture'),b=document.getElementById('play');let ticks=0;v.addEventListener('timeupdate',()=>document.title='Eymen media tick '+(++ticks));navigator.mediaSession.metadata=new MediaMetadata({title:'Eymen Media Acceptance'});b.onclick=()=>v.play().then(()=>{b.textContent='Eymen media fullscreen';b.onclick=()=>v.requestFullscreen()});document.title='Eymen media ready';}())";
         runOnMainSync(() -> {
@@ -845,7 +849,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
                     progress.onPageStop(s, success);
                 }
             });
-            org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
+            org.mozilla.geckoview.GeckoSession.ContentDelegate original = contentDelegate(page);
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s, String value) {
                     pageTitle.set(value); original.onTitleChange(s, value);
