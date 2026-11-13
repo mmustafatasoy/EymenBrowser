@@ -79,7 +79,7 @@ class BrowserPdfViewerActivity : Activity() {
             setBackgroundColor(Color.WHITE)
             contentDescription=label("PDF sayfası","PDF page")
         }
-        scroll.addView(picture,ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT,ScrollView.LayoutParams.WRAP_CONTENT))
+        scroll.addView(picture,android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT,android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
         root.addView(scroll,LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f))
         val controls=LinearLayout(this).apply {gravity=Gravity.CENTER_VERTICAL;orientation=LinearLayout.HORIZONTAL}
         previous=button("‹") { if(pageIndex>0){pageIndex--;renderPage()} }

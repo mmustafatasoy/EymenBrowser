@@ -77,7 +77,14 @@ assert 'visibleFiles.forEach { file ->' in downloads
 assert 'files.sumOf { it.bytes }' in downloads
 assert 'onOpen(file)' in downloads
 assert 'onClear: () -> Unit' in downloads
-assert 'setDataAndType(Uri.parse(file.uri), file.mimeType)' in main
+assert 'PdfOpenPolicy.isPdf(file.name,file.mimeType)' in main
+assert 'Intent(this,BrowserPdfViewerActivity::class.java)' in main
+assert 'setDataAndType(uri,"application/pdf")' in main
+assert 'setDataAndType(uri,file.mimeType)' in main
+pdf_viewer = (root / "android/app-telefon/src/main/java/com/eymen/browser/telefon/BrowserPdfViewerActivity.kt").read_text()
+assert 'contentResolver.openFileDescriptor(uri,"r")' in pdf_viewer
+assert 'PdfRenderer(' in pdf_viewer and 'page.render(' in pdf_viewer
+assert '5_000_000.0' in pdf_viewer and 'bitmap?.recycle()' in pdf_viewer
 assert 'Intent.FLAG_GRANT_READ_URI_PERMISSION' in main
 assert 'downloadRegistry.clearListOnly()' in main
 assert 'download_clear_confirm' in downloads
