@@ -544,7 +544,15 @@ export const messages = {
     "reading_mark_unread": "Okunmadı işaretle: %1$s",
     "reading_remove": "Okuma listesinden kaldır: %1$s",
     "reading_open": "Kaydedilen sayfayı aç: %1$s",
-    "reading_empty": "Bu görünümde kaydedilmiş okunacak sayfa yok."
+    "reading_empty": "Bu görünümde kaydedilmiş okunacak sayfa yok.",
+    "private_lock_title": "Gizli sekmelere dönünce kilit iste",
+    "private_lock_note": "Arka plandan dönüşte gizli sekmeler Android ekran kilidiyle açılır. Kilit açılmadan sayfa ve sekme başlıkları gösterilmez.",
+    "private_lock_device_required": "Bu özelliği kullanmak için önce Android ayarlarından bir ekran kilidi oluştur.",
+    "private_unlock_title": "Gizli sekmelerin kilidini aç",
+    "private_unlock_note": "Gizli sekmelerini görmek için telefonunun ekran kilidini doğrula. PIN veya parolan uygulamaya verilmez.",
+    "private_locked_title": "Gizli sekmeler kilitli",
+    "private_unlock": "Kilidi aç",
+    "private_return_normal": "Normal sekmelere dön"
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1090,6 +1098,14 @@ export const messages = {
     "reading_mark_unread": "Mark as unread: %1$s",
     "reading_remove": "Remove from reading list: %1$s",
     "reading_open": "Open saved page: %1$s",
-    "reading_empty": "There are no saved pages in this view."
+    "reading_empty": "There are no saved pages in this view.",
+    "private_lock_title": "Lock private tabs when returning",
+    "private_lock_note": "After leaving the app, private tabs require your Android screen lock. Pages and tab titles stay hidden until unlocked.",
+    "private_lock_device_required": "First set an Android screen lock in device settings to use this feature.",
+    "private_unlock_title": "Unlock private tabs",
+    "private_unlock_note": "Confirm your device screen lock to view private tabs. Your PIN or password is not shared with this app.",
+    "private_locked_title": "Private tabs are locked",
+    "private_unlock": "Unlock",
+    "private_return_normal": "Return to normal tabs"
   }
 } as const;

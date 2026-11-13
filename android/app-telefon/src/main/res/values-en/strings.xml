@@ -551,4 +551,12 @@ My issue or suggestion:
     <string name="reading_remove">Remove from reading list: %1$s</string>
     <string name="reading_open">Open saved page: %1$s</string>
     <string name="reading_empty">There are no saved pages in this view.</string>
+    <string name="private_lock_title">Lock private tabs when returning</string>
+    <string name="private_lock_note">After leaving the app, private tabs require your Android screen lock. Pages and tab titles stay hidden until unlocked.</string>
+    <string name="private_lock_device_required">First set an Android screen lock in device settings to use this feature.</string>
+    <string name="private_unlock_title">Unlock private tabs</string>
+    <string name="private_unlock_note">Confirm your device screen lock to view private tabs. Your PIN or password is not shared with this app.</string>
+    <string name="private_locked_title">Private tabs are locked</string>
+    <string name="private_unlock">Unlock</string>
+    <string name="private_return_normal">Return to normal tabs</string>
 </resources>

@@ -49,7 +49,9 @@ internal fun SettingsToggle(label: String, note: String, selected: Boolean,
 
 @Composable
 internal fun PrivacySettingsScreen(services: BrowserSettingsServices, dayMode: Boolean,
-    onBack: () -> Unit, onClear: (Boolean) -> Unit) = SettingsPage(R.string.settings_shield, dayMode, onBack) { p ->
+    onBack: () -> Unit, onClear: (Boolean) -> Unit,privateLock:PrivateTabLock?=null) = SettingsPage(R.string.settings_shield, dayMode, onBack) { p ->
+    if(privateLock!=null)SettingsToggle(stringResource(R.string.private_lock_title),stringResource(if(privateLock.available)R.string.private_lock_note else R.string.private_lock_device_required),
+        privateLock.enabled,p){privateLock.changeEnabled(it)}
     listOf(
         Triple(PrivacyOption.COOKIE_REJECT, R.string.shield_cookie_dialog, R.string.shield_cookie_dialog_desc),
         Triple(PrivacyOption.FINGERPRINT, R.string.shield_fingerprint, R.string.shield_fingerprint_desc),

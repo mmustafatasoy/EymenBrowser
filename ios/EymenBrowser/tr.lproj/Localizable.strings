@@ -543,3 +543,11 @@
 "reading_remove" = "Okuma listesinden kaldır: %1$s";
 "reading_open" = "Kaydedilen sayfayı aç: %1$s";
 "reading_empty" = "Bu görünümde kaydedilmiş okunacak sayfa yok.";
+"private_lock_title" = "Gizli sekmelere dönünce kilit iste";
+"private_lock_note" = "Arka plandan dönüşte gizli sekmeler Android ekran kilidiyle açılır. Kilit açılmadan sayfa ve sekme başlıkları gösterilmez.";
+"private_lock_device_required" = "Bu özelliği kullanmak için önce Android ayarlarından bir ekran kilidi oluştur.";
+"private_unlock_title" = "Gizli sekmelerin kilidini aç";
+"private_unlock_note" = "Gizli sekmelerini görmek için telefonunun ekran kilidini doğrula. PIN veya parolan uygulamaya verilmez.";
+"private_locked_title" = "Gizli sekmeler kilitli";
+"private_unlock" = "Kilidi aç";
+"private_return_normal" = "Normal sekmelere dön";

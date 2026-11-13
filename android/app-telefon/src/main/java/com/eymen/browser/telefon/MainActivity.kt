@@ -109,6 +109,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var downloadsLayer: ComposeView
     private lateinit var settingsLayer: ComposeView
     private lateinit var libraryLayer: ComposeView
+    private lateinit var privateLockLayer: ComposeView
+    private lateinit var privateTabsLock: PrivateTabLock
     private lateinit var history: BrowserHistory
     private lateinit var toolbarMotion: BrowserChromeMotion
     private val media by lazy {BrowserMedia.get(applicationContext)}
@@ -247,6 +249,7 @@ class MainActivity : ComponentActivity() {
         // is never applied on top of a decor-fitted window.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
+        privateTabsLock=PrivateTabLock(this){if(::root.isInitialized && !isFinishing && !isDestroyed){updateHomeVisibility();updateOverlayAccessibility()}}
         history = BrowserHistory.get(this)
         history.refresh()
         bookmarks.refresh()
@@ -370,7 +373,7 @@ class MainActivity : ComponentActivity() {
         )
         homeLayer.setContent {
             if (activeTab?.privateMode == true) {
-                PrivateHome()
+                PrivateHome(privateTabsLock)
             } else if (dayMode.value) {
                 LightBrowserHome(
                     menuOpen = menuShowing,
@@ -465,6 +468,7 @@ class MainActivity : ComponentActivity() {
                 undoCount = recentlyClosedNormal.size,
                 day = dayMode.value,
                 searchEpoch = overviewSearchEpoch,
+                privateLocked = privateTabsLock.locked,onUnlockPrivate = {privateTabsLock.unlock()},
                 onOpen = ::activateTab,
                 onClose = ::closeTab,
                 onCloseAll = ::closeAllOfType,
@@ -608,7 +612,7 @@ class MainActivity : ComponentActivity() {
                     FunctionalSettingsPage.DATA -> BrowsingDataSettingsScreen(dayMode.value,back,::confirmClearHistory,::clearBrowsingData)
                     FunctionalSettingsPage.SECURITY -> SecuritySettingsScreen(settingsServices,globalShieldWanted.value,dayMode.value,back,
                         { functionalSettingsPage=FunctionalSettingsPage.PRIVACY },{updater.check(manual=true)})
-                    FunctionalSettingsPage.PRIVACY -> PrivacySettingsScreen(settingsServices, dayMode.value, back, ::clearBrowsingData)
+                    FunctionalSettingsPage.PRIVACY -> PrivacySettingsScreen(settingsServices, dayMode.value, back, ::clearBrowsingData,privateTabsLock)
                     FunctionalSettingsPage.PERMISSIONS -> PermissionsSettingsScreen(settingsServices, dayMode.value, back,
                         currentUrl.value, activeTab?.privateMode == true) {
                         try { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
@@ -682,12 +686,17 @@ class MainActivity : ComponentActivity() {
             }
         }
         libraryLayer.visibility = View.GONE
+        privateLockLayer=ComposeView(this)
+        root.addView(privateLockLayer,FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT))
+        privateLockLayer.setContent {PrivateLockScreen({privateTabsLock.unlock()},::returnToNormalFromLock,!childMode.enabled)}
+        privateLockLayer.visibility=View.GONE
         updateChromeMargins()
         updateHomeVisibility()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    activeTab?.privateMode==true && privateTabsLock.locked -> returnToNormalFromLock()
                     libraryShowing -> hideLibrary()
                     settingsShowing && functionalSettingsPage != null -> functionalSettingsPage = null
                     settingsShowing && vpnScreenVisible -> {
@@ -765,6 +774,9 @@ class MainActivity : ComponentActivity() {
         deferRestoreLoad: Boolean = false,
         popupRequest: Boolean = false
     ): GeckoSession? {
+        if(privateMode && privateTabsLock.locked && ::privateLockLayer.isInitialized) {
+            privateTabsLock.unlock {createTab(privateMode,initialUrl,deferRestoreLoad,popupRequest)};return null
+        }
         if (childMode.enabled && !privateMode)
             return createTab(true, initialUrl, deferRestoreLoad, popupRequest)
         if (initialUrl != null && !childMode.allows(initialUrl)) {
@@ -959,6 +971,15 @@ class MainActivity : ComponentActivity() {
     private fun activateTab(id: Long) {
         if (::root.isInitialized) hideBrowserKeyboard()
         val tab = tabs.firstOrNull { it.id == id } ?: return
+        if(tab.privateMode && privateTabsLock.locked && ::privateLockLayer.isInitialized) {
+            if(tabs.none{it.id==activeId.value}) {
+                // Closing a locked popup/tab may select another private tab.
+                // Keep a valid protected owner instead of exposing the old address.
+                activeId.value=id;currentUrl.value=tab.url;atHome.value=tab.home
+                updateHomeVisibility();updateOverlayAccessibility()
+            } else privateTabsLock.unlock {activateTab(id)}
+            return
+        }
         if (activeId.value != id) {
             captureActiveTabThumbnail()
             if (videoFullScreen) setVideoFullScreen(false)
@@ -1554,7 +1575,40 @@ class MainActivity : ComponentActivity() {
         if (activeTab?.privateMode == false) saveNormalWorkspace()
     }
 
+    private fun returnToNormalFromLock() {
+        val normal=tabs.lastOrNull{!it.privateMode}
+        if(childMode.enabled){moveTaskToBack(true);return}
+        if(normal!=null)activateTab(normal.id) else createTab(false)
+    }
+
+    private fun updatePrivateWindowProtection() {
+        if(!::privateTabsLock.isInitialized)return
+        val protectWindow=privateTabsLock.enabled && (activeTab?.privateMode==true || overviewShowing && tabs.any{it.privateMode})
+        if(protectWindow)window.addFlags(WindowManager.LayoutParams.FLAG_SECURE) else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
+
     private fun updateHomeVisibility() {
+        if(::privateTabsLock.isInitialized) {
+            updatePrivateWindowProtection()
+            val locked=activeTab?.privateMode==true && privateTabsLock.locked
+            if(::privateLockLayer.isInitialized)privateLockLayer.visibility=if(locked)View.VISIBLE else View.GONE
+            if(locked) {
+                if(::view.isInitialized){view.releaseSession();view.visibility=View.INVISIBLE}
+                if(::homeLayer.isInitialized)homeLayer.visibility=View.GONE
+                if(::chrome.isInitialized)chrome.visibility=View.GONE
+                if(::tabsLayer.isInitialized)hideTabs()
+                if(::menuLayer.isInitialized)hideBrowserMenu()
+                if(::settingsLayer.isInitialized)hideSettings()
+                if(::downloadsLayer.isInitialized)hideDownloads()
+                if(::libraryLayer.isInitialized)hideLibrary()
+                if(::shieldLayer.isInitialized)hideShield()
+                return
+            } else if(::view.isInitialized) {
+                view.visibility=View.VISIBLE
+                activeTab?.let{if(view.session!==it.gecko)view.setSession(it.gecko)}
+                if(::chrome.isInitialized)chrome.visibility=if(videoFullScreen)View.GONE else View.VISIBLE
+            }
+        }
         if (::homeLayer.isInitialized) {
             homeLayer.visibility =
                 if (atHome.value && !videoFullScreen) View.VISIBLE else View.GONE
@@ -1598,7 +1652,9 @@ class MainActivity : ComponentActivity() {
     /** Overflow and full-page panels expose only their own accessibility tree. */
     private fun updateOverlayAccessibility() {
         if (!::root.isInitialized) return
+        updatePrivateWindowProtection()
         val owner = when {
+            ::privateLockLayer.isInitialized && privateLockLayer.visibility==View.VISIBLE -> privateLockLayer
             libraryShowing && ::libraryLayer.isInitialized -> libraryLayer
             settingsShowing && ::settingsLayer.isInitialized -> settingsLayer
             downloadsShowing && ::downloadsLayer.isInitialized -> downloadsLayer
@@ -2577,6 +2633,13 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        if(::privateTabsLock.isInitialized && privateTabsLock.enabled) {
+            activeTab?.takeIf{it.privateMode}?.let{tab ->
+                if(media.isPlaying(tab.gecko))media.pause()
+                if(videoFullScreen){tab.gecko.exitFullScreen();tab.fullScreen=false;setVideoFullScreen(false)}
+            }
+            privateTabsLock.background()
+        }
         if (::toolbarMotion.isInitialized) toolbarMotion.show(false)
         webPrompts.toList().forEach { it.dismiss() }
         webPrompts.clear()
@@ -2593,6 +2656,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if(::root.isInitialized){updateHomeVisibility();updateOverlayAccessibility()}
         if(::prefs.isInitialized && themeFollowsSystem)useSystemTheme()
         refreshSystemPreferences()
         updateAutofill()

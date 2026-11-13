@@ -89,7 +89,8 @@ internal fun TabOverview(
     onUndoClose: () -> Unit,
     onMoveTab: (Long, Int, Long?) -> Unit,
     onShareTab: (Long) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    privateLocked:Boolean=false,onUnlockPrivate:()->Unit={}
 ) {
     var section by remember { mutableStateOf(
         if (activePrivate) TabSection.PRIVATE else TabSection.NORMAL
@@ -104,7 +105,7 @@ internal fun TabOverview(
     // Normal groups are never applied to private sessions, nor to devices.
     var selectedGroupId by remember { mutableStateOf<Long?>(null) }
     // A close or privacy-context switch must not reuse an earlier search/IME value.
-    var searchQuery by remember(searchEpoch, section) { mutableStateOf("") }
+    var searchQuery by remember(searchEpoch, section,privateLocked) { mutableStateOf("") }
     val searchActive = TabSearchPolicy.query(searchQuery).isNotEmpty()
     LaunchedEffect(groups.map { it.id }) {
         if (selectedGroupId != null && groups.none { it.id == selectedGroupId }) {
@@ -119,7 +120,7 @@ internal fun TabOverview(
     val selectedText = if (day) T.gunduz_vurguUstu else T.gece_vurguUstu
     val outline = if (day) T.gunduz_cizgi else T.gece_cizgi
     val scopedTabs = tabs.filter { tab ->
-        tab.privateMode == (section == TabSection.PRIVATE) &&
+        !(section==TabSection.PRIVATE && privateLocked) && tab.privateMode == (section == TabSection.PRIVATE) &&
             (section != TabSection.NORMAL ||
                 selectedGroupId == null || tab.groupId == selectedGroupId)
     }
@@ -179,7 +180,7 @@ internal fun TabOverview(
         }
         Spacer(Modifier.height(16.dp))
 
-        if (section != TabSection.DEVICES) {
+        if (section != TabSection.DEVICES && !(section==TabSection.PRIVATE && privateLocked)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = T.telefon_ekran_kenar.dp),
                 verticalArrangement = Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
                 // Recreate the editor when switching privacy contexts; never transfer composition text.
@@ -319,7 +320,13 @@ internal fun TabOverview(
             }
         }
 
-        if (section == TabSection.DEVICES) {
+        if(section==TabSection.PRIVATE && privateLocked) {
+            Column(Modifier.weight(1f).fillMaxWidth().padding(T.telefon_ekran_kenar.dp),verticalArrangement=Arrangement.spacedBy(T.telefon_ekran_bosluk.dp)) {
+                ScreenText(stringResource(R.string.private_locked_title),text,strong=true,maxLines=3)
+                ScreenText(stringResource(R.string.private_unlock_note),muted,maxLines=4)
+                ScreenButton(stringResource(R.string.private_unlock),browserScreenPalette(day),onUnlockPrivate,primary=true)
+            }
+        } else if (section == TabSection.DEVICES) {
             val palette = browserScreenPalette(day)
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
                 .padding(T.telefon_ekran_kenar.dp),
@@ -550,9 +557,9 @@ internal fun TabOverview(
     }
 }
 
-/** T09 private start: labels follow approved design; no unimplemented lock toggle. */
+/** T09 private start with Android device-credential protection, enabled only by the user. */
 @Composable
-internal fun PrivateHome() {
+internal fun PrivateHome(lock:PrivateTabLock) {
     Column(
         Modifier.fillMaxSize().background(T.gizli_zemin)
             .verticalScroll(rememberScrollState())
@@ -594,9 +601,7 @@ internal fun PrivateHome() {
                 )
             }
         }
-        TabLabel(
-            stringResource(R.string.private_lock_unavailable),
-            13, T.gizli_yaziIkincil
-        )
+        SettingsToggle(stringResource(R.string.private_lock_title),stringResource(if(lock.available)R.string.private_lock_note else R.string.private_lock_device_required),
+            lock.enabled,privateScreenPalette()){lock.changeEnabled(it)}
     }
 }

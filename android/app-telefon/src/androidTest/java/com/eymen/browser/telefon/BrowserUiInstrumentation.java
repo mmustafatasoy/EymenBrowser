@@ -149,10 +149,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             bookmarkLibrary();
             mediaAndSystemTheme();
             libraryTransferAndReading();
+            privateLockWithRealAndroidCredential();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -848,6 +849,58 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> field(label(R.string.reading_search))!=null,"reading list reopened");
         click(activity.getString(R.string.reading_remove,title));await(() -> uiCheck(() -> !store.getLoading() && store.getReading().isEmpty()),"removing a reading entry preserves browser bookmarks");
         require(uiInt(() -> store.getEntries().size())==count+1,"reading-list deletion never deletes a bookmark");click(label(R.string.back));
+    }
+    private void shellComplete(String command) throws Exception {
+        try(android.os.ParcelFileDescriptor result=getUiAutomation().executeShellCommand(command);
+            java.io.InputStream stream=new android.os.ParcelFileDescriptor.AutoCloseInputStream(result)) {
+            byte[] block=new byte[4096];while(stream.read(block)!=-1){}
+        }
+    }
+    private PrivateTabLock tabLock() {return (PrivateTabLock)controller("privateTabsLock");}
+    private void confirmTestDeviceCredential() throws Exception {
+        await(() -> pinEditor()!=null,"actual Android device-credential password editor");
+        tap(pinEditor());
+        android.view.KeyEvent[] keys=android.view.KeyCharacterMap.load(android.view.KeyCharacterMap.VIRTUAL_KEYBOARD).getEvents("642857".toCharArray());
+        require(keys!=null,"synthetic emulator credential key events");
+        for(android.view.KeyEvent key:keys)require(getUiAutomation().injectInputEvent(key,true),"real Android credential key injected");
+        long now=SystemClock.uptimeMillis();
+        require(getUiAutomation().injectInputEvent(new android.view.KeyEvent(now,now,android.view.KeyEvent.ACTION_DOWN,android.view.KeyEvent.KEYCODE_ENTER,0),true),"confirm device PIN down");
+        require(getUiAutomation().injectInputEvent(new android.view.KeyEvent(now,now+1,android.view.KeyEvent.ACTION_UP,android.view.KeyEvent.KEYCODE_ENTER,0),true),"confirm device PIN up");
+    }
+    private void privateLockWithRealAndroidCredential() throws Exception {
+        // This credential fixture is strictly for the disposable AOSP emulator.
+        // Never modify a physical device's lock or replace an existing credential.
+        require("ranchu".equals(android.os.Build.HARDWARE)||"goldfish".equals(android.os.Build.HARDWARE),"credential test requires the disposable emulator");
+        android.app.KeyguardManager keyguard=getTargetContext().getSystemService(android.app.KeyguardManager.class);
+        require(!keyguard.isDeviceSecure(),"credential test never replaces an existing device lock");
+        boolean ownCredential=false;
+        try {
+            shellComplete("locksettings set-pin 642857");
+            await(keyguard::isDeviceSecure,"real Android test PIN enrollment");ownCredential=true;
+            openSettingsItem(R.string.settings_shield);click(label(R.string.private_lock_title));confirmTestDeviceCredential();
+            await(() -> uiCheck(() -> tabLock().getEnabled() && !tabLock().getLocked()),"only real Android credential success enables the private lock");
+            capture("private-lock-settings.png",true);click(label(R.string.back));click(label(R.string.back));
+            String url="https://example.com/?eymen-private-lock=1",title="Eymen Kilitli Gizli Sayfa";
+            org.mozilla.geckoview.GeckoSession secret=searchTabPage(true,url,title);
+            int tabs=realTabCount();
+            require(uiCheck(() -> (activity.getWindow().getAttributes().flags & android.view.WindowManager.LayoutParams.FLAG_SECURE)!=0),"private page is protected from recents/screenshots while lock is enabled");
+            require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"real background transition locks private browsing");
+            await(() -> uiCheck(() -> tabLock().getLocked()),"background sets the real private lock gate");foregroundBrowser();
+            await(() -> find(label(R.string.private_locked_title),false)!=null && uiCheck(() -> {
+                try{return browserView().getSession()==null;}catch(Exception e){throw new RuntimeException(e);}}),"locked private engine is detached and covered before viewing");
+            require(field(label(R.string.address_edit_label))==null && find(title,false)==null,"locked private address/title cannot appear in the app accessibility tree");
+            click(label(R.string.private_unlock));await(() -> pinEditor()!=null,"private unlock opens Android credential UI");systemBack();
+            await(() -> find(label(R.string.private_locked_title),false)!=null && uiCheck(() -> tabLock().getLocked()),"cancelling Android authentication keeps private tabs locked");
+            click(label(R.string.private_unlock));confirmTestDeviceCredential();
+            await(() -> uiCheck(() -> !tabLock().getLocked()) && url.equals(text(field(label(R.string.address_edit_label)))),"real credential unlock restores the same private address");
+            require(currentSession()==secret && realTabCount()==tabs,"authentication preserves the original Gecko session and tab count");
+            menuNavigation(R.string.menu_new_normal_tab_accessibility);
+            openSettingsItem(R.string.settings_shield);click(label(R.string.private_lock_title));confirmTestDeviceCredential();
+            await(() -> uiCheck(() -> !tabLock().getEnabled()),"disabling the private lock also requires Android credential confirmation");
+            click(label(R.string.back));click(label(R.string.back));
+        } finally {
+            if(ownCredential)shellComplete("locksettings clear --old 642857");
+        }
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
