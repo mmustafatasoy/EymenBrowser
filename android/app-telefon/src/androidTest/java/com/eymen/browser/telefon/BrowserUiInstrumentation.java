@@ -388,6 +388,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(()->find("Eymen scrolling test",false)!=null&&find("Eymen footer action",false)!=null,"long test document is painted and accessible before touch scrolling");
         int engineHeight=uiInt(()->{try{return browserView().getHeight();}catch(Exception e){throw new RuntimeException(e);}});
         swipeUp();
+        // APZ can deliver a compositor fling update after the finger lifts.
+        // A second genuine touchscreen swipe must still collapse the chrome;
+        // never force the policy or waive the existing visibility assertion.
+        if(!uiCheck(()->chromeView().getVisibility()==android.view.View.INVISIBLE))swipeUp();
         await(()->uiCheck(()->chromeView().getVisibility()==android.view.View.INVISIBLE),"scrolling down hides the complete top address/menu bar");
         require(engineHeight==uiInt(()->{try{return browserView().getHeight();}catch(Exception e){throw new RuntimeException(e);}}),"toolbar animation preserves the engine measured height");
         capture("scroll-hidden.png",true);
@@ -974,17 +978,28 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             method.invoke(activity,output,new kotlin.Pair<Long,String>(id,url));
         }catch(Exception error){throw new RuntimeException(error);}});
         awaitLong(() -> uiCheck(() -> !pageCapture().getBusy()),"actual full-document export completes",45000);
+        // Save the real exported bytes before pixel assertions so a failing
+        // capture remains available for inspection in the CI evidence ZIP.
+        File folder=new File(activity.getCacheDir(),"browser-ui-audit");require(folder.isDirectory()||folder.mkdirs(),"capture evidence folder exists");
+        try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(output);java.io.OutputStream file=new FileOutputStream(new File(folder,"full-page-saved.png"))){
+            require(input!=null,"real PNG evidence opened");byte[] block=new byte[8192];int count;while((count=input.read(block))!=-1)file.write(block,0,count);
+        }
         try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(output)){
             Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);require(bitmap!=null,"exported file is an actual decodable PNG");
             try {
                 require(bitmap.getHeight()>viewport*2,"full-page output includes content below more than two viewports");
-                int pixel=bitmap.getPixel(bitmap.getWidth()/2,bitmap.getHeight()-20);
-                require(Color.blue(pixel)>200 && Color.red(pixel)<50,"the off-screen document footer pixels are present in the actual exported PNG");
+                // Gecko can add document padding below the absolute-positioned
+                // footer. Check a substantial real blue band in the captured
+                // lower half rather than assuming it occupies the final row.
+                int blueRows=0,maxBlueRows=0;
+                for(int y=bitmap.getHeight()/2;y<bitmap.getHeight();y++){
+                    int pixel=bitmap.getPixel(bitmap.getWidth()/2,y);
+                    if(Color.blue(pixel)>200 && Color.red(pixel)<50 && Color.green(pixel)<80){
+                        blueRows++;maxBlueRows=Math.max(maxBlueRows,blueRows);
+                    }else blueRows=0;
+                }
+                require(maxBlueRows>=24,"the off-screen document footer pixels are present in the actual exported PNG");
             }finally{bitmap.recycle();}
-        }
-        File folder=new File(activity.getCacheDir(),"browser-ui-audit");require(folder.isDirectory()||folder.mkdirs(),"capture evidence folder exists");
-        try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(output);java.io.OutputStream file=new FileOutputStream(new File(folder,"full-page-saved.png"))){
-            require(input!=null,"real PNG evidence opened");byte[] block=new byte[8192];int count;while((count=input.read(block))!=-1)file.write(block,0,count);
         }
         require(currentSession()==page && url.equals(text(field(label(R.string.address_edit_label)))),"export keeps the original active page and session");
         openSettingsItem(R.string.settings_appearance);scrollClick(label(R.string.dark_pages));
