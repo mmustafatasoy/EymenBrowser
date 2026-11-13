@@ -108,6 +108,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var libraryLayer: ComposeView
     private lateinit var history: BrowserHistory
     private lateinit var toolbarMotion: BrowserChromeMotion
+    private val media by lazy {BrowserMedia.get(applicationContext)}
     private var libraryShowing by mutableStateOf(false)
     private var libraryMode by mutableStateOf(BrowserLibrary.HISTORY)
     private var bookmarkRevision by mutableStateOf(0)
@@ -138,6 +139,7 @@ class MainActivity : ComponentActivity() {
     private val atHome = mutableStateOf(true)
     private val currentUrl = mutableStateOf("")
     private val dayMode = mutableStateOf(false)
+    private var themeFollowsSystem by mutableStateOf(false)
     private val recent: List<String>
         get() = if (::history.isInitialized) history.entries.map { it.url }.distinct().take(2) else emptyList()
     private val savedFiles = mutableStateListOf<SavedDownload>()
@@ -265,6 +267,8 @@ class MainActivity : ComponentActivity() {
                 .apply()
         }
         dayMode.value = prefs.getBoolean("day_theme", true)
+        themeFollowsSystem = prefs.getString("theme_mode", "") == "system"
+        if(themeFollowsSystem)dayMode.value = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK != Configuration.UI_MODE_NIGHT_YES
         homeButtonEnabled = prefs.getBoolean("home_button_enabled",true)
         // The old light toolbar always used the top despite its legacy saved
         // bottom value. Preserve its visible position once, then honor choices.
@@ -619,6 +623,7 @@ class MainActivity : ComponentActivity() {
                     },
                     onSearchEngine = ::updateSearchEnginePreference,
                     onDayMode = ::updateDayThemePreference,
+                    themeFollowsSystem = themeFollowsSystem,onSystemTheme = ::useSystemTheme,
                     onAddressBottom = ::updateAddressPositionPreference,
                     onBack = ::hideSettings,
                     onAction = ::handleSettingsAction
@@ -846,6 +851,7 @@ class MainActivity : ComponentActivity() {
         val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null,
             if(deferRestoreLoad)null else activeTab?.takeIf { it.privateMode==privateMode }?.id)
         installStandardWebPrompts(tab)
+        media.attach(session)
         tab.pendingRestoreUrl = if (deferRestoreLoad) initialUrl else null
         tab.shieldEnabled = protectionFor(initialUrl, privateMode)
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
@@ -974,6 +980,7 @@ class MainActivity : ComponentActivity() {
             )
             while (recentlyClosedNormal.size > 10) recentlyClosedNormal.removeAt(0)
         }
+        media.release(tab.gecko)
         if (tab.gecko.isOpen) tab.gecko.close()
         tab.thumbnail = null
         tabs.remove(tab)
@@ -1762,7 +1769,7 @@ class MainActivity : ComponentActivity() {
     private fun resetTabsForChildMode() {
         if (!::view.isInitialized) return
         view.releaseSession()
-        tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
+        tabs.forEach { media.release(it.gecko);if (it.gecko.isOpen) it.gecko.close() }
         tabs.clear(); recentlyClosedNormal.clear(); privateShieldOverrides.clear()
         activeId.value = -1L
         createTab(childMode.enabled)
@@ -1994,8 +2001,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateDayThemePreference(day: Boolean) {
+        themeFollowsSystem=false
+        prefs.edit().putString("theme_mode",if(day)"light" else "dark").apply()
+        applyResolvedTheme(day)
+    }
+
+    private fun useSystemTheme() {
+        themeFollowsSystem=true
+        prefs.edit().putString("theme_mode","system").apply()
+        applyResolvedTheme(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK != Configuration.UI_MODE_NIGHT_YES)
+    }
+
+    private fun applyResolvedTheme(day: Boolean) {
         dayMode.value = day
-        prefs.edit().putBoolean("day_theme", day).apply()
+        prefs.edit().putBoolean("day_theme", dayMode.value).apply()
         updateSystemBarsAppearance()
         updateChromeMargins()
     }
@@ -2104,12 +2123,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
             MenuAction.OPEN_BROWSER -> openCurrentPageInAnotherBrowser()
-            MenuAction.THEME -> {
-                dayMode.value = !dayMode.value
-                prefs.edit().putBoolean("day_theme", dayMode.value).apply()
-                updateSystemBarsAppearance()
-                updateChromeMargins()
-            }
+            MenuAction.THEME -> updateDayThemePreference(!dayMode.value)
             MenuAction.SETTINGS -> showSettings()
         }
     }
@@ -2367,9 +2381,25 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(this, getString(resId), Toast.LENGTH_SHORT).show()
     }
 
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        val tab=activeTab ?: return
+        // Only an already-fullscreen, playing normal video enters PiP on Home.
+        // Private pages and child browsing never open an unsolicited overlay.
+        if(videoFullScreen && media.isPlaying(tab.gecko) && !tab.privateMode && !childMode.enabled &&
+            packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            val bounds=android.graphics.Rect();view.getGlobalVisibleRect(bounds)
+            try {
+                enterPictureInPictureMode(android.app.PictureInPictureParams.Builder()
+                    .setAspectRatio(android.util.Rational(16,9)).setSourceRectHint(bounds).build())
+            } catch(_:IllegalStateException) { /* Device policy may disable PiP. */ }
+        }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         GeckoMotorDenemesi.onConfigurationChanged(newConfig)
+        if(themeFollowsSystem)applyResolvedTheme(newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK != Configuration.UI_MODE_NIGHT_YES)
         // Rotating a notched phone changes top vs side display cutout insets.
         if (::root.isInitialized) root.requestApplyInsets()
     }
@@ -2519,6 +2549,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if(::prefs.isInitialized && themeFollowsSystem)useSystemTheme()
         refreshSystemPreferences()
         updateAutofill()
         downloads.observe()

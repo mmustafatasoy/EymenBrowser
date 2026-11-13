@@ -50,7 +50,8 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
     visible: Boolean,initialPage: BrowserSettingsPage,defaultBrowser: Boolean,notificationsEnabled: Boolean,
     homeButtonEnabled: Boolean,onHomeButton: (Boolean)->Unit,
     onBack: ()->Unit,onAction: (SettingsAction)->Unit,onSearchEngine: (String)->Unit,
-    onDayMode: (Boolean)->Unit,onAddressBottom: (Boolean)->Unit) {
+    onDayMode: (Boolean)->Unit,onAddressBottom: (Boolean)->Unit,
+    themeFollowsSystem: Boolean=false,onSystemTheme: ()->Unit={}) {
     val p=browserListPalette(dayMode)
     var query by remember(visible){mutableStateOf("")}
     val pages=remember(visible,initialPage){mutableStateListOf(initialPage)}
@@ -125,8 +126,9 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
                     SettingsActionRow(stringResource(R.string.onboarding_bottom),p,{onAddressBottom(true)},chosen=addressBottom)
                 }
                 BrowserSettingsPage.APPEARANCE->SettingsRows(p){
-                    SettingsActionRow(stringResource(R.string.theme_day),p,{onDayMode(true)},chosen=dayMode)
-                    SettingsActionRow(stringResource(R.string.theme_night),p,{onDayMode(false)},chosen=!dayMode)
+                    SettingsActionRow(stringResource(R.string.theme_day),p,{onDayMode(true)},chosen=dayMode && !themeFollowsSystem)
+                    SettingsActionRow(stringResource(R.string.theme_night),p,{onDayMode(false)},chosen=!dayMode && !themeFollowsSystem)
+                    SettingsActionRow(stringResource(R.string.theme_system),p,onSystemTheme,chosen=themeFollowsSystem)
                 }
                 BrowserSettingsPage.HOME->{
                     SettingsToggle(stringResource(R.string.settings_home_button),stringResource(R.string.settings_home_note),homeButtonEnabled,p,onHomeButton)

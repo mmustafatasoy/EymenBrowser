@@ -139,10 +139,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             polishedSharingAndInformation();
             openTabSearch();
             bookmarkLibrary();
+            mediaAndSystemTheme();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -498,8 +499,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         menuNavigation(privateMode ? R.string.private_tab : R.string.menu_new_normal_tab_accessibility);
         org.mozilla.geckoview.GeckoSession page = currentSession();
         java.util.concurrent.atomic.AtomicReference<String> title = new java.util.concurrent.atomic.AtomicReference<>("");
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
         runOnMainSync(() -> {
-            org.mozilla.geckoview.GeckoSession.ContentDelegate original = page.getContentDelegate();
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate() {
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session, String value) {
                     title.set(value); original.onTitleChange(session, value);
@@ -511,6 +512,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "real HTTPS document loaded for tab search");
         runOnMainSync(() -> page.loadUri("javascript:void(document.title=" + org.json.JSONObject.quote(pageTitle) + ")"));
         await(() -> pageTitle.equals(title.get()), "actual document title ready for tab search");
+        runOnMainSync(() -> page.setContentDelegate(original));
         return page;
     }
 
@@ -663,6 +665,88 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "private address editing does not expose normal bookmarks or history suggestions");
         systemBack();
         click(label(R.string.browser_menu));scrollClick(label(R.string.menu_new_normal_tab_accessibility));
+    }
+    private BrowserMedia mediaController() {
+        return (BrowserMedia)((kotlin.Lazy<?>)controller("media$delegate")).getValue();
+    }
+    private android.app.Notification mediaNotification() {
+        for(android.service.notification.StatusBarNotification item:getTargetContext().getSystemService(android.app.NotificationManager.class).getActiveNotifications())
+            if(item.getId()==BrowserMediaService.NOTIFICATION)return item.getNotification();
+        return null;
+    }
+    private android.media.session.MediaController androidMediaController() {
+        android.app.Notification note=mediaNotification();
+        if(note==null)return null;
+        android.media.session.MediaSession.Token token=note.extras.getParcelable(android.app.Notification.EXTRA_MEDIA_SESSION,android.media.session.MediaSession.Token.class);
+        return token==null?null:new android.media.session.MediaController(getTargetContext(),token);
+    }
+    private void foregroundBrowser() throws Exception {
+        try(android.os.ParcelFileDescriptor result=getUiAutomation().executeShellCommand("am start -W -n com.eymen.browser.telefon/.MainActivity");
+            java.io.InputStream stream=new android.os.ParcelFileDescriptor.AutoCloseInputStream(result)) {
+            byte[] buffer=new byte[4096];while(stream.read(buffer)!=-1){}
+        }
+        await(() -> uiCheck(() -> activity.hasWindowFocus() && !activity.isInPictureInPictureMode()),"browser returned from real Android Home/PiP");
+    }
+    private org.mozilla.geckoview.GeckoSession prepareMedia(boolean privateMode, java.util.concurrent.atomic.AtomicInteger ticks) throws Exception {
+        org.mozilla.geckoview.GeckoSession page=searchTabPage(privateMode,"https://example.com/?eymen-media-audit="+(privateMode?"private":"normal"),"Eymen media fixture");
+        String base64;
+        try(java.io.InputStream asset=getContext().getAssets().open("media-fixture.webm.b64")) {
+            java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();byte[] block=new byte[4096];int size;
+            while((size=asset.read(block))!=-1)bytes.write(block,0,size);
+            base64=bytes.toString("UTF-8").trim();
+        }
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original=page.getContentDelegate();
+        String html="<video id='fixture' style='position:fixed;inset:0;width:100%;height:100%' loop playsinline src='data:video/webm;base64,"+base64+"'></video><button id='play' style='position:fixed;inset:0;width:100%;height:100%;z-index:1'>Eymen media play</button>";
+        String js="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";const v=document.getElementById('fixture'),b=document.getElementById('play');let ticks=0;v.addEventListener('timeupdate',()=>document.title='Eymen media tick '+(++ticks));navigator.mediaSession.metadata=new MediaMetadata({title:'Eymen Media Acceptance'});b.onclick=()=>v.play().then(()=>{b.textContent='Eymen media fullscreen';b.onclick=()=>v.requestFullscreen()});document.title='Eymen media ready';}())";
+        runOnMainSync(() -> {
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s,String title){
+                    if(title!=null && title.startsWith("Eymen media tick "))ticks.set(Integer.parseInt(title.substring("Eymen media tick ".length())));
+                    original.onTitleChange(s,title);
+                }
+                @Override public void onFullScreen(org.mozilla.geckoview.GeckoSession s,boolean full){original.onFullScreen(s,full);}
+            });
+            page.loadUri(js);
+        });
+        await(() -> find("Eymen media play",false)!=null,"actual synthetic video play control is laid out");
+        click("Eymen media play");
+        await(() -> ticks.get()>0 && uiCheck(() -> mediaController().isPlaying(page)) && androidMediaController()!=null,
+            "real VP8/Vorbis playback produces Gecko events and an Android media notification");
+        return page;
+    }
+    private void mediaAndSystemTheme() throws Exception {
+        openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_system));
+        await(() -> "system".equals(prefs().getString("theme_mode","")),"follow-system is an actual persisted theme choice");
+        require(prefs().getBoolean("day_theme",false)==((activity.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)!=android.content.res.Configuration.UI_MODE_NIGHT_YES),
+            "follow-system resolves the current Android light/night configuration");
+        capture("theme-system.png",null);click(label(R.string.theme_day));click(label(R.string.back));click(label(R.string.back));
+        java.util.concurrent.atomic.AtomicInteger ticks=new java.util.concurrent.atomic.AtomicInteger();
+        org.mozilla.geckoview.GeckoSession page=prepareMedia(false,ticks);
+        await(() -> androidMediaController()!=null && androidMediaController().getMetadata()!=null && "Eymen Media Acceptance".equals(androidMediaController().getMetadata().getString(android.media.MediaMetadata.METADATA_KEY_TITLE)),"Android media title comes from the actual page metadata");
+        require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"real Android Home action");
+        await(() -> uiCheck(() -> !((androidx.activity.ComponentActivity)activity).getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)),"media test reaches the real Activity onStop boundary");
+        int before=ticks.get();await(() -> ticks.get()>before+1,"actual media time continues while the browser is stopped behind Android Home");
+        android.media.session.MediaController nativeMedia=androidMediaController();
+        require(nativeMedia!=null,"native media session token remains available in background");
+        nativeMedia.getTransportControls().pause();
+        await(() -> uiCheck(() -> !mediaController().getPlaying()) && nativeMedia.getPlaybackState().getState()==android.media.session.PlaybackState.STATE_PAUSED,"Android media pause controls the real Gecko player");
+        nativeMedia.getTransportControls().play();
+        await(() -> uiCheck(() -> mediaController().getPlaying()) && nativeMedia.getPlaybackState().getState()==android.media.session.PlaybackState.STATE_PLAYING,"Android media resumes real playback from background");
+        int resumed=ticks.get();await(() -> ticks.get()>resumed+1,"resumed media really advances its playback clock");
+        capture("media-background.png",null);
+        foregroundBrowser();click("Eymen media fullscreen");
+        await(() -> uiCheck(() -> Boolean.TRUE.equals(controller("videoFullScreen"))),"real DOM fullscreen reaches the production video callback");
+        require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"Home leaves a playing fullscreen video");
+        await(() -> uiCheck(() -> activity.isInPictureInPictureMode()) && uiCheck(() -> mediaController().isPlaying(page)),"actual Android PiP keeps the fullscreen video playing");
+        capture("media-pip.png",null);foregroundBrowser();systemBack();
+        nativeMedia.getTransportControls().stop();
+        await(() -> uiCheck(() -> mediaController().getOwner()==null) && mediaNotification()==null,"Stop releases playback, service and its notification");
+        prepareMedia(true,new java.util.concurrent.atomic.AtomicInteger());
+        await(() -> androidMediaController()!=null && androidMediaController().getMetadata()!=null && label(R.string.private_tab).equals(androidMediaController().getMetadata().getString(android.media.MediaMetadata.METADATA_KEY_TITLE)),"private media never exports the page title to Android media history");
+        require(mediaNotification().visibility==android.app.Notification.VISIBILITY_SECRET,"private media notification is hidden on the lock screen");
+        androidMediaController().getTransportControls().stop();
+        await(() -> mediaNotification()==null,"private media stops and removes its Android notification");
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){

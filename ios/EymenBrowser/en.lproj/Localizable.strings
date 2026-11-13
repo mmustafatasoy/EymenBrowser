@@ -517,3 +517,10 @@
 "address_suggestion_action" = "Open suggestion: %1$s";
 "bookmark_show_all" = "Show all bookmarks";
 "bookmark_open_folder" = "Open folder: %1$s";
+"theme_system" = "Follow system";
+"media_channel" = "Browser media";
+"media_playing" = "Playing";
+"media_paused" = "Paused";
+"media_play" = "Play";
+"media_pause" = "Pause";
+"media_stop" = "Stop";

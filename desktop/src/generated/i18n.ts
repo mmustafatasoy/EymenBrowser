@@ -518,7 +518,14 @@ export const messages = {
     "bookmark_operation_failed": "Yer imi değişikliği kaydedilemedi. Mevcut kayıtların korundu; tekrar deneyebilirsin.",
     "address_suggestion_action": "Öneriyi aç: %1$s",
     "bookmark_show_all": "Tüm yer imlerini göster",
-    "bookmark_open_folder": "Klasörü aç: %1$s"
+    "bookmark_open_folder": "Klasörü aç: %1$s",
+    "theme_system": "Sisteme uy",
+    "media_channel": "Tarayıcı medyası",
+    "media_playing": "Oynatılıyor",
+    "media_paused": "Duraklatıldı",
+    "media_play": "Oynat",
+    "media_pause": "Duraklat",
+    "media_stop": "Durdur"
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1038,6 +1045,13 @@ export const messages = {
     "bookmark_operation_failed": "The bookmark change could not be saved. Your existing entries are preserved; you can retry.",
     "address_suggestion_action": "Open suggestion: %1$s",
     "bookmark_show_all": "Show all bookmarks",
-    "bookmark_open_folder": "Open folder: %1$s"
+    "bookmark_open_folder": "Open folder: %1$s",
+    "theme_system": "Follow system",
+    "media_channel": "Browser media",
+    "media_playing": "Playing",
+    "media_paused": "Paused",
+    "media_play": "Play",
+    "media_pause": "Pause",
+    "media_stop": "Stop"
   }
 } as const;

@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -17,6 +18,8 @@
         android:icon="@drawable/ic_eymen_browser"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.NoActionBar">
+        <service android:name=".BrowserMediaService" android:exported="false" android:stopWithTask="true"
+            android:foregroundServiceType="mediaPlayback" />
         <service android:name=".EymenDownloadService"
             android:exported="false" android:stopWithTask="false"
             android:foregroundServiceType="dataSync" />
@@ -43,8 +46,8 @@
                 android:resource="@xml/browser_update_file_paths" />
         </provider>
         <activity android:name=".MainActivity" android:exported="true"
-            android:launchMode="singleTop"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:launchMode="singleTop" android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

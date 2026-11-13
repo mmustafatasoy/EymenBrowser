@@ -525,4 +525,11 @@ My issue or suggestion:
     <string name="address_suggestion_action">Open suggestion: %1$s</string>
     <string name="bookmark_show_all">Show all bookmarks</string>
     <string name="bookmark_open_folder">Open folder: %1$s</string>
+    <string name="theme_system">Follow system</string>
+    <string name="media_channel">Browser media</string>
+    <string name="media_playing">Playing</string>
+    <string name="media_paused">Paused</string>
+    <string name="media_play">Play</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_stop">Stop</string>
 </resources>

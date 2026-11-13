@@ -517,3 +517,10 @@
 "address_suggestion_action" = "Öneriyi aç: %1$s";
 "bookmark_show_all" = "Tüm yer imlerini göster";
 "bookmark_open_folder" = "Klasörü aç: %1$s";
+"theme_system" = "Sisteme uy";
+"media_channel" = "Tarayıcı medyası";
+"media_playing" = "Oynatılıyor";
+"media_paused" = "Duraklatıldı";
+"media_play" = "Oynat";
+"media_pause" = "Duraklat";
+"media_stop" = "Durdur";

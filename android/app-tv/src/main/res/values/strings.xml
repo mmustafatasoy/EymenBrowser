@@ -525,4 +525,11 @@ Sorun veya önerim:
     <string name="address_suggestion_action">Öneriyi aç: %1$s</string>
     <string name="bookmark_show_all">Tüm yer imlerini göster</string>
     <string name="bookmark_open_folder">Klasörü aç: %1$s</string>
+    <string name="theme_system">Sisteme uy</string>
+    <string name="media_channel">Tarayıcı medyası</string>
+    <string name="media_playing">Oynatılıyor</string>
+    <string name="media_paused">Duraklatıldı</string>
+    <string name="media_play">Oynat</string>
+    <string name="media_pause">Duraklat</string>
+    <string name="media_stop">Durdur</string>
 </resources>
