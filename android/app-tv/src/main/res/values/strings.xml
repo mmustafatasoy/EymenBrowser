@@ -503,4 +503,24 @@ Sorun veya önerim:
     <string name="vpn_import_download_confirmation">%1$s dosyası kişisel VPN erişim anahtarları içerir. Mevcut profilinizin yerine bu dosya doğrulanarak cihazda şifreli saklansın mı? VPN kendiliğinden açılmaz. İçe aktardıktan sonra İndirilenler klasöründeki dosya kopyasını silebilirsiniz.</string>
     <string name="vpn_import_confirm">İçe aktar</string>
     <string name="vpn_import_requires_closed">Dosya içe aktarmadan önce VPN bağlantısını kapatın ve devam eden işlemin bitmesini bekleyin.</string>
+    <string name="bookmark_new_folder">Yeni klasör</string>
+    <string name="bookmark_folder_name">Klasör adı</string>
+    <string name="bookmark_save">Kaydet</string>
+    <string name="bookmark_rename_folder">Klasörü yeniden adlandır</string>
+    <string name="bookmark_delete_folder">Klasörü sil</string>
+    <string name="bookmark_delete_folder_note">Klasör silinecek. İçindeki yer imleri Tümü bölümünde korunacak.</string>
+    <string name="bookmark_delete">Sil</string>
+    <string name="bookmark_edit">Yer imini düzenle</string>
+    <string name="bookmark_move">Klasöre taşı</string>
+    <string name="bookmark_no_folder">Klasör yok</string>
+    <string name="bookmark_title">Yer imi başlığı</string>
+    <string name="bookmark_address">Yer imi adresi</string>
+    <string name="bookmark_manage_folder">Klasörü yönet: %1$s</string>
+    <string name="bookmark_item_options">Yer imi seçenekleri: %1$s</string>
+    <string name="bookmark_folder_name_required">Bir klasör adı yaz.</string>
+    <string name="bookmark_folder_exists">Bu ada sahip bir klasör zaten var.</string>
+    <string name="bookmark_duplicate">Bu adres başka bir yer iminde kayıtlı.</string>
+    <string name="bookmark_limit">Kütüphane sınırına ulaşıldı. Yeni kayıt eklemek için bir kaydı kaldır.</string>
+    <string name="bookmark_operation_failed">Yer imi değişikliği kaydedilemedi. Mevcut kayıtların korundu; tekrar deneyebilirsin.</string>
+    <string name="address_suggestion_action">Öneriyi aç: %1$s</string>
 </resources>

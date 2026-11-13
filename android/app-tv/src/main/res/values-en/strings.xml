@@ -503,4 +503,24 @@ My issue or suggestion:
     <string name="vpn_import_download_confirmation">%1$s contains personal VPN access keys. Validate this file and store it encrypted on this device, replacing your current profile? The VPN will stay off. After importing, you can delete the file copy in your Downloads folder.</string>
     <string name="vpn_import_confirm">Import</string>
     <string name="vpn_import_requires_closed">Disconnect the VPN and wait for any pending operation before importing a file.</string>
+    <string name="bookmark_new_folder">New folder</string>
+    <string name="bookmark_folder_name">Folder name</string>
+    <string name="bookmark_save">Save</string>
+    <string name="bookmark_rename_folder">Rename folder</string>
+    <string name="bookmark_delete_folder">Delete folder</string>
+    <string name="bookmark_delete_folder_note">The folder will be deleted. Its bookmarks will remain under All.</string>
+    <string name="bookmark_delete">Delete</string>
+    <string name="bookmark_edit">Edit bookmark</string>
+    <string name="bookmark_move">Move to folder</string>
+    <string name="bookmark_no_folder">No folder</string>
+    <string name="bookmark_title">Bookmark title</string>
+    <string name="bookmark_address">Bookmark address</string>
+    <string name="bookmark_manage_folder">Manage folder: %1$s</string>
+    <string name="bookmark_item_options">Bookmark options: %1$s</string>
+    <string name="bookmark_folder_name_required">Enter a folder name.</string>
+    <string name="bookmark_folder_exists">A folder with this name already exists.</string>
+    <string name="bookmark_duplicate">This address is already saved in another bookmark.</string>
+    <string name="bookmark_limit">The library limit has been reached. Remove an entry to add another.</string>
+    <string name="bookmark_operation_failed">The bookmark change could not be saved. Your existing entries are preserved; you can retry.</string>
+    <string name="address_suggestion_action">Open suggestion: %1$s</string>
 </resources>

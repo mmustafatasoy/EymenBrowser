@@ -39,6 +39,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
                 .putBoolean("light_design_default_migrated_v105", true).commit();
             app.getSharedPreferences("eymen_child_mode", Context.MODE_PRIVATE).edit().clear().commit();
             new DownloadRegistry(app).clearListOnly();
+            app.getSharedPreferences("eymen_browser_bookmarks", Context.MODE_PRIVATE).edit()
+                .putStringSet("urls", new java.util.HashSet<>(java.util.Arrays.asList("https://example.net/legacy-bookmark"))).commit();
             createFixture(app);
             AccessibilityServiceInfo info = getUiAutomation().getServiceInfo();
             info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
@@ -136,10 +138,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             realHistoryAndScrolling();
             polishedSharingAndInformation();
             openTabSearch();
+            bookmarkLibrary();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -597,6 +600,66 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(label(R.string.back));
         openSettingsItem(R.string.settings_appearance); click(label(R.string.theme_day));
         click(label(R.string.back)); click(label(R.string.back));
+    }
+    private BrowserBookmarks bookmarkStore() {
+        return (BrowserBookmarks) ((kotlin.Lazy<?>) controller("bookmarks$delegate")).getValue();
+    }
+    private void bookmarkLibrary() throws Exception {
+        String url="https://example.com/?eymen-bookmark-audit=original";
+        String original="Eymen Yer İmi Başlığı", edited="Kütüphane Doğrulama";
+        String editedUrl="https://example.com/?eymen-bookmark-audit=edited";
+        String folder="Eymen Deneme Klasörü";
+        BrowserBookmarks store=bookmarkStore();
+        await(() -> uiCheck(() -> !store.getLoading() && store.getEntries().stream().anyMatch(x -> x.getUrl().equals("https://example.net/legacy-bookmark"))),
+            "legacy production URL set migrated without losing its bookmark");
+        searchTabPage(false,url,original);
+        click(label(R.string.browser_menu));click(label(R.string.menu_bookmark_add));
+        await(() -> uiCheck(() -> !store.getLoading() && store.getEntries().stream().anyMatch(x -> x.getUrl().equals(url) && x.getTitle().equals(original))),
+            "explicit bookmark stores its real page title independently of history");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.bookmarks));
+        await(() -> field(label(R.string.library_search_bookmarks))!=null,"real bookmark library opened");
+        click(label(R.string.bookmark_new_folder));search(label(R.string.bookmark_folder_name),"Geçici Klasör");clickNativePositive();
+        await(() -> uiCheck(() -> !store.getLoading() && store.getFolders().stream().anyMatch(x -> x.getName().equals("Geçici Klasör"))),"original folder saved");
+        click("Geçici Klasör");click(activity.getString(R.string.bookmark_manage_folder,"Geçici Klasör"));click(label(R.string.bookmark_rename_folder));
+        search(label(R.string.bookmark_folder_name),folder);clickNativePositive();
+        await(() -> uiCheck(() -> !store.getLoading() && store.getFolders().stream().anyMatch(x -> x.getName().equals(folder))),"new folder persisted");
+        click(activity.getString(R.string.bookmark_item_options,original));click(label(R.string.bookmark_move));click(folder);
+        await(() -> uiCheck(() -> !store.getLoading() && store.getEntries().stream().anyMatch(x -> x.getUrl().equals(url) && x.getFolderId()!=null)),"existing bookmark moved to the selected folder");
+        search(label(R.string.library_search_bookmarks),"legacy-bookmark");
+        await(() -> find(label(R.string.history_no_results),false)!=null,"folder search cannot include a bookmark from outside the folder");
+        click(label(R.string.search_clear));
+        click(activity.getString(R.string.bookmark_item_options,original));click(label(R.string.bookmark_edit));
+        search(label(R.string.bookmark_title),edited);search(label(R.string.bookmark_address),"javascript:alert(1)");clickNativePositive();
+        require(field(label(R.string.bookmark_address))!=null,"unsafe bookmark edit is rejected without closing the editor");
+        require(uiCheck(() -> store.getEntries().stream().anyMatch(x -> x.getUrl().equals(url))),"rejected edit preserves the original saved address");
+        search(label(R.string.bookmark_address),editedUrl);clickNativePositive();
+        await(() -> uiCheck(() -> !store.getLoading() && store.getEntries().stream().anyMatch(x -> x.getTitle().equals(edited) && x.getUrl().equals(editedUrl))),"title and address edit committed together");
+        capture("bookmarks-folder.png",true);
+        click(activity.getString(R.string.bookmark_manage_folder,folder));click(label(R.string.bookmark_delete_folder));clickNativePositive();
+        await(() -> uiCheck(() -> !store.getLoading() && store.getFolders().isEmpty() && store.getEntries().stream().anyMatch(x -> x.getTitle().equals(edited) && x.getFolderId()==null)),
+            "folder deletion keeps its edited bookmark at the library root");
+        runOnMainSync(store::refresh);await(() -> uiCheck(() -> !store.getLoading()),"bookmark library reloaded from SQLite");
+        try(android.database.sqlite.SQLiteDatabase db=android.database.sqlite.SQLiteDatabase.openDatabase(
+                getTargetContext().getDatabasePath("browser-bookmarks.db").getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+            android.database.Cursor row=db.rawQuery("SELECT title,folder_id FROM bookmarks WHERE url=?",new String[]{editedUrl})) {
+            require(row.moveToFirst() && edited.equals(row.getString(0)) && row.isNull(1),"edited title and preserved bookmark are durable SQLite records");
+        }
+        capture("bookmarks-all.png",true);
+        click(label(R.string.back));
+        tap(field(label(R.string.address_edit_label)));
+        await(this::softwareKeyboardVisible,"real keyboard opened for local address suggestions");
+        search(label(R.string.address_edit_label),edited);
+        click(activity.getString(R.string.address_suggestion_action,edited));
+        await(() -> editedUrl.equals(text(field(label(R.string.address_edit_label)))) && !softwareKeyboardVisible(),
+            "local bookmark suggestion navigates to its stored address and closes the keyboard");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.private_tab));
+        tap(field(label(R.string.address_edit_label)));
+        await(this::softwareKeyboardVisible,"real keyboard opened for private address entry");
+        search(label(R.string.address_edit_label),edited);
+        require(find(activity.getString(R.string.address_suggestion_action,edited),false)==null,
+            "private address editing does not expose normal bookmarks or history suggestions");
+        systemBack();
+        click(label(R.string.browser_menu));scrollClick(label(R.string.menu_new_normal_tab_accessibility));
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){

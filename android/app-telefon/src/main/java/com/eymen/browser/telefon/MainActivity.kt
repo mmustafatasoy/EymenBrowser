@@ -111,6 +111,8 @@ class MainActivity : ComponentActivity() {
     private var libraryShowing by mutableStateOf(false)
     private var libraryMode by mutableStateOf(BrowserLibrary.HISTORY)
     private var bookmarkRevision by mutableStateOf(0)
+    private val bookmarks by lazy { BrowserBookmarks.get(applicationContext,
+        getSharedPreferences("eymen_browser_bookmarks", MODE_PRIVATE)) }
     private var imeVisible = false
     private var homeButtonEnabled by mutableStateOf(true)
     private var defaultBrowser by mutableStateOf(false)
@@ -239,6 +241,7 @@ class MainActivity : ComponentActivity() {
         prefs = getSharedPreferences("eymen_browser_setup", MODE_PRIVATE)
         history = BrowserHistory.get(this)
         history.refresh()
+        bookmarks.refresh()
         childMode = BrowserChildMode(this, ::resetTabsForChildMode)
         settingsServices = BrowserSettingsServices(this,
             active = { session -> activeTab?.gecko === session && !isFinishing && !isDestroyed },
@@ -399,6 +402,9 @@ class MainActivity : ComponentActivity() {
                 tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
                 dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
                 privateMode=activeTab?.privateMode==true,
+                addressSuggestions=if(activeTab?.privateMode==true)emptyList() else
+                    bookmarks.entries.map {AddressSuggestion(it.url,it.title)}+
+                        history.entries.map {AddressSuggestion(it.url,it.title)},
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
                 onEditingChanged={addressEditing=it},
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
@@ -625,12 +631,14 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         libraryLayer.setContent {
             bookmarkRevision
+            if (libraryMode == BrowserLibrary.BOOKMARKS) {
+                BookmarksScreen(bookmarks,libraryShowing,dayMode.value,
+                    ::hideLibrary,{url -> hideLibrary();openUrl(url)},
+                    {editBookmarkFolder(null)},::showBookmarkFolderActions,::showBookmarkActions)
+            } else {
             val items = when (libraryMode) {
                 BrowserLibrary.HISTORY -> history.entries
-                BrowserLibrary.BOOKMARKS -> bookmarkUrls().sorted().mapIndexed { index,url ->
-                    HistoryEntry(index.toLong(),url,history.entries.firstOrNull { it.url == url }?.title
-                        ?: HistoryPolicy.title("",url),0L)
-                }
+                BrowserLibrary.BOOKMARKS -> emptyList()
                 BrowserLibrary.RECENT_TABS -> recentlyClosedNormal.asReversed().mapNotNull { it.safeUrl }
                     .distinct().mapIndexed { index,url -> HistoryEntry(index.toLong(),url,
                         history.entries.firstOrNull { it.url == url }?.title ?: HistoryPolicy.title("",url),0L) }
@@ -640,13 +648,11 @@ class MainActivity : ComponentActivity() {
                 onDelete = { item ->
                     when (libraryMode) {
                         BrowserLibrary.HISTORY -> history.delete(item.id)
-                        BrowserLibrary.BOOKMARKS -> {
-                            getSharedPreferences("eymen_browser_bookmarks",MODE_PRIVATE).edit()
-                                .putStringSet("urls",bookmarkUrls()-item.url).apply();bookmarkRevision++
-                        }
+                        BrowserLibrary.BOOKMARKS -> bookmarks.entries.firstOrNull {it.url==item.url}?.let {bookmarks.delete(it.id)}
                         BrowserLibrary.RECENT_TABS -> recentlyClosedNormal.removeAll { it.safeUrl == item.url }
                     }
                 },onClear = ::confirmClearHistory)
+            }
         }
         libraryLayer.visibility = View.GONE
         updateChromeMargins()
@@ -2122,8 +2128,7 @@ class MainActivity : ComponentActivity() {
         tab.gecko.loadUri("about:reader?url=" + URLEncoder.encode(https, "UTF-8"))
     }
 
-    private fun bookmarkUrls(): Set<String> = getSharedPreferences("eymen_browser_bookmarks",MODE_PRIVATE)
-        .getStringSet("urls",emptySet()).orEmpty().filter { GeckoMotorDenemesi.verifiedHttpsUrl(it) == it }.toSet()
+    private fun bookmarkUrls(): Set<String> = bookmarks.entries.map {it.url}.toSet()
 
     private fun isCurrentBookmarked(): Boolean {
         bookmarkRevision
@@ -2131,12 +2136,77 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun toggleCurrentBookmark() {
-        val tab = activeTab ?: return
-        val url = GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf { it==tab.url && !tab.home } ?: return
-        val old = bookmarkUrls()
-        getSharedPreferences("eymen_browser_bookmarks",MODE_PRIVATE).edit()
-            .putStringSet("urls",if (url in old) old-url else old+url).apply()
+        val tab=activeTab ?: return
+        val url=GeckoMotorDenemesi.verifiedHttpsUrl(tab.url)?.takeIf {it==tab.url && !tab.home} ?: return
+        if(bookmarks.loading) {notice(R.string.history_loading);return}
+        val item=bookmarks.entries.firstOrNull {it.url==url}
+        if(item!=null)bookmarks.delete(item.id) else bookmarks.add(url,tab.title)
         bookmarkRevision++
+    }
+
+    private fun editBookmarkFolder(folder: BookmarkFolder?) {
+        bookmarks.clearError()
+        val field=EditText(this).apply {
+            hint=getString(R.string.bookmark_folder_name);contentDescription=hint
+            isSingleLine=true;setText(folder?.name.orEmpty())
+            filters=arrayOf(android.text.InputFilter.LengthFilter(120))
+        }
+        val dialog=BrowserDialogs.builder(this).setTitle(if(folder==null)R.string.bookmark_new_folder else R.string.bookmark_rename_folder)
+            .setView(field).setNegativeButton(android.R.string.cancel,null)
+            .setPositiveButton(R.string.bookmark_save,null).create()
+        dialog.setOnShowListener {dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val name=BookmarkPolicy.name(field.text.toString())
+            if(name.isEmpty())field.error=getString(R.string.bookmark_folder_name_required)
+            else if(bookmarks.folders.any {it.id!=folder?.id && it.name.equals(name,true)})field.error=getString(R.string.bookmark_folder_exists)
+            else {bookmarks.saveFolder(folder?.id,name);dialog.dismiss()}
+        }}
+        dialog.show()
+    }
+
+    private fun showBookmarkFolderActions(folder: BookmarkFolder) {
+        BrowserDialogs.builder(this).setTitle(folder.name)
+            .setItems(arrayOf(getString(R.string.bookmark_rename_folder),getString(R.string.bookmark_delete_folder))) {_,which ->
+                if(which==0)editBookmarkFolder(folder) else BrowserDialogs.builder(this)
+                    .setTitle(R.string.bookmark_delete_folder).setMessage(R.string.bookmark_delete_folder_note)
+                    .setNegativeButton(android.R.string.cancel,null)
+                    .setPositiveButton(R.string.bookmark_delete) {_,_ -> bookmarks.deleteFolder(folder.id)}.show()
+            }.show()
+    }
+
+    private fun showBookmarkActions(item: BookmarkEntry) {
+        BrowserDialogs.builder(this).setTitle(item.title)
+            .setItems(arrayOf(getString(R.string.bookmark_edit),getString(R.string.bookmark_move),getString(R.string.bookmark_delete))) {_,which ->
+                when(which) {
+                    0 -> editBookmark(item)
+                    1 -> {
+                        val folders=bookmarks.folders.toList()
+                        val names=arrayOf(getString(R.string.bookmark_no_folder),*folders.map {it.name}.toTypedArray())
+                        BrowserDialogs.builder(this).setTitle(R.string.bookmark_move).setSingleChoiceItems(names,
+                            folders.indexOfFirst {it.id==item.folderId}+1) {dialog,index ->
+                                bookmarks.move(item.id,folders.getOrNull(index-1)?.id);dialog.dismiss()
+                            }.setNegativeButton(android.R.string.cancel,null).show()
+                    }
+                    2 -> bookmarks.delete(item.id)
+                }
+            }.show()
+    }
+
+    private fun editBookmark(item: BookmarkEntry) {
+        val title=EditText(this).apply {hint=getString(R.string.bookmark_title);contentDescription=hint;isSingleLine=true;setText(item.title)
+            filters=arrayOf(android.text.InputFilter.LengthFilter(120))}
+        val url=EditText(this).apply {hint=getString(R.string.bookmark_address);contentDescription=hint;isSingleLine=true;setText(item.url)
+            inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+            filters=arrayOf(android.text.InputFilter.LengthFilter(16384))}
+        val fields=android.widget.LinearLayout(this).apply {orientation=android.widget.LinearLayout.VERTICAL;addView(title);addView(url)}
+        val dialog=BrowserDialogs.builder(this).setTitle(R.string.bookmark_edit).setView(fields)
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.bookmark_save,null).create()
+        dialog.setOnShowListener {dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val safe=BookmarkPolicy.url(url.text.toString())
+            if(safe==null)url.error=getString(R.string.invalid_address)
+            else if(bookmarks.entries.any {it.id!=item.id && it.url==safe})url.error=getString(R.string.bookmark_duplicate)
+            else {bookmarks.edit(item.id,title.text.toString(),safe);dialog.dismiss()}
+        }}
+        dialog.show()
     }
 
     private fun showBookmarks() = showLibrary(BrowserLibrary.BOOKMARKS)
@@ -2146,7 +2216,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun openLibrary(mode: BrowserLibrary) {
         hideBrowserKeyboard();hideBrowserMenu();hideSettings();hideDownloads();hideShield();hideTabs()
-        libraryMode = mode;history.refresh();libraryShowing = true;libraryLayer.visibility = View.VISIBLE
+        libraryMode = mode;history.refresh();bookmarks.refresh();libraryShowing = true;libraryLayer.visibility = View.VISIBLE
         updateOverlayAccessibility()
     }
     private fun hideLibrary() {
