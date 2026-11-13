@@ -132,6 +132,7 @@ object GeckoMotorDenemesi {
         askDrmPermission: (String, (Boolean) -> Unit) -> Unit,
         onDownload: (WebResponse) -> Unit = { response -> response.body?.close(); Unit },
         privateMode: Boolean = false,
+        desktopSite: Boolean = false,
         initialLoad: Boolean = true,
         openSession: Boolean = true,
         sitePermissions: GeckoSession.PermissionDelegate? = null,
@@ -152,6 +153,8 @@ object GeckoMotorDenemesi {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
             .useTrackingProtection(trackingProtection)
+            .userAgentMode(if (desktopSite) GeckoSessionSettings.USER_AGENT_MODE_DESKTOP else GeckoSessionSettings.USER_AGENT_MODE_MOBILE)
+            .viewportMode(if (desktopSite) GeckoSessionSettings.VIEWPORT_MODE_DESKTOP else GeckoSessionSettings.VIEWPORT_MODE_MOBILE)
             .build()
         val session = GeckoSession(settings)
         session.setTranslationsSessionDelegate(object : TranslationsController.SessionTranslation.Delegate {})

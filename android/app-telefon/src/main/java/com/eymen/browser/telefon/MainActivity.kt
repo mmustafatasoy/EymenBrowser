@@ -69,6 +69,8 @@ private class BrowserTab(
     var homeFromBack by mutableStateOf(false)
     var fullScreen by mutableStateOf(false)
     var desktop by mutableStateOf(false)
+    // Once per tab: keep the user free to disable desktop mode manually.
+    var whatsappDesktopConsidered = false
     var shieldEnabled by mutableStateOf(false)
     var lastScrollY = 0
     var historyVisitAt = 0L
@@ -810,6 +812,8 @@ class MainActivity : ComponentActivity() {
             return null
         }
         if (!popupRequest && tabs.isNotEmpty()) {
+            // Gecko SurfaceView may otherwise retain the previous tab frame.
+            view.coverUntilFirstPaint(if (dayMode.value) AndroidColor.WHITE else AndroidColor.BLACK)
             view.releaseSession()
         }
         val id = nextId++
@@ -824,6 +828,7 @@ class MainActivity : ComponentActivity() {
             askDrmPermission = ::showDrmAccessPrompt,
             onDownload = downloads::handleResponse,
             privateMode = privateMode,
+            desktopSite = DesktopSitePolicy.preferDesktop(initialUrl),
             initialLoad = initialUrl != null && !deferRestoreLoad,
             openSession = !popupRequest,
             sitePermissions = settingsServices,
@@ -873,6 +878,7 @@ class MainActivity : ComponentActivity() {
                     val changed=tab.url!=url
                     if(changed)tab.webApp=null
                     tab.url=url
+                    if (ensureWhatsAppDesktop(tab,url)) tab.gecko.reload()
                     // Same-document navigation has no PageStart. Follow Gecko's
                     // actual location for SPA/hash Back and Forward as well.
                     if(changed && tab.historyVisitAt>0 && !tab.privateMode && !childMode.enabled && HistoryPolicy.safeUrl(url,false)!=null) {
@@ -907,6 +913,10 @@ class MainActivity : ComponentActivity() {
         )
         val tab = BrowserTab(id, session, privateMode, initialUrl, if (popupRequest) activeId.value else null,
             if(deferRestoreLoad)null else activeTab?.takeIf { it.privateMode==privateMode }?.id)
+        if (DesktopSitePolicy.preferDesktop(initialUrl)) {
+            tab.desktop = true
+            tab.whatsappDesktopConsidered = true
+        }
         installStandardWebPrompts(tab)
         installPrintPolicy(tab)
         media.attach(session)
@@ -1009,6 +1019,8 @@ class MainActivity : ComponentActivity() {
         if (activeId.value != id) {
             captureActiveTabThumbnail()
             if (videoFullScreen) setVideoFullScreen(false)
+            // Keep compositor pixels from the previous tab out of the next one.
+            view.coverUntilFirstPaint(if (dayMode.value) AndroidColor.WHITE else AndroidColor.BLACK)
             view.releaseSession()
             view.setSession(tab.gecko)
             activeId.value = id
@@ -1241,6 +1253,7 @@ class MainActivity : ComponentActivity() {
                     if (pixels == null) return@accept
                     runOnUiThread {
                         if (tabs.none { it.id == tab.id } || tab.privateMode ||
+                            activeId.value != tab.id || view.session !== tab.gecko ||
                             tab.url != capturedUrl
                         ) return@runOnUiThread
                         try {
@@ -1346,6 +1359,7 @@ class MainActivity : ComponentActivity() {
             tab.home = false
             tab.shieldEnabled = protectionFor(verified, tab.privateMode)
             tab.gecko.settings.setUseTrackingProtection(tab.shieldEnabled)
+            ensureWhatsAppDesktop(tab,verified)
             currentUrl.value = verified
             atHome.value = false
             updateHomeVisibility()
@@ -2496,6 +2510,15 @@ class MainActivity : ComponentActivity() {
                 runOnUiThread { notice(R.string.menu_pdf_error) }
             }
         )
+    }
+
+    private fun ensureWhatsAppDesktop(tab: BrowserTab, url: String): Boolean {
+        if (!DesktopSitePolicy.preferDesktop(url) || tab.whatsappDesktopConsidered) return false
+        tab.whatsappDesktopConsidered = true
+        tab.desktop = true
+        tab.gecko.settings.setUserAgentMode(GeckoSessionSettings.USER_AGENT_MODE_DESKTOP)
+        tab.gecko.settings.setViewportMode(GeckoSessionSettings.VIEWPORT_MODE_DESKTOP)
+        return true
     }
 
     private fun toggleDesktopSite() {
