@@ -1,6 +1,13 @@
 # Proje durumu
 
-Son güncelleme: 2026-11-12
+Son güncelleme: 2026-11-13
+
+## Güncel devam — Android eksiklerini tamamlama (2026-11-13)
+
+- Kullanıcı “Uygulamanın eksiklerini ekle bitir” dedi. Mevcut yalnız Android telefon kapsamı ve tasarım kaynakları korunarak şartnamedeki eksikler tamamlanır; TV/PC/Apple bekler, gerçek VPN saha kabulü kullanıcının önceki isteğiyle açık kalır. Sıradaki ürün işi özellik 12 yer imi başlığı/klasörü/düzenlemesidir; mevcut kayıtlar kaybedilmez. Bir iş derlendi diye 64 özellik veya fiziksel cihaz kabulü tamamlandı denmez.
+- **Açık sekme araması kabul edildi ve main'e alındı:** kaynak `b8e5046e20e7fa5e1ac2b50386cdf60fc7a96de4`. [Kaynak/JVM/üç ABI #43278172669](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/43278172669), [iki API tam UI #43278171951](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/43278171951), [iki API görsel #43278171768](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/43278171768), [indirme #43278172288](https://github.com/mmustafatasoy/EymenBrowser/actions/runs/43278172288) aynı kaynakta `completed/success`.
+- API35 iş **131392066850**, API36 iş **131392067440**: `eymen_browser_ui_audit=passed`, `INSTRUMENTATION_CODE: -1`; gerçek klavye, başlık/URL, gizli/normal ayrımı, tek sonuç/hızlı geçiş, boş sonuç/toplu kapatma koruması ve önceki kabuller birlikte geçti. Artefakt **13972685180** / **13972695200** indirildi; ZIP ve 26 zorunlu PNG doğrulandı, iki API'nin dört gerçek arama ekranı ve T06 görselleri açılıp incelendi. Önceki başarısız aday kabul sayılmaz; düzeltmede hiçbir koşul kaldırılmadı.
+- Ana dal `4520087209c766acbd23e08badc3a529b844f527` üzerinden bu kaynağa fast-forward edildi. Son yayımlanmış kararlı sürüm hâlâ **v1.0.23**; **v1.0.24** yayımlanmadı. Manuel üretim akışı/orijinal imza değişmez; fiziksel güncelleme ve VPN kabulü bu emülatör sonuçlarıyla kapanmaz.
 
 ## Güncel devam — yeni yazılım adımı: açık sekmelerde arama
 

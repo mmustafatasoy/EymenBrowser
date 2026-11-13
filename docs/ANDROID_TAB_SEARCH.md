@@ -34,11 +34,15 @@ kapatmanın etkisizliği, mevcut oturuma dönüş ve sorgu sıfırlama eklenir.
 Açık/koyu dört yeni PNG zorunludur; önceki kabuller silinmez. Yeni adımlar için
 instrumentation 900 s, host betiği 1080 s sınırında kalır.
 
-Yerel kaynak/i18n/şartname, 11 regresyon denetimi ve kozmetik JS kontrolü geçti.
-İlk adayda JVM/üç ABI, Android 15/16 görsel ve indirme CI geçti. Tam UI'da
-arkadaki Gecko belge başlığının sonuç sanılması, gerçek arama editörünün
-Compose üst katmanında arama yapan test düzeltmesiyle giderilir. Gizli/normal
-sonuç dışlama koşulları korunur; son kaynağın dört CI sonucu beklenir.
-Fiziksel Android 8/11/14/16, gerçek cihazda
-güncelleme ve VPN saha kabulü ayrıca açıktır. Son kararlı sürüm v1.0.23'tür;
-bu özellik henüz yayımlanmamıştır.
+Yerel kaynak/i18n/şartname, 11 regresyon denetimi ve kozmetik JS geçti.
+Kaynak `b8e5046e20e7fa5e1ac2b50386cdf60fc7a96de4` için yedi JVM testi/üç ABI,
+Android 15/16 tam UI ve görsel, arka plan indirme CI başarılıdır. İki API'de
+PASS işareti, 26 zorunlu PNG ve dört gerçek arama ekranı doğrulandı.
+[İş/run/artefakt kanıtları](DURUM.md).
+
+Önceki adayın tam UI sonucu, global erişilebilirlik aramasının arkadaki Gecko
+belgesini sonuç sanması nedeniyle başarısızdı. Gerçek arama editörünün Compose
+üst katmanında arama yapan düzeltme bütün gizli/normal dışlama koşullarını korur.
+
+Fiziksel Android 8/11/14/16, gerçek cihaz güncelleme ve VPN saha kabulü açık.
+Son kararlı sürüm v1.0.23; bu özellik main'dedir, henüz yayımlanmamıştır.
