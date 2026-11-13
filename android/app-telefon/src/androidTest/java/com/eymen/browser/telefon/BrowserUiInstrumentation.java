@@ -151,10 +151,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             libraryTransferAndReading();
             privateLockWithRealAndroidCredential();
             secureDnsAndNativePrint();
+            fullPageCaptureAndDarkPages();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -945,6 +946,51 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "cancelling Android print restores the original browser page");
         require(currentSession()==page && new DownloadRegistry(getTargetContext()).items().size()==files,
             "print cancellation keeps the actual session and creates no user download record");
+    }
+    private BrowserPageStyles pageStyles() {return (BrowserPageStyles)((kotlin.Lazy<?>)controller("pageStyles$delegate")).getValue();}
+    private BrowserPageCapture pageCapture() {return (BrowserPageCapture)((kotlin.Lazy<?>)controller("pageCapture$delegate")).getValue();}
+    private void fullPageCaptureAndDarkPages() throws Exception {
+        await(() -> uiCheck(() -> pageStyles().getReady()),"the APK-bundled page style component is installed in real Gecko");
+        require(!prefs().getBoolean("dark_pages",false),"dark pages are opt-in by default");
+        String url="https://example.com/?eymen-full-page-audit=1";
+        org.mozilla.geckoview.GeckoSession page=searchTabPage(false,url,"Eymen full document");
+        String html="<main style='height:2200px;background:white'><h1>Eymen full document top</h1><footer style='position:absolute;top:2000px;width:100%;height:200px;background:rgb(0,0,255)'>Eymen full document bottom</footer></main>";
+        runOnMainSync(() -> page.loadUri("javascript:void(function(){document.documentElement.style.cssText='height:auto;overflow:auto';document.body.style.cssText='display:block;margin:0;padding:0;width:100%;max-width:none;height:auto;overflow:visible';document.body.innerHTML="+org.json.JSONObject.quote(html)+";window.scrollTo(0,0);}())"));
+        await(() -> find("Eymen full document top",false)!=null,"the tall HTTPS document is actually rendered");
+        int viewport=uiInt(() -> {try{return browserView().getHeight();}catch(Exception error){throw new RuntimeException(error);}});
+        Uri output=libraryFile("Eymen-full-document.png","image/png","");
+        runOnMainSync(() -> {try{
+            long id=((BrowserTab)((java.util.List<?>)controller("tabs")).stream().filter(t -> ((BrowserTab)t).getGecko()==page).findFirst().get()).getId();
+            java.lang.reflect.Method method=MainActivity.class.getDeclaredMethod("exportPageCapture",Uri.class,kotlin.Pair.class);method.setAccessible(true);
+            method.invoke(activity,output,new kotlin.Pair<Long,String>(id,url));
+        }catch(Exception error){throw new RuntimeException(error);}});
+        awaitLong(() -> uiCheck(() -> !pageCapture().getBusy()),"actual full-document export completes",45000);
+        try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(output)){
+            Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);require(bitmap!=null,"exported file is an actual decodable PNG");
+            try {
+                require(bitmap.getHeight()>viewport*2,"full-page output includes content below more than two viewports");
+                int pixel=bitmap.getPixel(bitmap.getWidth()/2,bitmap.getHeight()-20);
+                require(Color.blue(pixel)>200 && Color.red(pixel)<50,"the off-screen document footer pixels are present in the actual exported PNG");
+            }finally{bitmap.recycle();}
+        }
+        File folder=new File(activity.getCacheDir(),"browser-ui-audit");require(folder.isDirectory()||folder.mkdirs(),"capture evidence folder exists");
+        try(java.io.InputStream input=getTargetContext().getContentResolver().openInputStream(output);java.io.OutputStream file=new FileOutputStream(new File(folder,"full-page-saved.png"))){
+            require(input!=null,"real PNG evidence opened");byte[] block=new byte[8192];int count;while((count=input.read(block))!=-1)file.write(block,0,count);
+        }
+        require(currentSession()==page && url.equals(text(field(label(R.string.address_edit_label)))),"export keeps the original active page and session");
+        openSettingsItem(R.string.settings_appearance);scrollClick(label(R.string.dark_pages));
+        await(() -> prefs().getBoolean("dark_pages",false),"actual appearance toggle persists dark page choice");
+        click(label(R.string.back));click(label(R.string.back));
+        await(() -> find("Example Domain",false)!=null,"the selected dark-page preference reloads the real current document");
+        runOnMainSync(() -> page.loadUri("javascript:void(function(){let n=0;const timer=setInterval(()=>{if(getComputedStyle(document.documentElement).filter.includes('invert')){clearInterval(timer);document.title='Eymen actual dark style';}else if(++n>100)clearInterval(timer);},100);}())"));
+        await(() -> uiCheck(() -> ((java.util.List<?>)controller("tabs")).stream().anyMatch(t -> ((BrowserTab)t).getGecko()==page && "Eymen actual dark style".equals(((BrowserTab)t).getTitle()))),"the real HTTPS document receives its opt-in dark rendering style");
+        require(uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_LIGHT),"forced effect requests a light base rather than double-inverting an automatic dark page");
+        capture("dark-page.png",true);
+        openSettingsItem(R.string.settings_appearance);scrollClick(label(R.string.dark_pages));
+        await(() -> !prefs().getBoolean("dark_pages",true),"dark-page effect can be disabled through its actual setting");
+        click(label(R.string.back));click(label(R.string.back));
+        await(() -> find("Example Domain",false)!=null,"disabling the effect reloads the page without the optional style");
+        require(currentSession()==page && uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM),"disabling restores system content preference and preserves the same session");
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){

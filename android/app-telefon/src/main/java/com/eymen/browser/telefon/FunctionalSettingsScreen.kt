@@ -200,6 +200,7 @@ internal fun BrowserToolsScreen(services: BrowserSettingsServices, dayMode: Bool
         listOf(MenuAction.HISTORY to R.string.history, MenuAction.QR to R.string.menu_scan_qr,
             MenuAction.TRANSLATE to R.string.menu_translate, MenuAction.READER to R.string.menu_reader,
             MenuAction.FIND to R.string.menu_find, MenuAction.PDF to R.string.menu_save_pdf,
+            MenuAction.SCREENSHOT to R.string.page_capture,
             MenuAction.DESKTOP to R.string.menu_desktop, MenuAction.SEND_TO_DEVICE to R.string.menu_send_device,
             MenuAction.OPEN_EXTERNAL to R.string.menu_open_official_app,
             MenuAction.OPEN_BROWSER to R.string.menu_open_other_browser).forEach { (action, label) ->

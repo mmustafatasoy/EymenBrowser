@@ -1,0 +1,9 @@
+{
+  "manifest_version": 2,
+  "name": "EYMEN Browser Page Tools",
+  "version": "1.0.0",
+  "description": "User-selected dark page rendering, with no network or persistent page data.",
+  "browser_specific_settings": {"gecko": {"id": "eymen-page-tools@atasoyyazilim.com"}},
+  "content_scripts": [{"matches": ["https://*/*"], "js": ["dark-pages.js"], "run_at": "document_start", "all_frames": false}],
+  "permissions": ["nativeMessaging", "nativeMessagingFromContent", "geckoViewAddons"]
+}

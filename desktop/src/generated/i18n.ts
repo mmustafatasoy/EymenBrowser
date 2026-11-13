@@ -559,7 +559,13 @@ export const messages = {
     "secure_dns_quad9": "Quad9 — DNS üzerinden HTTPS",
     "secure_dns_note": "Bu seçim tarayıcı sayfaları içindir; telefonun genel DNS ayarını değiştirmez. DoH seçiliyken genel alan adları için seçilen sağlayıcı kullanılır. Sağlayıcıya erişilemiyorsa sayfa açılmayabilir.",
     "print_page": "Yazdır",
-    "print_failed": "Yazdırma ekranı açılamadı. Sayfanın yüklendiğinden ve cihazda yazdırma hizmeti bulunduğundan emin ol."
+    "print_failed": "Yazdırma ekranı açılamadı. Sayfanın yüklendiğinden ve cihazda yazdırma hizmeti bulunduğundan emin ol.",
+    "page_capture": "Tam sayfa ekran görüntüsü",
+    "page_capture_saved": "Sayfanın tamamı PNG olarak kaydedildi.",
+    "page_capture_failed": "Ekran görüntüsü kaydedilemedi. Çok uzun sayfalarda daha kısa bir sayfa deneyin.",
+    "dark_pages": "Siteleri koyu göster",
+    "dark_pages_note": "HTTPS sayfalarına isteğe bağlı koyu efekt uygular. Açık sayfalar yeniden yüklenir; bazı görseller ve site tasarımları farklı görünebilir.",
+    "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir."
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1120,6 +1126,12 @@ export const messages = {
     "secure_dns_quad9": "Quad9 — DNS over HTTPS",
     "secure_dns_note": "This choice applies to browser pages and does not change device-wide DNS settings. DoH uses the chosen resolver for public domains. Pages may not open if that resolver is unreachable.",
     "print_page": "Print",
-    "print_failed": "The print screen could not be opened. Check that the page has loaded and a print service is available on the device."
+    "print_failed": "The print screen could not be opened. Check that the page has loaded and a print service is available on the device.",
+    "page_capture": "Full-page screenshot",
+    "page_capture_saved": "The whole page was saved as PNG.",
+    "page_capture_failed": "The screenshot could not be saved. For very long pages, try a shorter page.",
+    "dark_pages": "Show dark pages",
+    "dark_pages_note": "Applies an optional dark effect to HTTPS pages. Open pages reload; some images and site designs may look different.",
+    "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available."
   }
 } as const;

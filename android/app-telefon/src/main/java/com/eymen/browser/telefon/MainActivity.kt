@@ -84,6 +84,7 @@ private class BrowserTab(
     var groupId by mutableStateOf<Long?>(null)
     // Restored background tabs open their saved HTTPS URL only when selected.
     var pendingRestoreUrl: String? = null
+    var pendingDarkReload = false
     // Captured Gecko page pixels live only in RAM, never stored or synced.
     var thumbnail by mutableStateOf<Bitmap?>(null)
 }
@@ -114,6 +115,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var history: BrowserHistory
     private lateinit var toolbarMotion: BrowserChromeMotion
     private val media by lazy {BrowserMedia.get(applicationContext)}
+    private val pageStyles by lazy {BrowserPageStyles(this){session -> tabs.any{it.gecko===session}}}
+    private val pageCapture by lazy {BrowserPageCapture(this)}
+    private var captureOwner:Pair<Long,String>?=null
+    private val pageCaptureLauncher=registerForActivityResult(ActivityResultContracts.CreateDocument("image/png")){uri ->
+        val owner=captureOwner;captureOwner=null
+        if(uri!=null && owner!=null)exportPageCapture(uri,owner)
+    }
     private var libraryShowing by mutableStateOf(false)
     private var libraryMode by mutableStateOf(BrowserLibrary.HISTORY)
     private var bookmarkRevision by mutableStateOf(0)
@@ -291,6 +299,7 @@ class MainActivity : ComponentActivity() {
         cosmeticFilterWanted.value = prefs.getBoolean("cosmetic_filter_wanted", false)
         GeckoMotorDenemesi.configureTrackerProtection(this, strictShieldWanted.value)
         initializeCosmeticExtension()
+        pageStyles.initialize {tabs.map{it.gecko}}
         // A locale recreation must restore the workspace rather than replay
         // the external URL which originally launched this Activity.
         val incomingUrl = if (savedInstanceState == null) GeckoMotorDenemesi.urlFromIntent(intent) else null
@@ -648,6 +657,7 @@ class MainActivity : ComponentActivity() {
                     onSearchEngine = ::updateSearchEnginePreference,
                     onDayMode = ::updateDayThemePreference,
                     themeFollowsSystem = themeFollowsSystem,onSystemTheme = ::useSystemTheme,
+                    darkPages = pageStyles.enabled,darkPagesReady=pageStyles.ready,onDarkPages=::setDarkPagesEnabled,
                     onAddressBottom = ::updateAddressPositionPreference,
                     onBack = ::hideSettings,
                     onAction = ::handleSettingsAction
@@ -941,6 +951,7 @@ class MainActivity : ComponentActivity() {
         })
         tabs.add(tab)
         cosmeticExtension?.let { installCosmeticPolicy(tab, it) }
+        pageStyles.attach(session)
         if (popupRequest) {
             val openerId = activeId.value
             awaitPopupOpen(tab, openerId)
@@ -997,8 +1008,10 @@ class MainActivity : ComponentActivity() {
         val delayed = tab.pendingRestoreUrl
         if (delayed != null) {
             tab.pendingRestoreUrl = null
+            tab.pendingDarkReload = false
             tab.gecko.loadUri(delayed)
         }
+        if(tab.pendingDarkReload && delayed==null && !tab.home){tab.pendingDarkReload=false;tab.gecko.reload()}
         setVideoFullScreen(tab.fullScreen)
         updateAutofill()
         updateHomeVisibility()
@@ -2186,7 +2199,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleMenuAction(action: MenuAction) {
-        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE, MenuAction.PRINT)) {
+        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE, MenuAction.PRINT, MenuAction.SCREENSHOT)) {
             notice(R.string.child_blocked); return
         }
         hideBrowserMenu()
@@ -2214,6 +2227,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.TOOLS -> { showSettings(); handleSettingsAction(SettingsAction.TOOLS) }
             MenuAction.PDF -> saveCurrentPageAsPdf()
             MenuAction.PRINT -> printCurrentPage()
+            MenuAction.SCREENSHOT -> requestPageCapture()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
@@ -2413,6 +2427,29 @@ class MainActivity : ComponentActivity() {
             override fun onPrint(stream:java.io.InputStream){printPdfStream(tab.gecko,stream)}
             override fun onPrintWithStatus(stream:java.io.InputStream):GeckoResult<Boolean> = printPdfStream(tab.gecko,stream)
         }
+    }
+
+    private fun setDarkPagesEnabled(enabled:Boolean) {
+        if(!pageStyles.updateEnabled(enabled))return
+        tabs.forEach{it.pendingDarkReload=!it.home}
+        activeTab?.takeIf{!it.home && !(it.privateMode && privateTabsLock.locked)}?.let {
+            it.pendingDarkReload=false;it.gecko.reload()
+        }
+    }
+
+    private fun requestPageCapture() {
+        val tab=activeTab ?: return
+        if(!canPrintSession(tab.gecko)){notice(R.string.page_capture_failed);return}
+        captureOwner=tab.id to tab.url
+        try{pageCaptureLauncher.launch("Eymen-page.png")}catch(_:Exception){captureOwner=null;notice(R.string.page_capture_failed)}
+    }
+
+    private fun exportPageCapture(uri:Uri,owner:Pair<Long,String>) {
+        pageCapture.save(uri,
+            {val tab=activeTab;tab!=null && tab.id==owner.first && tab.url==owner.second && canPrintSession(tab.gecko)},
+            {view.captureFullPage()}) {success ->
+                if(!isFinishing && !isDestroyed)notice(if(success)R.string.page_capture_saved else R.string.page_capture_failed)
+            }
     }
 
     private fun saveCurrentPageAsPdf() {
@@ -2715,6 +2752,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         if (::toolbarMotion.isInitialized) toolbarMotion.dispose()
+        pageCapture.close()
         vpn.stopUiMonitoring()
         updater.dispose()
         if(::sharing.isInitialized)sharing.dismiss()

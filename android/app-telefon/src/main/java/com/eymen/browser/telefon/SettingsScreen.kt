@@ -51,7 +51,8 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
     homeButtonEnabled: Boolean,onHomeButton: (Boolean)->Unit,
     onBack: ()->Unit,onAction: (SettingsAction)->Unit,onSearchEngine: (String)->Unit,
     onDayMode: (Boolean)->Unit,onAddressBottom: (Boolean)->Unit,
-    themeFollowsSystem: Boolean=false,onSystemTheme: ()->Unit={}) {
+    themeFollowsSystem: Boolean=false,onSystemTheme: ()->Unit={},
+    darkPages:Boolean=false,darkPagesReady:Boolean=false,onDarkPages:(Boolean)->Unit={}) {
     val p=browserListPalette(dayMode)
     var query by remember(visible){mutableStateOf("")}
     val pages=remember(visible,initialPage){mutableStateListOf(initialPage)}
@@ -129,6 +130,8 @@ internal fun SettingsScreen(globalShield: Boolean,searchEngine: String,dayMode: 
                     SettingsActionRow(stringResource(R.string.theme_day),p,{onDayMode(true)},chosen=dayMode && !themeFollowsSystem)
                     SettingsActionRow(stringResource(R.string.theme_night),p,{onDayMode(false)},chosen=!dayMode && !themeFollowsSystem)
                     SettingsActionRow(stringResource(R.string.theme_system),p,onSystemTheme,chosen=themeFollowsSystem)
+                    if(darkPagesReady)SettingsToggle(stringResource(R.string.dark_pages),stringResource(R.string.dark_pages_note),darkPages,p,onDarkPages)
+                    else ScreenText(stringResource(R.string.dark_pages_unavailable),p.muted,maxLines=4)
                 }
                 BrowserSettingsPage.HOME->{
                     SettingsToggle(stringResource(R.string.settings_home_button),stringResource(R.string.settings_home_note),homeButtonEnabled,p,onHomeButton)

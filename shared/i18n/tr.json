@@ -557,5 +557,11 @@
   "secure_dns_quad9": "Quad9 — DNS üzerinden HTTPS",
   "secure_dns_note": "Bu seçim tarayıcı sayfaları içindir; telefonun genel DNS ayarını değiştirmez. DoH seçiliyken genel alan adları için seçilen sağlayıcı kullanılır. Sağlayıcıya erişilemiyorsa sayfa açılmayabilir.",
   "print_page": "Yazdır",
-  "print_failed": "Yazdırma ekranı açılamadı. Sayfanın yüklendiğinden ve cihazda yazdırma hizmeti bulunduğundan emin ol."
+  "print_failed": "Yazdırma ekranı açılamadı. Sayfanın yüklendiğinden ve cihazda yazdırma hizmeti bulunduğundan emin ol.",
+  "page_capture": "Tam sayfa ekran görüntüsü",
+  "page_capture_saved": "Sayfanın tamamı PNG olarak kaydedildi.",
+  "page_capture_failed": "Ekran görüntüsü kaydedilemedi. Çok uzun sayfalarda daha kısa bir sayfa deneyin.",
+  "dark_pages": "Siteleri koyu göster",
+  "dark_pages_note": "HTTPS sayfalarına isteğe bağlı koyu efekt uygular. Açık sayfalar yeniden yüklenir; bazı görseller ve site tasarımları farklı görünebilir.",
+  "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir."
 }

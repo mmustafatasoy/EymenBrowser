@@ -566,4 +566,10 @@ My issue or suggestion:
     <string name="secure_dns_note">This choice applies to browser pages and does not change device-wide DNS settings. DoH uses the chosen resolver for public domains. Pages may not open if that resolver is unreachable.</string>
     <string name="print_page">Print</string>
     <string name="print_failed">The print screen could not be opened. Check that the page has loaded and a print service is available on the device.</string>
+    <string name="page_capture">Full-page screenshot</string>
+    <string name="page_capture_saved">The whole page was saved as PNG.</string>
+    <string name="page_capture_failed">The screenshot could not be saved. For very long pages, try a shorter page.</string>
+    <string name="dark_pages">Show dark pages</string>
+    <string name="dark_pages_note">Applies an optional dark effect to HTTPS pages. Open pages reload; some images and site designs may look different.</string>
+    <string name="dark_pages_unavailable">The dark-page component is not ready. Regular browsing remains available.</string>
 </resources>
