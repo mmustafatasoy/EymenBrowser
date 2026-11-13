@@ -1034,9 +1034,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             bar.getLocationOnScreen(barLocation);
             barSize[0]=bar.getWidth();barSize[1]=bar.getHeight();
             try {
-                android.view.View page=browserView();
-                page.getLocationOnScreen(pageLocation);
-                pageSize[0]=page.getWidth();pageSize[1]=page.getHeight();
+                android.view.View enginePage=browserView();
+                enginePage.getLocationOnScreen(pageLocation);
+                pageSize[0]=enginePage.getWidth();pageSize[1]=enginePage.getHeight();
             }catch(Exception error){throw new RuntimeException(error);}
         });
         require(barSize[0]>0 && barSize[1]>0 && pageSize[0]>0 && pageSize[1]>0 &&

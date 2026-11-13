@@ -2,6 +2,15 @@
 
 Son güncelleme: 2026-11-13
 
+## 2026-11-13 — v1.0.24 kararlı sürüm notu P0 kabul hata incelemesi
+
+- Kullanıcının yüklediği `EymenBrowser_KARARLI_SURUM_NOTU.md` kapsamı izlendi: yeni özellik yok, yalnız Android telefon, tasarım/imza/release workflow değişmedi.
+- `#43497308851` gerçek Android 15/16 kabul artefaktları ve logları incelendi. API35 testinde gerçek `android.webkit.WebView` altındaki düzenlenebilir alan mevcutken HTML aria-label Android erişilebilirlik düğümüne taşınmamıştı. API36 cihaz kimlik doğrulama ekranı sistemsel olarak açılıp kapanıyordu; eski test browser kökünü taradığı için güvenilir değildi.
+- `d70c413`: test yalnız aktif görünen Gecko web alanında gerçek textarea'yı bulur, sistem PIN alanını yalnız Android SystemUI/Settings penceresinden alır. Gerçek form verisi, sistemsel onay ve güvenlik koşulları zorunlu kalır.
+- `61c8ea7`: koyu web içeriği/açık araç çubuğu piksel denetimi sabit ekran oranı yerine gerçek Chrome/GeckoView sınırlarıyla kontrol edilir; araç çubuğu üstte/altta koşullarını değiştirmez.
+- `#43506147212` test APK derlemesinde aynı metot içinde değişken adı `page` zaten bulunduğundan Java derleme hatası görüldü; bu kaynakta yalnız yerel değişken `enginePage` olarak ayrıldı. Eski CI hatası başarı kabul edilmedi.
+- **Açık kapı:** bu son kaynakta kaynak/JVM/3 ABI, Android 15/16 tam UI, görsel ve indirme CI gruplarının tamamı aynı committe geçecek. Geçmeden `main` fast-forward/yayın yok. Kararlı son yayın hâlâ v1.0.23. Sonraki iş notun P0 kapısını bitirmek, ardından 3.1–3.8 hata düzeltmelerini değerlendirmek; gerçek WhatsApp Web/telefon PDF ve VPN saha kabulü hâlâ açık.
+
 ## 2026-11-13 – kullanıcı bildirimi: sekme karışması, WhatsApp Web, arama önerisi ve PDF
 
 - Kullanıcı Chrome benzeri gerçek davranışı istedi. Chrome'un kapalı kaynak kodu/tasarımı kopyalanmadı, yalnız Android telefonun mevcut GeckoView mimarisi ve onaylı tasarımı korundu.
