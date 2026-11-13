@@ -1096,9 +1096,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             String html="<h1>Eymen tab memory</h1><textarea aria-label='Eymen tab memory note'></textarea>";
             page.loadUri("javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";window.__eymenMemoryToken='same live document';document.addEventListener('visibilitychange',()=>document.title=document.hidden?'Eymen memory hidden':'Eymen memory visible');document.title='Eymen memory visible';}())");
         });
-        await(() -> field("Eymen tab memory note")!=null,"real web text area is available");
-        tap(field("Eymen tab memory note"));sendStringSync("Eymen note kept");
-        await(() -> "Eymen note kept".equals(text(field("Eymen tab memory note"))),"real keyboard writes a form value before tab deactivation");
+        await(() -> memoryFormEditor()!=null,"real web text area is available");
+        tap(memoryFormEditor());sendStringSync("Eymen note kept");
+        await(() -> "Eymen note kept".equals(text(memoryFormEditor())),"real keyboard writes a form value before tab deactivation");
         if(softwareKeyboardVisible())systemBack();
         searchTabPage(false,"https://example.com/?eymen-memory-other=1","Eymen other memory page");
         await(() -> "Eymen memory hidden".equals(title.get()),"releasing the display makes the real background document hidden");
@@ -1110,7 +1110,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> tabResult("Eymen memory hidden")!=null,"inactive tab remains searchable by its real address");
         tap(tabResult("Eymen memory hidden"));
         await(() -> currentSession()==page && "Eymen memory visible".equals(title.get()),"selecting the inactive card resumes the same actual Gecko document");
-        require("Eymen note kept".equals(text(field("Eymen tab memory note"))),"user-entered form text survives the native inactive-memory cycle");
+        require("Eymen note kept".equals(text(memoryFormEditor())),"user-entered form text survives the native inactive-memory cycle");
         runOnMainSync(() -> page.loadUri("javascript:void(document.title=window.__eymenMemoryToken==='same live document'?'Eymen memory RAM preserved':'Eymen memory RAM lost')"));
         await(() -> "Eymen memory RAM preserved".equals(title.get()),"JavaScript RAM state survives without a hidden reload or tab replacement");
         if(softwareKeyboardVisible())systemBack();capture("tab-memory-restored.png",true);
@@ -1482,13 +1482,57 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> nativePositive() != null, "native confirmation positive button");
         tap(nativePositive()); waitForIdleSync(); SystemClock.sleep(100);
     }
+    /**
+     * Gecko exposes a real web textarea as an editable child of its WebView,
+     * but on API35 does not always expose HTML aria-label as an Android
+     * contentDescription. Verify the live page's heading and locate exactly
+     * one real web editor inside Gecko, never the separate Compose address bar.
+     */
+    private AccessibilityNodeInfo memoryFormEditor() {
+        ArrayDeque<AccessibilityNodeInfo> queue=roots();
+        while(!queue.isEmpty()){
+            AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
+            if("android.webkit.WebView".equals(String.valueOf(node.getClassName())) && node.isVisibleToUser()){
+                ArrayDeque<AccessibilityNodeInfo> headingScope=new ArrayDeque<>();headingScope.add(node);
+                if(find(headingScope,"Eymen tab memory",false)==null)return null;
+                ArrayDeque<AccessibilityNodeInfo> descendants=new ArrayDeque<>();descendants.add(node);
+                AccessibilityNodeInfo editor=null;
+                while(!descendants.isEmpty()){
+                    AccessibilityNodeInfo child=descendants.removeFirst();if(!child.refresh())continue;
+                    if(child!=node && child.isVisibleToUser() && editorNode(child)){
+                        if(editor!=null)return null; // The fixture requires exactly one real web textarea.
+                        editor=child;
+                    }
+                    for(int i=0;i<child.getChildCount();i++){
+                        AccessibilityNodeInfo nested=child.getChild(i);if(nested!=null)descendants.add(nested);
+                    }
+                }
+                return editor;
+            }
+            for(int i=0;i<node.getChildCount();i++){
+                AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);
+            }
+        }
+        return null;
+    }
+    /**
+     * Android 16 renders device credentials in a SystemUI TYPE_SYSTEM window.
+     * getRootInActiveWindow() may still point at our own activity. Require an
+     * actually visible password editor belonging to Android, not our browser.
+     */
     private AccessibilityNodeInfo pinEditor() {
-        AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
-        if (root == null) return null;
-        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>(); queue.add(root);
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();
+            if(root==null || !root.refresh())continue;
+            String owner=String.valueOf(root.getPackageName());
+            if(("com.android.systemui".equals(owner)||"com.android.settings".equals(owner))
+                && (window.getType()==AccessibilityWindowInfo.TYPE_SYSTEM ||
+                    window.getType()==AccessibilityWindowInfo.TYPE_APPLICATION))queue.add(root);
+        }
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo node=queue.removeFirst(); if (!node.refresh()) continue;
-            if (node.isVisibleToUser() && node.isEditable() && node.isPassword()) return node;
+            if (node.isVisibleToUser() && editorNode(node) && node.isPassword()) return node;
             for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
         }
         return null;
