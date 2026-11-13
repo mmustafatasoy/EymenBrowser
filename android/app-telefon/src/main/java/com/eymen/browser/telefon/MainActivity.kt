@@ -2391,7 +2391,7 @@ class MainActivity : ComponentActivity() {
                 try {
                     val native=view.printDelegate?.onPrintWithStatus(stream)
                     if(native==null){stream.close();result.complete(false);notice(R.string.print_failed)}
-                    else native.accept({value -> result.complete(value)},{error -> result.completeExceptionally(error)})
+                    else native.accept({value -> result.complete(value)},{error -> result.completeExceptionally(error ?: IllegalStateException("Native print failed"))})
                 }catch(error:Exception){try{stream.close()}catch(_:Exception){};result.completeExceptionally(error)}
             }
         }
