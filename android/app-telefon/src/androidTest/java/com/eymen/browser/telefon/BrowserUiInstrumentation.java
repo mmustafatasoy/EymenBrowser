@@ -1024,14 +1024,34 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         runOnMainSync(() -> page.loadUri("javascript:void(function(){let n=0;const timer=setInterval(()=>{if(getComputedStyle(document.documentElement).filter.includes('invert')){clearInterval(timer);document.title='Eymen actual dark style';}else if(++n>100)clearInterval(timer);},100);}())"));
         await(() -> uiCheck(() -> ((java.util.List<?>)controller("tabs")).stream().anyMatch(t -> ((BrowserTab)t).getGecko()==page && "Eymen actual dark style".equals(((BrowserTab)t).getTitle()))),"the real HTTPS document receives its opt-in dark rendering style");
         require(uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_LIGHT),"forced effect requests a light base rather than double-inverting an automatic dark page");
-        // The web document is dark while the native toolbar remains light.
-        // Assert both actual surfaces instead of assuming a single theme pixel.
+        // The web document is dark while the native toolbar stays light.
+        // Derive pixel locations from the two actual view rectangles.  A fixed
+        // 11.5% screen height accidentally sampled the webpage in bottom-bar mode.
+        final int[] barLocation=new int[2], pageLocation=new int[2];
+        final int[] barSize=new int[2], pageSize=new int[2];
+        runOnMainSync(() -> {
+            android.view.View bar=chromeView();
+            bar.getLocationOnScreen(barLocation);
+            barSize[0]=bar.getWidth();barSize[1]=bar.getHeight();
+            try {
+                android.view.View page=browserView();
+                page.getLocationOnScreen(pageLocation);
+                pageSize[0]=page.getWidth();pageSize[1]=page.getHeight();
+            }catch(Exception error){throw new RuntimeException(error);}
+        });
+        require(barSize[0]>0 && barSize[1]>0 && pageSize[0]>0 && pageSize[1]>0 &&
+            uiCheck(() -> chromeView().getVisibility()==android.view.View.VISIBLE),
+            "real toolbar and Gecko content have measurable visible bounds");
         Bitmap mixed=getUiAutomation().takeScreenshot();
         try {
-            int chromePixel=mixed.getPixel(8,(int)(mixed.getHeight()*0.115f));
-            int pagePixel=mixed.getPixel(8,mixed.getHeight()/2);
+            int chromeX=Math.min(mixed.getWidth()-1,Math.max(0,barLocation[0]+8));
+            int chromeY=Math.min(mixed.getHeight()-1,Math.max(0,barLocation[1]+barSize[1]/2));
+            int pageX=Math.min(mixed.getWidth()-1,Math.max(0,pageLocation[0]+8));
+            int pageY=Math.min(mixed.getHeight()-1,Math.max(0,pageLocation[1]+pageSize[1]/2));
+            int chromePixel=mixed.getPixel(chromeX,chromeY);
+            int pagePixel=mixed.getPixel(pageX,pageY);
             require(Color.red(chromePixel)>180 && Color.green(chromePixel)>180 && Color.red(pagePixel)<80,
-                "real dark document has dark pixels and the light toolbar stays light");
+                "real dark document pixels differ from the measured light toolbar surface");
         } finally {mixed.recycle();}
         capture("dark-page.png",null);
         openSettingsItem(R.string.settings_appearance);scrollClick(label(R.string.dark_pages));
