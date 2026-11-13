@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.eymen.browser.tema.EymenPaths
 import com.eymen.browser.tema.EymenTokens as T
@@ -36,8 +38,12 @@ internal fun BookmarksScreen(store: BrowserBookmarks, visible: Boolean, dayMode:
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(T.telefon_ekran_kucukBosluk.dp),
             horizontalArrangement=Arrangement.spacedBy(T.telefon_ekran_kucukBosluk.dp)) {
-            ScreenButton(stringResource(R.string.tab_all),p,{selected=null},primary=selected==null)
-            store.folders.forEach {folder -> ScreenButton(folder.name,p,{selected=folder.id},primary=selected==folder.id)}
+            val allLabel=stringResource(R.string.bookmark_show_all)
+            ScreenButton(stringResource(R.string.tab_all),p,{selected=null},modifier=Modifier.semantics{contentDescription=allLabel},primary=selected==null)
+            store.folders.forEach {folder ->
+                val openLabel=stringResource(R.string.bookmark_open_folder,folder.name)
+                ScreenButton(folder.name,p,{selected=folder.id},modifier=Modifier.semantics{contentDescription=openLabel},primary=selected==folder.id)
+            }
         }
         val folder=store.folders.firstOrNull {it.id==selected}
         if(folder!=null) SettingsActionRow(stringResource(R.string.bookmark_manage_folder,folder.name),p,{onFolder(folder)},icon=EymenPaths.ayarlar)

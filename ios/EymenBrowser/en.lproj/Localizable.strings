@@ -515,3 +515,5 @@
 "bookmark_limit" = "The library limit has been reached. Remove an entry to add another.";
 "bookmark_operation_failed" = "The bookmark change could not be saved. Your existing entries are preserved; you can retry.";
 "address_suggestion_action" = "Open suggestion: %1$s";
+"bookmark_show_all" = "Show all bookmarks";
+"bookmark_open_folder" = "Open folder: %1$s";

@@ -267,7 +267,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         String spaHtml="<button style='position:fixed;inset:0;width:100%;height:100%' onclick=\"history.pushState({},'',location.href+'#native-step');document.title='Eymen SPA step ready';\">Eymen SPA step</button>";
         String spaScript="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(spaHtml)+";document.title='Eymen SPA ready';}())";
         runOnMainSync(()->session.loadUri(spaScript));
-        await(()->"Eymen SPA ready".equals(title.get()),"user-activated SPA history fixture ready");tapBrowserCenter();
+        await(()->"Eymen SPA ready".equals(title.get()) && find("Eymen SPA step",false)!=null,"user-activated SPA history fixture is laid out and accessible");
+        click("Eymen SPA step");
         await(()->text(field(address)).equals(second+"#native-step"),"same-document location updates the address without PageStart");
         menuNavigation(R.string.back);await(()->second.equals(text(field(address))),"menu Back updates the SPA address");
         menuNavigation(R.string.forward);await(()->(second+"#native-step").equals(text(field(address))),"menu Forward updates the SPA address");
@@ -620,11 +621,13 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> field(label(R.string.library_search_bookmarks))!=null,"real bookmark library opened");
         click(label(R.string.bookmark_new_folder));search(label(R.string.bookmark_folder_name),"Geçici Klasör");clickNativePositive();
         await(() -> uiCheck(() -> !store.getLoading() && store.getFolders().stream().anyMatch(x -> x.getName().equals("Geçici Klasör"))),"original folder saved");
-        click("Geçici Klasör");click(activity.getString(R.string.bookmark_manage_folder,"Geçici Klasör"));click(label(R.string.bookmark_rename_folder));
+        click(activity.getString(R.string.bookmark_open_folder,"Geçici Klasör"));click(activity.getString(R.string.bookmark_manage_folder,"Geçici Klasör"));click(label(R.string.bookmark_rename_folder));
         search(label(R.string.bookmark_folder_name),folder);clickNativePositive();
         await(() -> uiCheck(() -> !store.getLoading() && store.getFolders().stream().anyMatch(x -> x.getName().equals(folder))),"new folder persisted");
+        click(label(R.string.bookmark_show_all));
         click(activity.getString(R.string.bookmark_item_options,original));click(label(R.string.bookmark_move));click(folder);
         await(() -> uiCheck(() -> !store.getLoading() && store.getEntries().stream().anyMatch(x -> x.getUrl().equals(url) && x.getFolderId()!=null)),"existing bookmark moved to the selected folder");
+        click(activity.getString(R.string.bookmark_open_folder,folder));
         search(label(R.string.library_search_bookmarks),"legacy-bookmark");
         await(() -> find(label(R.string.history_no_results),false)!=null,"folder search cannot include a bookmark from outside the folder");
         click(label(R.string.search_clear));

@@ -515,3 +515,5 @@
 "bookmark_limit" = "Kütüphane sınırına ulaşıldı. Yeni kayıt eklemek için bir kaydı kaldır.";
 "bookmark_operation_failed" = "Yer imi değişikliği kaydedilemedi. Mevcut kayıtların korundu; tekrar deneyebilirsin.";
 "address_suggestion_action" = "Öneriyi aç: %1$s";
+"bookmark_show_all" = "Tüm yer imlerini göster";
+"bookmark_open_folder" = "Klasörü aç: %1$s";

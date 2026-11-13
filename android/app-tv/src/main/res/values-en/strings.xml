@@ -523,4 +523,6 @@ My issue or suggestion:
     <string name="bookmark_limit">The library limit has been reached. Remove an entry to add another.</string>
     <string name="bookmark_operation_failed">The bookmark change could not be saved. Your existing entries are preserved; you can retry.</string>
     <string name="address_suggestion_action">Open suggestion: %1$s</string>
+    <string name="bookmark_show_all">Show all bookmarks</string>
+    <string name="bookmark_open_folder">Open folder: %1$s</string>
 </resources>

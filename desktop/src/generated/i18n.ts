@@ -516,7 +516,9 @@ export const messages = {
     "bookmark_duplicate": "Bu adres başka bir yer iminde kayıtlı.",
     "bookmark_limit": "Kütüphane sınırına ulaşıldı. Yeni kayıt eklemek için bir kaydı kaldır.",
     "bookmark_operation_failed": "Yer imi değişikliği kaydedilemedi. Mevcut kayıtların korundu; tekrar deneyebilirsin.",
-    "address_suggestion_action": "Öneriyi aç: %1$s"
+    "address_suggestion_action": "Öneriyi aç: %1$s",
+    "bookmark_show_all": "Tüm yer imlerini göster",
+    "bookmark_open_folder": "Klasörü aç: %1$s"
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1034,6 +1036,8 @@ export const messages = {
     "bookmark_duplicate": "This address is already saved in another bookmark.",
     "bookmark_limit": "The library limit has been reached. Remove an entry to add another.",
     "bookmark_operation_failed": "The bookmark change could not be saved. Your existing entries are preserved; you can retry.",
-    "address_suggestion_action": "Open suggestion: %1$s"
+    "address_suggestion_action": "Open suggestion: %1$s",
+    "bookmark_show_all": "Show all bookmarks",
+    "bookmark_open_folder": "Open folder: %1$s"
   }
 } as const;
