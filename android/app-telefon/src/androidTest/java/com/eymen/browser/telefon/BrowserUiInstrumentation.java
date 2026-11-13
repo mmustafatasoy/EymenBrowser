@@ -152,6 +152,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             privateLockWithRealAndroidCredential();
             secureDnsAndNativePrint();
             fullPageCaptureAndDarkPages();
+            nativePdfViewerAcceptance();
             inactiveTabKeepsFormAndSession();
             realWebNotifications();
             realInstalledWebApp();
@@ -551,7 +552,15 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         String alphaTitle = "Eymen Sekme Deneyi İzmir", betaTitle = "Eymen Sekme Deneyi Ankara";
         String secretTitle = "Eymen Sekme Deneyi Gizli";
         org.mozilla.geckoview.GeckoSession alpha = searchTabPage(false, alphaUrl, alphaTitle);
+        String alphaProof="Eymen independent alpha content", betaProof="Eymen independent beta content";
+        runOnMainSync(() -> alpha.loadUri("javascript:void(document.body.insertAdjacentHTML('afterbegin'," +
+            org.json.JSONObject.quote("<h1>"+alphaProof+"</h1>") + "))"));
+        await(() -> find(alphaProof,false)!=null,"first tab paints its own real document");
         org.mozilla.geckoview.GeckoSession beta = searchTabPage(false, betaUrl, betaTitle);
+        runOnMainSync(() -> beta.loadUri("javascript:void(document.body.insertAdjacentHTML('afterbegin'," +
+            org.json.JSONObject.quote("<h1>"+betaProof+"</h1>") + "))"));
+        await(() -> find(betaProof,false)!=null && find(alphaProof,false)==null,
+            "new tab paints distinct content, not the previous tab's surface");
         org.mozilla.geckoview.GeckoSession secret = searchTabPage(true,
             "https://example.com/?eymen-tab-search=private", secretTitle);
         int count = realTabCount();
@@ -586,6 +595,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(label(R.string.tab_next) + " ›");
         await(() -> currentSession() == alpha && field(hint) == null,
             "Next from an excluded active tab selects the first matching existing session");
+        await(() -> find(alphaProof,false)!=null && find(betaProof,false)==null,
+            "alpha document reappears without the beta DOM after switching back");
+        capture("tab-independent-alpha.png",true);
         click(label(R.string.tabs));
         search(hint, "izmir");
         await(() -> tabResult(alphaTitle) != null && tabResult(betaTitle) == null &&
@@ -598,6 +610,9 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click(label(R.string.tab_next) + " ›");
         await(() -> currentSession() == beta && field(hint) == null,
             "quick switching can activate a single result when the current tab is excluded");
+        await(() -> find(betaProof,false)!=null && find(alphaProof,false)==null,
+            "beta document reappears without the alpha DOM after switching back");
+        capture("tab-independent-beta.png",true);
         click(label(R.string.tabs));
         search(hint, "no-such-open-tab-acceptance");
         await(() -> tabResult(label(R.string.tabs_search_empty)) != null,
@@ -1009,12 +1024,66 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         runOnMainSync(() -> page.loadUri("javascript:void(function(){let n=0;const timer=setInterval(()=>{if(getComputedStyle(document.documentElement).filter.includes('invert')){clearInterval(timer);document.title='Eymen actual dark style';}else if(++n>100)clearInterval(timer);},100);}())"));
         await(() -> uiCheck(() -> ((java.util.List<?>)controller("tabs")).stream().anyMatch(t -> ((BrowserTab)t).getGecko()==page && "Eymen actual dark style".equals(((BrowserTab)t).getTitle()))),"the real HTTPS document receives its opt-in dark rendering style");
         require(uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_LIGHT),"forced effect requests a light base rather than double-inverting an automatic dark page");
-        capture("dark-page.png",true);
+        // The web document is dark while the native toolbar remains light.
+        // Assert both actual surfaces instead of assuming a single theme pixel.
+        Bitmap mixed=getUiAutomation().takeScreenshot();
+        try {
+            int chromePixel=mixed.getPixel(8,(int)(mixed.getHeight()*0.115f));
+            int pagePixel=mixed.getPixel(8,mixed.getHeight()/2);
+            require(Color.red(chromePixel)>180 && Color.green(chromePixel)>180 && Color.red(pagePixel)<80,
+                "real dark document has dark pixels and the light toolbar stays light");
+        } finally {mixed.recycle();}
+        capture("dark-page.png",null);
         openSettingsItem(R.string.settings_appearance);scrollClick(label(R.string.dark_pages));
         await(() -> !prefs().getBoolean("dark_pages",true),"dark-page effect can be disabled through its actual setting");
         click(label(R.string.back));click(label(R.string.back));
         await(() -> find("Example Domain",false)!=null,"disabling the effect reloads the page without the optional style");
         require(currentSession()==page && uiCheck(() -> runtime().getSettings().getPreferredColorScheme()==org.mozilla.geckoview.GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM),"disabling restores system content preference and preserves the same session");
+    }
+    private void nativePdfViewerAcceptance() throws Exception {
+        Context context=getTargetContext();
+        org.mozilla.geckoview.GeckoSession existing=currentSession();
+        android.graphics.pdf.PdfDocument document=new android.graphics.pdf.PdfDocument();
+        for(int number=1;number<=2;number++){
+            android.graphics.pdf.PdfDocument.PageInfo info=
+                new android.graphics.pdf.PdfDocument.PageInfo.Builder(500,800,number).create();
+            android.graphics.pdf.PdfDocument.Page sheet=document.startPage(info);
+            android.graphics.Paint paint=new android.graphics.Paint();
+            paint.setColor(Color.BLACK);paint.setTextSize(26f);
+            sheet.getCanvas().drawText("Eymen real PDF page "+number,50,70,paint);
+            document.finishPage(sheet);
+        }
+        android.content.ContentValues values=new android.content.ContentValues();
+        String filename="Eymen actual PDF test.pdf";
+        values.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME,filename);
+        values.put(android.provider.MediaStore.MediaColumns.MIME_TYPE,"application/pdf");
+        values.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,android.os.Environment.DIRECTORY_DOWNLOADS);
+        values.put(android.provider.MediaStore.MediaColumns.IS_PENDING,1);
+        Uri file=context.getContentResolver().insert(
+            android.provider.MediaStore.Downloads.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY),values);
+        require(file!=null,"real MediaStore PDF fixture created");
+        libraryFixtures.add(file);
+        try(java.io.OutputStream out=context.getContentResolver().openOutputStream(file,"w")) {
+            require(out!=null,"PDF MediaStore stream available"); document.writeTo(out);
+        }finally{document.close();}
+        android.content.ContentValues complete=new android.content.ContentValues();
+        complete.put(android.provider.MediaStore.MediaColumns.IS_PENDING,0);
+        require(context.getContentResolver().update(file,complete,null,null)>0,"two-page PDF committed");
+        new DownloadRegistry(context).record(new SavedDownload(file.toString(),filename,"application/pdf",800,System.currentTimeMillis()));
+        menuNavigation(R.string.downloads);
+        await(() -> find(filename,false)!=null,"actual PDF appears in Downloads");
+        click(filename);
+        awaitLong(() -> find("Sayfa 1 / 2",false)!=null || find("Page 1 / 2",false)!=null,
+            "PDF opened internally with two real pages",30000);
+        capture("pdf-viewer-first-page.png",null);
+        click("›");
+        await(() -> find("Sayfa 2 / 2",false)!=null || find("Page 2 / 2",false)!=null,
+            "real native PDF reader advances to second page");
+        capture("pdf-viewer-second-page.png",null);
+        systemBack();
+        await(() -> find(filename,false)!=null,"closing PDF returns to Downloads");
+        click(label(R.string.back));
+        require(currentSession()==existing,"PDF reading preserves browsing session");
     }
     private void inactiveTabKeepsFormAndSession() throws Exception {
         org.mozilla.geckoview.GeckoSession page=searchTabPage(false,"https://example.com/?eymen-memory-audit=1","Eymen memory fixture");
