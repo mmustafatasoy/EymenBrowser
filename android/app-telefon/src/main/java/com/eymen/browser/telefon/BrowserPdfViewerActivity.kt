@@ -167,7 +167,7 @@ class BrowserPdfViewerActivity : Activity() {
     }
     override fun onDestroy(){
         disposed=true;generation++
-        picture.setImageDrawable(null)
+        if(::picture.isInitialized)picture.setImageDrawable(null)
         displayed?.recycle();displayed=null
         worker.execute {
             try{pdf?.close()}catch(_:Exception){}

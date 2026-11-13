@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var addressSuggestionsLayer: ComposeView
     private var addressSuggestionQuery by mutableStateOf("")
     private var addressSuggestionsVisible by mutableStateOf(false)
+    private var remoteSuggestions by mutableStateOf<List<AddressSuggestion>>(emptyList())
+    private val searchAutocomplete by lazy { SearchAutocomplete() }
     private lateinit var homeLayer: ComposeView
     private lateinit var tabsLayer: ComposeView
     private lateinit var menuLayer: ComposeView
@@ -434,9 +436,15 @@ class MainActivity : ComponentActivity() {
                 tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
                 dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
                 privateMode=activeTab?.privateMode==true,
-                onAddressQuery={addressSuggestionQuery=TabSearchPolicy.boundedInput(it)},
+                onAddressQuery={
+                    addressSuggestionQuery=TabSearchPolicy.boundedInput(it)
+                    refreshSearchAutocomplete(addressSuggestionQuery)
+                },
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
-                onEditingChanged={addressEditing=it;addressSuggestionsVisible=it},
+                onEditingChanged={
+                    addressEditing=it;addressSuggestionsVisible=it
+                    if(!it)clearSearchAutocomplete()
+                },
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
             }
         }
@@ -445,9 +453,12 @@ class MainActivity : ComponentActivity() {
         root.addView(addressSuggestionsLayer,FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.WRAP_CONTENT))
         addressSuggestionsLayer.visibility=View.GONE
         addressSuggestionsLayer.setContent {
-            val items=if(addressSuggestionsVisible)AddressSuggestionPolicy.find(addressSuggestionQuery,
-                bookmarks.entries.map{AddressSuggestion(it.url,it.title)}+history.entries.map{AddressSuggestion(it.url,it.title)},
-                activeTab?.privateMode==true) else emptyList()
+            val items=if(addressSuggestionsVisible) {
+                val local=AddressSuggestionPolicy.find(addressSuggestionQuery,
+                    bookmarks.entries.map{AddressSuggestion(it.url,it.title)}+history.entries.map{AddressSuggestion(it.url,it.title)},
+                    activeTab?.privateMode==true)
+                (local+remoteSuggestions).distinctBy{if(it.search)"search:"+it.title.lowercase(Locale.ROOT) else "url:"+it.url}.take(7)
+            }else emptyList()
             androidx.compose.runtime.LaunchedEffect(items,addressSuggestionsVisible) {
                 addressSuggestionsLayer.visibility=if(!addressSuggestionsVisible || items.isEmpty())View.GONE else View.VISIBLE
             }
@@ -2156,7 +2167,21 @@ class MainActivity : ComponentActivity() {
     private fun showAddressPositionSelection() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
     private fun showAppearanceOptions() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
 
+    private fun refreshSearchAutocomplete(query:String) {
+        remoteSuggestions=emptyList()
+        searchAutocomplete.request(query,searchEngine,activeTab?.privateMode==true,childMode.enabled,
+            prefs.getBoolean("remote_suggestions_enabled",true)) { words ->
+            remoteSuggestions=words.map{AddressSuggestion(url=it,title=it,search=true)}
+        }
+    }
+
+    private fun clearSearchAutocomplete() {
+        if(::prefs.isInitialized)searchAutocomplete.cancel()
+        remoteSuggestions=emptyList()
+    }
+
     private fun hideBrowserKeyboard() {
+        clearSearchAutocomplete()
         addressSuggestionsVisible=false;addressSuggestionQuery=""
         if(::addressSuggestionsLayer.isInitialized)addressSuggestionsLayer.visibility=View.GONE
         addressEditing=false
@@ -2799,6 +2824,7 @@ class MainActivity : ComponentActivity() {
         // UI status polling does not run while the Activity is hidden.
         vpn.stopUiMonitoring()
         downloads.pauseObserving()
+        clearSearchAutocomplete()
         // Synchronous write at the lifecycle boundary for process/phone death.
         if (::view.isInitialized) saveNormalWorkspace(durable = true)
         super.onStop()
@@ -2825,6 +2851,7 @@ class MainActivity : ComponentActivity() {
         updater.dispose()
         if(::sharing.isInitialized)sharing.dismiss()
         downloads.dispose()
+        searchAutocomplete.close()
         if (::view.isInitialized) view.releaseSession()
         tabs.forEach { if (it.gecko.isOpen) it.gecko.close() }
         tabs.clear()

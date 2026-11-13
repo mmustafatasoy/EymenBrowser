@@ -1,6 +1,6 @@
 package com.eymen.browser.telefon
 
-internal data class AddressSuggestion(val url: String, val title: String)
+internal data class AddressSuggestion(val url: String, val title: String, val search: Boolean = false)
 
 /** Feature 9. Local library suggestions; no keystroke leaves the device. */
 internal object AddressSuggestionPolicy {

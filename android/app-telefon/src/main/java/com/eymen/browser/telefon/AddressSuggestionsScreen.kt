@@ -21,7 +21,7 @@ internal fun AddressSuggestionsScreen(items:List<AddressSuggestion>,day:Boolean,
         .verticalScroll(rememberScrollState())) {
         items.forEach{item ->
             val label=stringResource(R.string.address_suggestion_action,item.title)
-            SettingsActionRow(item.title,p,{onOpen(item.url)},modifier=Modifier.semantics{contentDescription=label},note=item.url,icon=EymenPaths.ara)
+            SettingsActionRow(item.title,p,{onOpen(if(item.search)item.title else item.url)},modifier=Modifier.semantics{contentDescription=label},note=if(item.search)"Google" else item.url,icon=EymenPaths.ara)
         }
     }
 }
