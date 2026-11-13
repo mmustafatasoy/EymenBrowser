@@ -568,7 +568,12 @@ export const messages = {
     "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir.",
     "web_notifications_channel": "Site bildirimleri",
     "permission_web_notifications": "Bu sitenin Android bildirimi göstermesine izin verilsin mi? Android ayrıca bildirim izni sorabilir.",
-    "web_notifications_note": "İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez."
+    "web_notifications_note": "İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez.",
+    "webapp_install": "Web uygulamasını kur",
+    "webapp_confirm": "%1$s\n%2$s\n\nBu HTTPS web uygulaması kendi penceresinde açılır. Son ana ekran onayını Android sorar. Site kapsamı dışındaki bağlantılar tarayıcıda açılır.",
+    "webapp_requested": "Ana ekrana ekleme isteği Android’e gönderildi.",
+    "webapp_failed": "Ana ekrana eklenemedi. Başlatıcının desteklediğini ve en fazla 20 web uygulaması sınırını kontrol edin.",
+    "webapp_unavailable": "Bu sayfada kurulabilir, aynı kaynaktan güvenli bir web uygulaması manifesti yok."
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1138,6 +1143,11 @@ export const messages = {
     "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available.",
     "web_notifications_channel": "Site notifications",
     "permission_web_notifications": "Allow this site to show Android notifications? Android may also ask for notification permission.",
-    "web_notifications_note": "Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version."
+    "web_notifications_note": "Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version.",
+    "webapp_install": "Install web app",
+    "webapp_confirm": "%1$s\n%2$s\n\nThis HTTPS web app opens in its own window. Android asks for final home-screen confirmation. Links outside its scope open in the browser.",
+    "webapp_requested": "The home-screen request was sent to Android.",
+    "webapp_failed": "Could not add the app. Check launcher support and the limit of 20 web apps.",
+    "webapp_unavailable": "This page has no installable, secure web app manifest from the same origin."
   }
 } as const;

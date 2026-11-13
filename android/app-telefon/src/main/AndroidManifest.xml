@@ -69,5 +69,9 @@
                 <data android:scheme="https"/>
             </intent-filter>
         </activity>
+        <activity android:name=".WebAppActivity" android:exported="false"
+            android:documentLaunchMode="intoExisting" android:taskAffinity="com.eymen.browser.telefon.webapps"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode"
+            android:resizeableActivity="true" />
     </application>
 </manifest>

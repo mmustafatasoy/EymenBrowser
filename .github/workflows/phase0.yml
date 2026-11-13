@@ -1,7 +1,7 @@
 name: EymenBrowser - Android telefon arayuz ve kaynak denetimi
 on:
   push:
-    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, fix/update-current-message, test/v1.0.23-update-acceptance, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs, feat/android-web-notifications]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, fix/update-current-message, test/v1.0.23-update-acceptance, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs, feat/android-web-notifications, feat/android-web-apps]
   workflow_dispatch:
 env:
   PYTHONIOENCODING: utf-8

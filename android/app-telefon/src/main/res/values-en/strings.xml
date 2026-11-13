@@ -575,4 +575,12 @@ My issue or suggestion:
     <string name="web_notifications_channel">Site notifications</string>
     <string name="permission_web_notifications">Allow this site to show Android notifications? Android may also ask for notification permission.</string>
     <string name="web_notifications_note">Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version.</string>
+    <string name="webapp_install">Install web app</string>
+    <string name="webapp_confirm">%1$s
+%2$s
+
+This HTTPS web app opens in its own window. Android asks for final home-screen confirmation. Links outside its scope open in the browser.</string>
+    <string name="webapp_requested">The home-screen request was sent to Android.</string>
+    <string name="webapp_failed">Could not add the app. Check launcher support and the limit of 20 web apps.</string>
+    <string name="webapp_unavailable">This page has no installable, secure web app manifest from the same origin.</string>
 </resources>

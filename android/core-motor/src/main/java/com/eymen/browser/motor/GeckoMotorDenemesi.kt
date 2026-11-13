@@ -146,7 +146,8 @@ object GeckoMotorDenemesi {
         trackingProtection: Boolean = false,
         onBlocked: (Int) -> Unit = { _ -> Unit },
         onExternalAppLink: (String, String?, Boolean) -> Boolean = { _, _, _ -> false },
-        onUserOpenedWindow: (String) -> GeckoSession? = { _ -> null }
+        onUserOpenedWindow: (String) -> GeckoSession? = { _ -> null },
+        onWebAppManifest: (org.json.JSONObject) -> Unit = {}
     ): GeckoSession {
         val settings = GeckoSessionSettings.Builder()
             .usePrivateMode(privateMode)
@@ -223,6 +224,7 @@ object GeckoMotorDenemesi {
         })
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onCloseRequest(session: GeckoSession) { onClose() }
+            override fun onWebAppManifest(session:GeckoSession,manifest:org.json.JSONObject){onWebAppManifest(manifest)}
             override fun onTitleChange(session: GeckoSession, title: String?) {
                 onTitle(title)
             }

@@ -30,6 +30,10 @@ internal class BrowserPageStyles(context:Context,private val live:(GeckoSession)
             },{_ -> ready=false})
         }catch(_:RuntimeException){ready=false}
     }
+    fun refresh():Boolean {
+        val wanted=prefs.getBoolean("dark_pages",false);val changed=wanted!=enabled
+        enabled=wanted;applyRuntime();return changed
+    }
     fun updateEnabled(value:Boolean):Boolean {
         if(!ready)return false
         enabled=value;prefs.edit().putBoolean("dark_pages",value).apply();applyRuntime();return true

@@ -154,10 +154,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             fullPageCaptureAndDarkPages();
             inactiveTabKeepsFormAndSession();
             realWebNotifications();
+            realInstalledWebApp();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,real_inactive_Gecko_tab_visibility_memory_cycle_form_and_RAM_state_preserved,real_Web_Notification_permission_Android_permission_drawer_click_revoke_and_private_denial,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,real_inactive_Gecko_tab_visibility_memory_cycle_form_and_RAM_state_preserved,real_Web_Notification_permission_Android_permission_drawer_click_revoke_and_private_denial,real_engine_manifest_user_and_launcher_confirmation_pinned_shortcut_standalone_task_and_scope_handoff,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -723,11 +724,13 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             base64=bytes.toString("UTF-8").trim();
         }
         org.mozilla.geckoview.GeckoSession.ContentDelegate original=contentDelegate(page);
-        String html="<video id='fixture' style='position:fixed;inset:0;width:100%;height:100%' loop playsinline src='data:video/webm;base64,"+base64+"'></video><button id='play' style='position:fixed;inset:0;width:100%;height:100%;z-index:1'>Eymen media play</button>";
-        String js="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";const v=document.getElementById('fixture'),b=document.getElementById('play');let ticks=0;v.addEventListener('timeupdate',()=>document.title='Eymen media tick '+(++ticks));navigator.mediaSession.metadata=new MediaMetadata({title:'Eymen Media Acceptance'});b.onclick=()=>v.play().then(()=>{b.textContent='Eymen media fullscreen';b.onclick=()=>v.requestFullscreen()});document.title='Eymen media ready';}())";
+        String html="<video preload='auto' id='fixture' style='position:fixed;inset:0;width:100%;height:100%' loop playsinline src='data:video/webm;base64,"+base64+"'></video><button id='play' style='position:fixed;inset:0;width:100%;height:100%;z-index:1'>Eymen media play</button>";
+        java.util.concurrent.atomic.AtomicBoolean ready=new java.util.concurrent.atomic.AtomicBoolean();
+        String js="javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";const v=document.getElementById('fixture'),b=document.getElementById('play');b.disabled=true;b.textContent='Eymen media loading';let ticks=0;v.addEventListener('timeupdate',()=>document.title='Eymen media tick '+(++ticks));v.addEventListener('loadeddata',()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{b.disabled=false;b.textContent='Eymen media play';document.title='Eymen media ready';})),{once:true});v.addEventListener('error',()=>document.title='Eymen media decoder error '+(v.error?v.error.code:'unknown'));navigator.mediaSession.metadata=new MediaMetadata({title:'Eymen Media Acceptance'});b.onclick=()=>{document.title='Eymen media play requested';v.play().then(()=>{b.textContent='Eymen media fullscreen';b.onclick=()=>v.requestFullscreen()}).catch(e=>document.title='Eymen media play error '+e.name+': '+e.message);};v.load();}())";
         runOnMainSync(() -> {
             page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
                 @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession s,String title){
+                    if("Eymen media ready".equals(title))ready.set(true);
                     if(title!=null && title.startsWith("Eymen media tick "))ticks.set(Integer.parseInt(title.substring("Eymen media tick ".length())));
                     original.onTitleChange(s,title);
                 }
@@ -735,34 +738,32 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             });
             page.loadUri(js);
         });
-        await(() -> find("Eymen media play",false)!=null,"actual synthetic video play control is laid out");
+        awaitLong(() -> ready.get() && find("Eymen media play",false)!=null,"real decoded fixture frame and two painted frames enable the media play control",30000);
         click("Eymen media play");
         await(() -> ticks.get()>0 && uiCheck(() -> mediaController().isPlaying(page)) && androidMediaController()!=null,
             "real VP8/Vorbis playback produces Gecko events and an Android media notification");
         return page;
     }
     private boolean dismissVisibleFullscreenEducation() {
-        for(android.view.accessibility.AccessibilityWindowInfo window:getUiAutomation().getWindows()){
-            AccessibilityNodeInfo root=window.getRoot();
-            if(root==null || !root.refresh() || window.getType()!=AccessibilityWindowInfo.TYPE_SYSTEM)continue;
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();if(root==null || !root.refresh())continue;
+            String pkg=String.valueOf(root.getPackageName());
+            if(!"android".equals(pkg) && !"com.android.systemui".equals(pkg))continue;
+            boolean heading=String.valueOf(window.getTitle()).contains("ImmersiveModeConfirmation");
+            AccessibilityNodeInfo button=null;
             ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();queue.add(root);
             while(!queue.isEmpty()){
                 AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
-                String pkg=String.valueOf(node.getPackageName());
-                // Android 15 hosts this framework window in system_server
-                // (package android); newer builds can host it in SystemUI.
-                boolean systemPackage="android".equals(pkg)||"com.android.systemui".equals(pkg);
-                if(systemPackage && "android:id/ok".equals(node.getViewIdResourceName()) &&
-                    node.isVisibleToUser() && node.isClickable() && matches(node,"Got it")){
-                    tap(node);waitForIdleSync();return true;
-                }
+                if(node.isVisibleToUser() && matches(node,"Viewing full screen"))heading=true;
+                if(node.isVisibleToUser() && node.isClickable() && matches(node,"Got it"))button=node;
                 for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
             }
+            if(heading && button!=null){tap(button);waitForIdleSync();return true;}
         }
         return false;
     }
     private void dismissFullscreenEducation() throws Exception {
-        long deadline=SystemClock.uptimeMillis()+1500;
+        long deadline=SystemClock.uptimeMillis()+4000;
         while(SystemClock.uptimeMillis()<deadline){if(dismissVisibleFullscreenEducation())return;Thread.sleep(50);}
     }
     private void mediaAndSystemTheme() throws Exception {
@@ -797,6 +798,10 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "actual Android Back exits DOM fullscreen and restores usable browser controls after PiP");
         nativeMedia.getTransportControls().stop();
         await(() -> uiCheck(() -> mediaController().getOwner()==null) && mediaNotification()==null,"Stop releases playback, service and its notification");
+        // The normal fixture has finished every Stop/PiP assertion. Unload its
+        // owned decoder before allocating the separate private-player fixture.
+        runOnMainSync(() -> page.loadUri("javascript:void(function(){const v=document.getElementById('fixture');v.pause();v.removeAttribute('src');v.load();document.body.textContent='Eymen media fixture released';}())"));
+        await(() -> find("Eymen media fixture released",false)!=null,"completed normal fixture releases its decoder before the private fixture");
         prepareMedia(true,new java.util.concurrent.atomic.AtomicInteger());
         await(() -> androidMediaController()!=null && androidMediaController().getMetadata()!=null && label(R.string.private_tab).equals(androidMediaController().getMetadata().getString(android.media.MediaMetadata.METADATA_KEY_TITLE)),"private media never exports the page title to Android media history");
         require(mediaNotification().visibility==android.app.Notification.VISIBILITY_SECRET,"private media notification is hidden on the lock screen");
@@ -907,6 +912,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
                 try{return browserView().getSession()==null;}catch(Exception e){throw new RuntimeException(e);}}),"locked private engine is detached and covered before viewing");
             require(field(label(R.string.address_edit_label))==null && find(title,false)==null,"locked private address/title cannot appear in the app accessibility tree");
             click(label(R.string.private_unlock));await(() -> pinEditor()!=null,"private unlock opens Android credential UI");systemBack();
+            try{getUiAutomation().waitForIdle(500,3000);}catch(java.util.concurrent.TimeoutException ignored){}
+            if(uiCheck(() -> tabLock().getAuthenticating()) && pinEditor()!=null)systemBack();
             await(() -> find(label(R.string.private_locked_title),false)!=null && uiCheck(() -> tabLock().getLocked()),"cancelling Android authentication keeps private tabs locked");
             click(label(R.string.private_unlock));confirmTestDeviceCredential();
             await(() -> uiCheck(() -> !tabLock().getLocked()) && url.equals(text(field(label(R.string.address_edit_label)))),"real credential unlock restores the same private address");
@@ -1073,6 +1080,68 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         click("Eymen private notification request");await(() -> "Eymen private notification denied".equals(privateTitle.get()),"private page cannot obtain notification consent or export its page title");
         require(siteNotification("Eymen Site Test")==null && siteNotification("Eymen Revoke Test")==null,"private denial produces no site notification");
         runOnMainSync(() -> secret.setContentDelegate(privateDelegate));menuNavigation(R.string.menu_new_normal_tab_accessibility);
+    }
+    private WebAppSpec activeWebApp(org.mozilla.geckoview.GeckoSession session){
+        java.util.concurrent.atomic.AtomicReference<WebAppSpec> result=new java.util.concurrent.atomic.AtomicReference<>();
+        runOnMainSync(() -> {for(Object item:(java.util.List<?>)controller("tabs")){BrowserTab tab=(BrowserTab)item;if(tab.getGecko()==session)result.set(tab.getWebApp());}});return result.get();
+    }
+    private AccessibilityNodeInfo launcherAddButton(){
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();if(root==null||!root.refresh()||!"com.android.launcher3".equals(String.valueOf(root.getPackageName())))continue;
+            ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();queue.add(root);
+            while(!queue.isEmpty()){
+                AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
+                String text=text(node);
+                if(node.isVisibleToUser() && ("Add automatically".equals(text)||"Add to Home screen".equals(text)||"Add to home screen".equals(text)||"Add".equals(text))){
+                    AccessibilityNodeInfo target=node;while(target!=null && !target.isClickable())target=target.getParent();
+                    if(target!=null && target.isVisibleToUser())return target;
+                }
+                for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
+            }
+        }return null;
+    }
+    private void swipeLauncherPage(){
+        AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();require(root!=null,"actual launcher root for page swipe");Rect rect=new Rect();root.getBoundsInScreen(rect);
+        long time=SystemClock.uptimeMillis();float from=rect.left+rect.width()*0.8f,to=rect.left+rect.width()*0.2f,y=rect.top+rect.height()*0.5f;
+        for(int i=0;i<=12;i++){
+            int action=i==0?MotionEvent.ACTION_DOWN:i==12?MotionEvent.ACTION_UP:MotionEvent.ACTION_MOVE;
+            MotionEvent event=MotionEvent.obtain(time,SystemClock.uptimeMillis(),action,from+(to-from)*i/12f,y,0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            require(getUiAutomation().injectInputEvent(event,true),"native launcher swipe input");event.recycle();SystemClock.sleep(20);
+        }
+        try{getUiAutomation().waitForIdle(250,3000);}catch(java.util.concurrent.TimeoutException ignored){}
+    }
+    private void realInstalledWebApp() throws Exception {
+        menuNavigation(R.string.menu_new_normal_tab_accessibility);
+        org.mozilla.geckoview.GeckoSession page=currentSession();runOnMainSync(() -> page.loadUri("https://mdn.github.io/pwa-examples/a2hs/"));
+        awaitLong(() -> activeWebApp(page)!=null,"real MDN HTTPS manifest arrives through the production Gecko callback",45000);
+        WebAppSpec spec=activeWebApp(page);require(spec!=null && spec.getStartUrl().startsWith("https://mdn.github.io/pwa-examples/a2hs/"),"manifest-derived app start remains on the real approved origin and scope");
+        android.content.pm.ShortcutManager shortcuts=getTargetContext().getSystemService(android.content.pm.ShortcutManager.class);
+        require(shortcuts.isRequestPinShortcutSupported(),"actual default Android launcher supports pinned web apps");
+        click(label(R.string.browser_menu));scrollClick(label(R.string.webapp_install));
+        await(() -> find(label(R.string.webapp_install),false)!=null,"native manifest name and origin confirmation is visible");
+        capture("web-app-confirmation.png",true);click(label(R.string.webapp_install));
+        await(() -> launcherAddButton()!=null,"real Android launcher asks for final home-screen confirmation");
+        capture("web-app-launcher.png",null);tap(launcherAddButton());
+        await(() -> shortcuts.getPinnedShortcuts().stream().anyMatch(item -> item.getId().startsWith(BrowserWebApps.PREFIX)),"Android actually pins the approved shortcut");
+        android.content.pm.ShortcutInfo installed=shortcuts.getPinnedShortcuts().stream().filter(item -> item.getId().startsWith(BrowserWebApps.PREFIX)).findFirst().get();
+        require(installed.isPinned() && installed.getIntent()!=null && new android.content.ComponentName(getTargetContext(),WebAppActivity.class).equals(installed.getIntent().getComponent()),"pinned shortcut targets the dedicated standalone activity");
+        android.app.Instrumentation.ActivityMonitor monitor=addMonitor(WebAppActivity.class.getName(),null,false);Activity web=null;
+        try {
+            require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"open actual Android home before launching the web app");
+            String longLabel=String.valueOf(installed.getLongLabel());
+            for(int attempt=0;attempt<4 && find(spec.getName(),false)==null && find(longLabel,false)==null;attempt++)swipeLauncherPage();
+            await(() -> find(spec.getName(),false)!=null || find(longLabel,false)!=null,"the real pinned app icon is visible on the launcher");
+            AccessibilityNodeInfo icon=find(spec.getName(),false);if(icon==null)icon=find(longLabel,false);tap(icon);
+            web=waitForMonitorWithTimeout(monitor,20000);require(web instanceof WebAppActivity,"physical launcher icon opens the real standalone web app activity");
+            Activity ownWeb=web;await(() -> uiCheck(ownWeb::hasWindowFocus) && find("a fox picture",false)!=null,"the actual HTTPS app document renders in its independent window");
+            require(web.getTaskId()!=activity.getTaskId() && field(label(R.string.address_edit_label))==null,"installed app has a separate Android task without browser chrome");
+            java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession> standalone=new java.util.concurrent.atomic.AtomicReference<>();
+            runOnMainSync(() -> {try{java.lang.reflect.Field field=WebAppActivity.class.getDeclaredField("session");field.setAccessible(true);standalone.set((org.mozilla.geckoview.GeckoSession)field.get(ownWeb));}catch(Exception error){throw new RuntimeException(error);}});
+            require(standalone.get()!=page && uiCheck(standalone.get()::isOpen),"standalone app owns a real separate Gecko session");capture("web-app-standalone.png",null);
+            String outside="https://example.com/?eymen-webapp-outside=1";
+            runOnMainSync(() -> standalone.get().loadUri("javascript:void(function(){const a=document.createElement('a');a.href='"+outside+"';a.textContent='Eymen outside app scope';a.style.cssText='position:fixed;top:0;left:0;width:100%;padding:30px;z-index:999999;background:white;color:black';document.body.appendChild(a);}())"));
+            click("Eymen outside app scope");await(() -> uiCheck(activity::hasWindowFocus) && outside.equals(text(field(label(R.string.address_edit_label)))),"real user navigation outside app scope returns to the browser");
+        }finally{if(web!=null){Activity own=web;runOnMainSync(own::finish);}removeMonitor(monitor);shortcuts.disableShortcuts(java.util.Collections.singletonList(installed.getId()));}
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
@@ -1495,6 +1564,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void recordFailure() throws Exception {
         File directory = new File(getTargetContext().getCacheDir(), "browser-ui-audit");
         directory.mkdirs();
+        StringBuilder windows=new StringBuilder();
+        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+            AccessibilityNodeInfo root=window.getRoot();windows.append("type=").append(window.getType()).append(" title=").append(window.getTitle())
+                .append(" package=").append(root==null?null:root.getPackageName()).append(" focused=").append(window.isFocused()).append('\n');
+        }
+        try(FileOutputStream out=new FileOutputStream(new File(directory,"system-windows.txt"))){out.write(windows.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));}
         StringBuilder diagnostic=new StringBuilder();
         runOnMainSync(()->{
             try {

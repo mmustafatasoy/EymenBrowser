@@ -21,7 +21,7 @@ import com.eymen.browser.tema.EymenTokens as T
 
 internal enum class MenuAction {
     BOOKMARKS, HISTORY, DOWNLOADS, PRIVATE, TRANSLATE, FIND,
-    READER, DESKTOP, PDF, PRINT, SCREENSHOT, SHARE, SEND_TO_DEVICE, QR,
+    READER, DESKTOP, PDF, PRINT, SCREENSHOT, INSTALL_WEB_APP, SHARE, SEND_TO_DEVICE, QR,
     EXTENSIONS, OPEN_EXTERNAL, OPEN_BROWSER, THEME, SETTINGS, TOOLS,
     READING_LIST, READING_ADD, NEW_TAB, TAB_GROUP, RECENT_TABS, CLEAR_DATA, SITE_CONTROLS, HELP
 }
@@ -45,6 +45,7 @@ private val groups = listOf(
         MenuRow(R.string.menu_save_pdf,EymenPaths.belge,MenuAction.PDF,true),
         MenuRow(R.string.print_page,EymenPaths.belge,MenuAction.PRINT,true),
         MenuRow(R.string.page_capture,EymenPaths.indir,MenuAction.SCREENSHOT,true),
+        MenuRow(R.string.webapp_install,EymenPaths.site,MenuAction.INSTALL_WEB_APP,true),
         MenuRow(R.string.menu_desktop,EymenPaths.masaustu,MenuAction.DESKTOP,true)),
     listOf(MenuRow(R.string.menu_extensions,EymenPaths.eklenti,MenuAction.EXTENSIONS),
         MenuRow(R.string.menu_scan_qr,EymenPaths.qr,MenuAction.QR),
@@ -60,7 +61,7 @@ private val groups = listOf(
 internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,textPercent: Int,
     onTextSize: (Int) -> Unit,onDismiss: () -> Unit,onAction: (MenuAction) -> Unit,
     onBack: () -> Unit,onForward: () -> Unit,onReload: () -> Unit,
-    canGoBack: Boolean,canGoForward: Boolean,bookmarked: Boolean,onBookmark: () -> Unit) {
+    canGoBack: Boolean,canGoForward: Boolean,bookmarked: Boolean,onBookmark: () -> Unit,webAppAvailable:Boolean=false) {
     val p=browserListPalette(dayMode)
     val dismissLabel=stringResource(R.string.menu_dismiss)
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -100,6 +101,7 @@ internal fun BrowserMenu(hasPage: Boolean,isDesktop: Boolean,dayMode: Boolean,te
                     }
                 }
                 rows.forEach { row ->
+                    if(row.action==MenuAction.INSTALL_WEB_APP && !webAppAvailable)return@forEach
                     val allowed=!row.needsPage || hasPage
                     val actionDescription=if(row.action==MenuAction.NEW_TAB)stringResource(R.string.menu_new_normal_tab_accessibility)else null
                     Row(Modifier.fillMaxWidth().heightIn(min=T.telefon_liste_satir.dp)

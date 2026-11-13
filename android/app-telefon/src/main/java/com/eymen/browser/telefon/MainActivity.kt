@@ -85,6 +85,7 @@ private class BrowserTab(
     // Restored background tabs open their saved HTTPS URL only when selected.
     var pendingRestoreUrl: String? = null
     var pendingDarkReload = false
+    var webApp by mutableStateOf<WebAppSpec?>(null)
     // Captured Gecko page pixels live only in RAM, never stored or synced.
     var thumbnail by mutableStateOf<Bitmap?>(null)
 }
@@ -523,6 +524,7 @@ class MainActivity : ComponentActivity() {
             if (menuShowing) BrowserMenu(
                 hasPage = !atHome.value && GeckoMotorDenemesi.verifiedHttpsUrl(activeTab?.url) != null,
                 isDesktop = activeTab?.desktop == true,dayMode = dayMode.value,
+                webAppAvailable=activeTab?.webApp!=null && activeTab?.privateMode==false && !childMode.enabled,
                 textPercent = settingsServices.textPercent,onTextSize = settingsServices::setTextSize,
                 onDismiss = ::hideBrowserMenu,onAction = ::handleMenuAction,
                 onBack = ::navigateBrowserBack,
@@ -860,12 +862,16 @@ class MainActivity : ComponentActivity() {
                         history.updateTitle(tab.url,tab.title,tab.historyVisitAt)
                 }
             },
+            onWebAppManifest = {manifest -> tabs.firstOrNull{it.id==id && !it.privateMode && !it.home}?.let{
+                it.webApp=BrowserWebApps(this).discover(it.url,manifest)
+            }},
             onCanGoBack = { value -> tabs.firstOrNull { it.id == id }?.canGoBack = value },
             onCanGoForward = { value -> tabs.firstOrNull { it.id == id }?.canGoForward = value },
             onLocation = { url ->
                 val tab=tabs.firstOrNull { it.id==id }
                 if(tab!=null && url!=null && !(tab.home && url.equals("about:blank",true))) {
                     val changed=tab.url!=url
+                    if(changed)tab.webApp=null
                     tab.url=url
                     // Same-document navigation has no PageStart. Follow Gecko's
                     // actual location for SPA/hash Back and Forward as well.
@@ -909,6 +915,7 @@ class MainActivity : ComponentActivity() {
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 runOnUiThread {
+                    tab.webApp=null
                     // Gecko can signal its internal about:blank document on a new
                     // empty session. This is not a user navigation: keep T03 home.
                     if ((tab.home || tab.pendingRestoreUrl != null) &&
@@ -2204,7 +2211,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleMenuAction(action: MenuAction) {
-        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE, MenuAction.PRINT, MenuAction.SCREENSHOT)) {
+        if (childMode.enabled && action in setOf(MenuAction.QR, MenuAction.SHARE, MenuAction.SEND_TO_DEVICE, MenuAction.PRINT, MenuAction.SCREENSHOT, MenuAction.INSTALL_WEB_APP)) {
             notice(R.string.child_blocked); return
         }
         hideBrowserMenu()
@@ -2233,6 +2240,7 @@ class MainActivity : ComponentActivity() {
             MenuAction.PDF -> saveCurrentPageAsPdf()
             MenuAction.PRINT -> printCurrentPage()
             MenuAction.SCREENSHOT -> requestPageCapture()
+            MenuAction.INSTALL_WEB_APP -> requestWebAppInstall()
             MenuAction.DESKTOP -> toggleDesktopSite()
             MenuAction.SHARE -> shareCurrentPage()
             MenuAction.OPEN_EXTERNAL -> openCurrentPageInOfficialApp()
@@ -2440,6 +2448,20 @@ class MainActivity : ComponentActivity() {
         activeTab?.takeIf{!it.home && !(it.privateMode && privateTabsLock.locked)}?.let {
             it.pendingDarkReload=false;it.gecko.reload()
         }
+    }
+
+    private fun requestWebAppInstall() {
+        val tab=activeTab ?: return
+        val app=tab.webApp
+        if(app==null || tab.privateMode || childMode.enabled || !canPrintSession(tab.gecko)){notice(R.string.webapp_unavailable);return}
+        val address=tab.url
+        BrowserDialogs.builder(this).setTitle(R.string.webapp_install)
+            .setMessage(getString(R.string.webapp_confirm,app.name,BrowserSettingsServices.origin(app.startUrl)))
+            .setNegativeButton(android.R.string.cancel,null)
+            .setPositiveButton(R.string.webapp_install){_,_ ->
+                if(activeTab?.id==tab.id && tab.url==address && !childMode.enabled && canPrintSession(tab.gecko))
+                    notice(if(BrowserWebApps(this).request(app))R.string.webapp_requested else R.string.webapp_failed)
+            }.show()
     }
 
     private fun requestPageCapture() {

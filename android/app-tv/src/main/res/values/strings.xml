@@ -575,4 +575,12 @@ Sorun veya önerim:
     <string name="web_notifications_channel">Site bildirimleri</string>
     <string name="permission_web_notifications">Bu sitenin Android bildirimi göstermesine izin verilsin mi? Android ayrıca bildirim izni sorabilir.</string>
     <string name="web_notifications_note">İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez.</string>
+    <string name="webapp_install">Web uygulamasını kur</string>
+    <string name="webapp_confirm">%1$s
+%2$s
+
+Bu HTTPS web uygulaması kendi penceresinde açılır. Son ana ekran onayını Android sorar. Site kapsamı dışındaki bağlantılar tarayıcıda açılır.</string>
+    <string name="webapp_requested">Ana ekrana ekleme isteği Android’e gönderildi.</string>
+    <string name="webapp_failed">Ana ekrana eklenemedi. Başlatıcının desteklediğini ve en fazla 20 web uygulaması sınırını kontrol edin.</string>
+    <string name="webapp_unavailable">Bu sayfada kurulabilir, aynı kaynaktan güvenli bir web uygulaması manifesti yok.</string>
 </resources>
