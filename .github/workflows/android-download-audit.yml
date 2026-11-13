@@ -1,7 +1,7 @@
 name: EymenBrowser Android background download acceptance
 on:
   push:
-    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs, feat/android-web-notifications]
     paths:
       - '.github/workflows/android-download-audit.yml'
       - 'android/app-telefon/src/androidTest/**'

@@ -1,7 +1,7 @@
 name: EymenBrowser address and custom screens acceptance
 on:
   push:
-    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs]
+    branches: [main, fix/v1.0.21-privacy-load-acceptance, feat/free-vpn-setup, feat/tab-search, feat/bookmark-library, feat/android-finishing, feat/android-library-tools, feat/private-tab-lock, feat/android-dns-print, feat/android-page-tools, feat/android-sleeping-tabs, feat/android-web-notifications]
     paths:
       - '.github/workflows/android-browser-ui-audit.yml'
       - 'android/app-telefon/src/main/java/com/eymen/browser/telefon/**'
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   address-custom-screens:
     runs-on: ubuntu-latest
-    timeout-minutes: 34
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -55,7 +55,7 @@ jobs:
       - name: Enable KVM
         run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
       - name: Test actual touch and typing plus themed custom screens
-        timeout-minutes: 22
+        timeout-minutes: 28
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -69,7 +69,7 @@ jobs:
           emulator-options: -no-window -gpu swangle -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           emulator-boot-timeout: 240
-          script: timeout 1080 bash tools/audit_android_browser_ui.sh
+          script: timeout 1380 bash tools/audit_android_browser_ui.sh
       - name: Print failure hierarchy to the job log
         if: failure()
         run: |

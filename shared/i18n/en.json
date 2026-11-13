@@ -563,5 +563,8 @@
   "page_capture_failed": "The screenshot could not be saved. For very long pages, try a shorter page.",
   "dark_pages": "Show dark pages",
   "dark_pages_note": "Applies an optional dark effect to HTTPS pages. Open pages reload; some images and site designs may look different.",
-  "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available."
+  "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available.",
+  "web_notifications_channel": "Site notifications",
+  "permission_web_notifications": "Allow this site to show Android notifications? Android may also ask for notification permission.",
+  "web_notifications_note": "Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version."
 }

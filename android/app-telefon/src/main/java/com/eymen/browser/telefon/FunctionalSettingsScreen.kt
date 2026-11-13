@@ -87,6 +87,7 @@ internal fun PermissionsSettingsScreen(services: BrowserSettingsServices, dayMod
     LaunchedEffect(Unit) { services.refreshPermissions() }
     SettingsPage(R.string.settings_site_permissions, dayMode, onBack) { p ->
         ScreenText(stringResource(R.string.permission_settings_note), p.muted, maxLines = 5)
+        ScreenText(stringResource(R.string.web_notifications_note),p.muted,maxLines=6)
         BrowserSettingsServices.origin(currentUrl)?.let { origin ->
             SettingsToggle(stringResource(R.string.popup_allow), origin,
                 services.popupAllowed(currentUrl, privateMode), p) { services.setPopups(currentUrl, privateMode, it) }
@@ -97,6 +98,7 @@ internal fun PermissionsSettingsScreen(services: BrowserSettingsServices, dayMod
             if (services.busy) R.string.settings_loading else R.string.permission_none), p.muted)
         services.permissions.forEach { perm ->
             val type = when (perm.permission) {
+                GeckoSession.PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION -> R.string.web_notifications_channel
                 GeckoSession.PermissionDelegate.PERMISSION_GEOLOCATION -> R.string.permission_location
                 GeckoSession.PermissionDelegate.PERMISSION_STORAGE_ACCESS -> R.string.permission_cookies
                 GeckoSession.PermissionDelegate.PERMISSION_PERSISTENT_STORAGE -> R.string.permission_storage

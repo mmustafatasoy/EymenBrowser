@@ -158,7 +158,10 @@ internal class BrowserSettingsServices(
             .setTitle(origin(perm.uri))
             .setItems(arrayOf(activity.getString(R.string.permission_allow),
                 activity.getString(R.string.permission_deny), activity.getString(R.string.permission_ask))) { _, index ->
-                runtime.storageController.setPermission(perm, values[index]); refreshPermissions()
+                runtime.storageController.setPermission(perm, values[index])
+                if(perm.permission==GeckoSession.PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION && values[index]!=allow)
+                    BrowserWebNotifications.get(activity).clearOrigin(origin(perm.uri))
+                refreshPermissions()
             }.show()
     }
 
@@ -183,6 +186,22 @@ internal class BrowserSettingsServices(
     override fun onContentPermissionRequest(session: GeckoSession,
         perm: GeckoSession.PermissionDelegate.ContentPermission): GeckoResult<Int> {
         if (!eligible(session, perm.uri)) return GeckoResult.fromValue(deny)
+        if(perm.permission==GeckoSession.PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION){
+            if(perm.privateMode || activity.getSharedPreferences("eymen_child_mode",0).getBoolean("enabled",false))return GeckoResult.fromValue(deny)
+            val result=GeckoResult<Int>()
+            confirm(origin(perm.uri).orEmpty(),activity.getString(R.string.permission_web_notifications)){ok ->
+                if(!ok || !active(session))result.complete(deny)
+                else if(Build.VERSION.SDK_INT>=33 && activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+                    if(pendingAndroid!=null)result.complete(deny)
+                    else {
+                        pendingAndroid={granted -> result.complete(if(granted && active(session))allow else deny)}
+                        try{permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))}
+                        catch(_:Exception){val done=pendingAndroid;pendingAndroid=null;done?.invoke(false)}
+                    }
+                }else result.complete(allow)
+            }
+            perm.notifyShown();return result
+        }
         if (perm.permission == GeckoSession.PermissionDelegate.PERMISSION_AUTOPLAY_AUDIBLE)
             return GeckoResult.fromValue(if (autoplay) allow else deny)
         if (perm.permission == GeckoSession.PermissionDelegate.PERMISSION_AUTOPLAY_INAUDIBLE)

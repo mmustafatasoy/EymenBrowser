@@ -572,4 +572,7 @@ Sorun veya önerim:
     <string name="dark_pages">Siteleri koyu göster</string>
     <string name="dark_pages_note">HTTPS sayfalarına isteğe bağlı koyu efekt uygular. Açık sayfalar yeniden yüklenir; bazı görseller ve site tasarımları farklı görünebilir.</string>
     <string name="dark_pages_unavailable">Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir.</string>
+    <string name="web_notifications_channel">Site bildirimleri</string>
+    <string name="permission_web_notifications">Bu sitenin Android bildirimi göstermesine izin verilsin mi? Android ayrıca bildirim izni sorabilir.</string>
+    <string name="web_notifications_note">İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez.</string>
 </resources>

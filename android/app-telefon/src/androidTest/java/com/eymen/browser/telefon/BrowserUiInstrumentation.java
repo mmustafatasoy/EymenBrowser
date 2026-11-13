@@ -153,10 +153,11 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             secureDnsAndNativePrint();
             fullPageCaptureAndDarkPages();
             inactiveTabKeepsFormAndSession();
+            realWebNotifications();
             freeVpnSetup();
             advancedSettings();
             result.putString("eymen_browser_ui_audit", "passed");
-            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,real_inactive_Gecko_tab_visibility_memory_cycle_form_and_RAM_state_preserved,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
+            result.putString("checks", "real_popup_open_write_opener_close_and_system_back,address_held_tap_select_all_native_IME_composition_search_go,real_same_tab_back_forward_system_and_menu_SPA_location,first_page_home_back_forward,keyboard_back_cancels_address_edit,settings_search_engine_theme,real_download_filter_clear,home_new_tab,real_cookie_reject,real_cookie_storage_clear,real_runtime_privacy,android_autofill_toggle,signed_addon_install_toggle_remove,parent_PIN_allowlist_private_child,local_QR_bitmap_decode,actual_language_recreation,native_browser_role_http_filter_and_cancel,real_persistent_history_private_exclusion_search_delete_clear,animated_top_bottom_toolbar_tiny_reverse,fixed_footer_hit_test,native_list_menu_settings,share_exact_URL_copy_sensitive_clipboard_QR_PNG_decode_and_system_chooser,offline_license_search_read_back_stack,about_website_privacy_support_and_reviewed_email,styled_native_confirmation_light_dark,open_tab_search_real_title_URL_private_isolation_clear_reset_no_hidden_close_light_dark,bookmarks_legacy_migration_title_folder_edit_move_delete_preserves_links_SQLite_and_local_suggestions_private_exclusion,real_Gecko_VP8_Vorbis_background_time_progress_native_media_pause_resume_stop_private_metadata_and_system_PiP_theme,real_ContentResolver_JSON_HTML_import_export_transaction_rollback_SQLite_v1_upgrade_and_reading_list,real_Android_Keyguard_enable_cancel_unlock_disable_FLAG_SECURE_and_detached_private_session,real_Gecko_DoH_runtime_modes_and_Android_PrintSpooler_preview_cancel,real_full_document_PNG_export_bottom_pixels_and_opt_in_dark_page_style,real_inactive_Gecko_tab_visibility_memory_cycle_form_and_RAM_state_preserved,real_Web_Notification_permission_Android_permission_drawer_click_revoke_and_private_denial,free_VPN_official_setup_confirmed_download_import_cancel_Keystore_browser_only_no_auto_connect");
             code = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { recordFailure(); } catch (Throwable ignored) {}
@@ -1023,6 +1024,55 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         await(() -> "Eymen memory RAM preserved".equals(title.get()),"JavaScript RAM state survives without a hidden reload or tab replacement");
         if(softwareKeyboardVisible())systemBack();capture("tab-memory-restored.png",true);
         runOnMainSync(() -> page.setContentDelegate(original));
+    }
+    private android.app.Notification siteNotification(String title) {
+        android.app.NotificationManager manager=getTargetContext().getSystemService(android.app.NotificationManager.class);
+        for(android.service.notification.StatusBarNotification item:manager.getActiveNotifications()){
+            android.app.Notification notification=item.getNotification();
+            if(BrowserWebNotifications.CHANNEL.equals(notification.getChannelId()) && title.equals(String.valueOf(notification.extras.getCharSequence(android.app.Notification.EXTRA_TITLE))))return notification;
+        }return null;
+    }
+    private void realWebNotifications() throws Exception {
+        org.mozilla.geckoview.GeckoSession page=searchTabPage(false,"https://example.org/?eymen-notification-audit=1","Eymen notification document");
+        java.util.concurrent.atomic.AtomicReference<String> title=new java.util.concurrent.atomic.AtomicReference<>("");
+        org.mozilla.geckoview.GeckoSession.ContentDelegate original=contentDelegate(page);
+        runOnMainSync(() -> {
+            page.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session,String value){title.set(value);original.onTitleChange(session,value);}
+            });
+            String html="<button id='notify'>Eymen notification request</button>";
+            page.loadUri("javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";document.getElementById('notify').onclick=async()=>{const p=await Notification.requestPermission();if(p==='granted'){window.__eymenNotification=new Notification('Eymen Site Test',{body:'Real Gecko Android notification',tag:'eymen-notification-audit',silent:true});window.__eymenNotification.onclick=()=>document.title='Eymen notification clicked';}else document.title='Eymen notification denied';};}())");
+        });
+        click("Eymen notification request");
+        await(() -> find(label(R.string.permission_web_notifications),false)!=null,"actual site notification consent is shown");
+        boolean needsAndroid=getTargetContext().checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED;
+        click(label(R.string.permission_allow));
+        if(needsAndroid){await(() -> find("Allow",false)!=null,"real Android POST_NOTIFICATIONS consent appears");click("Allow");}
+        await(() -> siteNotification("Eymen Site Test")!=null,"actual Web Notification arrives in Android NotificationManager");
+        require(getTargetContext().checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED,"the OS notification permission was genuinely granted");
+        require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS),"open the actual Android notification drawer");
+        await(() -> find("Eymen Site Test",false)!=null,"real site notification is visible in Android SystemUI");
+        capture("web-notification.png",null);click("Eymen Site Test");
+        await(() -> "Eymen notification clicked".equals(title.get()) && currentSession()==page && siteNotification("Eymen Site Test")==null,"physical notification tap fires real Gecko onclick and returns to the same normal page");
+        runOnMainSync(() -> page.loadUri("javascript:void(window.__eymenNotification=new Notification('Eymen Revoke Test',{tag:'eymen-revoke-audit',silent:true}))"));
+        await(() -> siteNotification("Eymen Revoke Test")!=null,"previously approved site can show another actual notification");
+        openSettingsItem(R.string.settings_site_permissions);await(() -> find("https://example.org",false)!=null,"site's real notification permission is listed");click("https://example.org");click(label(R.string.permission_deny));
+        await(() -> siteNotification("Eymen Revoke Test")==null,"revoking the real site permission removes its outstanding Android notification");
+        click(label(R.string.back));click(label(R.string.back));
+        runOnMainSync(() -> page.setContentDelegate(original));
+        org.mozilla.geckoview.GeckoSession secret=searchTabPage(true,"https://example.org/?eymen-private-notification=1","Eymen private notification document");
+        java.util.concurrent.atomic.AtomicReference<String> privateTitle=new java.util.concurrent.atomic.AtomicReference<>("");
+        org.mozilla.geckoview.GeckoSession.ContentDelegate privateDelegate=contentDelegate(secret);
+        runOnMainSync(() -> {
+            secret.setContentDelegate(new org.mozilla.geckoview.GeckoSession.ContentDelegate(){
+                @Override public void onTitleChange(org.mozilla.geckoview.GeckoSession session,String value){privateTitle.set(value);privateDelegate.onTitleChange(session,value);}
+            });
+            String html="<button id='private-notify'>Eymen private notification request</button>";
+            secret.loadUri("javascript:void(function(){document.body.innerHTML="+org.json.JSONObject.quote(html)+";document.getElementById('private-notify').onclick=async()=>{let denied=true;try{denied=(await Notification.requestPermission())!=='granted';}catch(_){}document.title=denied?'Eymen private notification denied':'Eymen private notification incorrectly allowed';};}())");
+        });
+        click("Eymen private notification request");await(() -> "Eymen private notification denied".equals(privateTitle.get()),"private page cannot obtain notification consent or export its page title");
+        require(siteNotification("Eymen Site Test")==null && siteNotification("Eymen Revoke Test")==null,"private denial produces no site notification");
+        runOnMainSync(() -> secret.setContentDelegate(privateDelegate));menuNavigation(R.string.menu_new_normal_tab_accessibility);
     }
     private boolean systemShareChooserVisible(){
         for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){

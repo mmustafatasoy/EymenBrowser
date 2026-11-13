@@ -572,4 +572,7 @@ My issue or suggestion:
     <string name="dark_pages">Show dark pages</string>
     <string name="dark_pages_note">Applies an optional dark effect to HTTPS pages. Open pages reload; some images and site designs may look different.</string>
     <string name="dark_pages_unavailable">The dark-page component is not ready. Regular browsing remains available.</string>
+    <string name="web_notifications_channel">Site notifications</string>
+    <string name="permission_web_notifications">Allow this site to show Android notifications? Android may also ask for notification permission.</string>
+    <string name="web_notifications_note">Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version.</string>
 </resources>

@@ -563,5 +563,8 @@
   "page_capture_failed": "Ekran görüntüsü kaydedilemedi. Çok uzun sayfalarda daha kısa bir sayfa deneyin.",
   "dark_pages": "Siteleri koyu göster",
   "dark_pages_note": "HTTPS sayfalarına isteğe bağlı koyu efekt uygular. Açık sayfalar yeniden yüklenir; bazı görseller ve site tasarımları farklı görünebilir.",
-  "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir."
+  "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir.",
+  "web_notifications_channel": "Site bildirimleri",
+  "permission_web_notifications": "Bu sitenin Android bildirimi göstermesine izin verilsin mi? Android ayrıca bildirim izni sorabilir.",
+  "web_notifications_note": "İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez."
 }

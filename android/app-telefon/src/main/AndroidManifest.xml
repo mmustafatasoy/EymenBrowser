@@ -38,6 +38,7 @@
             <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
                 android:value="false" />
         </service>
+        <receiver android:name=".BrowserWebNotificationDismissReceiver" android:exported="false" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.updateprovider"
             android:exported="false"

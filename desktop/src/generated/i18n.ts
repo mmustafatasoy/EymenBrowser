@@ -565,7 +565,10 @@ export const messages = {
     "page_capture_failed": "Ekran görüntüsü kaydedilemedi. Çok uzun sayfalarda daha kısa bir sayfa deneyin.",
     "dark_pages": "Siteleri koyu göster",
     "dark_pages_note": "HTTPS sayfalarına isteğe bağlı koyu efekt uygular. Açık sayfalar yeniden yüklenir; bazı görseller ve site tasarımları farklı görünebilir.",
-    "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir."
+    "dark_pages_unavailable": "Koyu sayfa bileşeni henüz hazır değil. Normal tarama kullanılabilir.",
+    "web_notifications_channel": "Site bildirimleri",
+    "permission_web_notifications": "Bu sitenin Android bildirimi göstermesine izin verilsin mi? Android ayrıca bildirim izni sorabilir.",
+    "web_notifications_note": "İzin verdiğiniz açık siteler Android bildirimi gösterebilir. Gizli ve çocuk modunda bildirim gösterilmez. Tarayıcı kapalıyken uzaktan push bildirimi bu sürümde desteklenmez."
   },
   "en": {
     "app_name": "EymenBrowser",
@@ -1132,6 +1135,9 @@ export const messages = {
     "page_capture_failed": "The screenshot could not be saved. For very long pages, try a shorter page.",
     "dark_pages": "Show dark pages",
     "dark_pages_note": "Applies an optional dark effect to HTTPS pages. Open pages reload; some images and site designs may look different.",
-    "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available."
+    "dark_pages_unavailable": "The dark-page component is not ready. Regular browsing remains available.",
+    "web_notifications_channel": "Site notifications",
+    "permission_web_notifications": "Allow this site to show Android notifications? Android may also ask for notification permission.",
+    "web_notifications_note": "Approved open sites can show Android notifications. Private and child modes cannot show them. Remote push delivery while the browser is closed is not supported in this version."
   }
 } as const;

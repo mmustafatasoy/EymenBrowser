@@ -115,6 +115,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var history: BrowserHistory
     private lateinit var toolbarMotion: BrowserChromeMotion
     private val media by lazy {BrowserMedia.get(applicationContext)}
+    private val webNotifications by lazy {BrowserWebNotifications.get(applicationContext)}
     private val pageStyles by lazy {BrowserPageStyles(this){session -> tabs.any{it.gecko===session}}}
     private val pageCapture by lazy {BrowserPageCapture(this)}
     private var captureOwner:Pair<Long,String>?=null
@@ -269,6 +270,7 @@ class MainActivity : ComponentActivity() {
                 activeTab?.takeIf { !it.home && it.gecko.isOpen }?.gecko?.reload()
             })
         settingsServices.apply()
+        webNotifications
         addons = BrowserAddons(this)
         qrScanner = BrowserQrScanner(this, ::openUrl, ::notice)
         sharing = BrowserShareController(this, { dayMode.value }, ::notice)
@@ -302,7 +304,9 @@ class MainActivity : ComponentActivity() {
         pageStyles.initialize {tabs.map{it.gecko}}
         // A locale recreation must restore the workspace rather than replay
         // the external URL which originally launched this Activity.
-        val incomingUrl = if (savedInstanceState == null) GeckoMotorDenemesi.urlFromIntent(intent) else null
+        val incomingUrl = if (savedInstanceState == null) {
+            if(intent.action==BrowserWebNotifications.OPEN)webNotifications.open(intent) else GeckoMotorDenemesi.urlFromIntent(intent)
+        } else null
 
         root = FrameLayout(this)
         updateSystemBarsAppearance()
@@ -1868,6 +1872,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun resetTabsForChildMode() {
+        webNotifications.clearAll()
         if (!::view.isInitialized) return
         view.releaseSession()
         tabs.forEach { media.release(it.gecko);if (it.gecko.isOpen) it.gecko.close() }
@@ -2646,6 +2651,13 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if(intent.action==BrowserWebNotifications.OPEN){
+            val origin=webNotifications.open(intent) ?: return
+            val existing=activeTab?.takeIf{!it.privateMode && BrowserSettingsServices.origin(it.url)==origin}
+                ?: tabs.lastOrNull{!it.privateMode && BrowserSettingsServices.origin(it.url)==origin}
+            if(existing!=null)activateTab(existing.id) else createTab(false,origin)
+            return
+        }
         if (intent.action == EymenDownloadService.OPEN_DOWNLOADS) {
             showDownloads()
             return
