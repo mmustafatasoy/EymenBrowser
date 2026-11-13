@@ -2,6 +2,17 @@
 
 Son güncelleme: 2026-11-13
 
+## 2026-11-13 – kullanıcı bildirimi: sekme karışması, WhatsApp Web, arama önerisi ve PDF
+
+- Kullanıcı Chrome benzeri gerçek davranışı istedi. Chrome'un kapalı kaynak kodu/tasarımı kopyalanmadı, yalnız Android telefonun mevcut GeckoView mimarisi ve onaylı tasarımı korundu.
+- Son aday commit d9611bc, feat/android-web-apps üzerinde. Sekme geçişinde önceki compositor görüntüsünü coverUntilFirstPaint ile saklar; eski sekmeye asenkron thumbnail atılmasını gerçek aktif kimlik/oturum/URL kontrolüyle engeller. Mevcut oturumlar kapanmaz.
+- Yalnız HTTPS web.whatsapp.com ilk girişinde Gecko desktop viewport ve desktop User-Agent kullanılır; kullanıcının elle mobil moda dönüşü korunur. Bu bir WhatsApp hesabı/QR gerçek cihaz kabulü değildir.
+- Google seçili normal modda 280 ms gecikmeli arama tamamlamaları yalnız Google suggestqueries sağlayıcısından gelir. Eski yanıtlar ve gizli/çocuk/URL istekleri dışlanır; ağ yoksa yerel geçmiş ve yer imi önerileri kalır. Sağlayıcı uç noktası resmî API değildir.
+- İndirilen PDF content URI olarak uygulama içi Android PdfRenderer ile açılır. Sayfa, yakınlaştırma, sınırlı bitmap bellek, bozuk/şifreli PDF hatası ve tarayıcı Gecko oturumunu koruma uygulanır. Diğer dosyaların harici açılması korunur.
+- Saf JVM testleri alan adı kısıtı, öneri gizliliği ve PDF dosya tipi kararını kapsar. Tam Android 15/16 UI adımlarına iki ayrı gerçek DOM sekme, iki sayfalı MediaStore PDF aç/ileri/geri ve koyu web sayfası/açık toolbar için ayrı piksel koşulları eklendi; mevcut kabul koşulları kaldırılmadı.
+- Kaynak/3 ABI, tam UI iki API, görsel iki API ve indirme kontrolünün hepsi aynı son commit üzerinde success olmadan main fast-forward veya manuel 1.0.24 yayını YOK. Son test durumunu GitHub Actions'tan kontrol et; eski başarısız/cancelled koşuları kabul sayma.
+- Gerçek fiziksel PDF örnekleri, WhatsApp Web giriş/QR ve güncelleme, VPN handshake/IP/DNS/WebRTC saha denemeleri henüz doğrulanmadı. Ayrıntı: [ANDROID_CHROME_DAVRANIS_DUZELTMELERI.md](ANDROID_CHROME_DAVRANIS_DUZELTMELERI.md).
+
 ## Güncel devam — Android eksiklerini tamamlama (2026-11-13)
 
 - Kullanıcı “Uygulamanın eksiklerini ekle bitir” dedi. Mevcut yalnız Android telefon kapsamı ve tasarım kaynakları korunarak şartnamedeki eksikler tamamlanır; TV/PC/Apple bekler, gerçek VPN saha kabulü kullanıcının önceki isteğiyle açık kalır. Özellik 12 yer imi/klasör ve 9 yerel öneri main `39f6a5c` üzerinde kabul edildi. Medya/tema, aktarım/okuma listesi, özel kilit, DNS/yazdırma, PNG/koyu sayfa, sekme belleği, site bildirimi ve web uygulaması işleri son `feat/android-web-apps` yaprak adayında birleşir; önce aynı son kaynağın dört CI grubu ve iki API artefaktı doğrulanır, sonra main fast-forward ve manuel 1.0.24 yayını gelir. Bir iş derlendi diye 64 özellik veya fiziksel cihaz kabulü tamamlandı denmez.
