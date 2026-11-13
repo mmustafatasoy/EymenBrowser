@@ -506,6 +506,7 @@ public final class BrowserUiInstrumentation extends Instrumentation {
     private void openShare() throws Exception {click(label(R.string.browser_menu));scrollClick(label(R.string.menu_share));}
 
     private org.mozilla.geckoview.GeckoSession.ContentDelegate contentDelegate(org.mozilla.geckoview.GeckoSession page) {
+        if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper())return page.getContentDelegate();
         java.util.concurrent.atomic.AtomicReference<org.mozilla.geckoview.GeckoSession.ContentDelegate> delegate=new java.util.concurrent.atomic.AtomicReference<>();
         runOnMainSync(() -> delegate.set(page.getContentDelegate()));return delegate.get();
     }
