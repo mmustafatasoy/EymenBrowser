@@ -99,6 +99,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private lateinit var view: GeckoView
     private lateinit var chrome: ComposeView
+    private lateinit var addressSuggestionsLayer: ComposeView
+    private var addressSuggestionQuery by mutableStateOf("")
+    private var addressSuggestionsVisible by mutableStateOf(false)
     private lateinit var homeLayer: ComposeView
     private lateinit var tabsLayer: ComposeView
     private lateinit var menuLayer: ComposeView
@@ -409,13 +412,24 @@ class MainActivity : ComponentActivity() {
                 tabCount=tabs.count { it.privateMode==(activeTab?.privateMode==true) },
                 dayMode=dayMode.value,homeButtonEnabled=homeButtonEnabled,
                 privateMode=activeTab?.privateMode==true,
-                addressSuggestions=if(activeTab?.privateMode==true)emptyList() else
-                    bookmarks.entries.map {AddressSuggestion(it.url,it.title)}+
-                        history.entries.map {AddressSuggestion(it.url,it.title)},
+                onAddressQuery={addressSuggestionQuery=TabSearchPolicy.boundedInput(it)},
                 onGo=::openAddress,onHome={showHome(true)},onVoiceSearch=::startVoiceSearch,
-                onEditingChanged={addressEditing=it},
+                onEditingChanged={addressEditing=it;addressSuggestionsVisible=it},
                 onNewTab={createTab(privateMode=false)},onTabs=::showTabs,onMenu=::showBrowserMenu)
             }
+        }
+
+        addressSuggestionsLayer=ComposeView(this)
+        root.addView(addressSuggestionsLayer,FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.WRAP_CONTENT))
+        addressSuggestionsLayer.visibility=View.GONE
+        addressSuggestionsLayer.setContent {
+            val items=if(addressSuggestionsVisible)AddressSuggestionPolicy.find(addressSuggestionQuery,
+                bookmarks.entries.map{AddressSuggestion(it.url,it.title)}+history.entries.map{AddressSuggestion(it.url,it.title)},
+                activeTab?.privateMode==true) else emptyList()
+            androidx.compose.runtime.LaunchedEffect(items,addressSuggestionsVisible) {
+                addressSuggestionsLayer.visibility=if(!addressSuggestionsVisible || items.isEmpty())View.GONE else View.VISIBLE
+            }
+            AddressSuggestionsScreen(items,dayMode.value,::openAddress)
         }
 
         tabsLayer = ComposeView(this)
@@ -1620,6 +1634,12 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams.MATCH_PARENT,barHeight,
             if (bottomBar) Gravity.BOTTOM else Gravity.TOP)
         toolbarMotion.configure(barHeight,bottomBar,videoFullScreen)
+        if(::addressSuggestionsLayer.isInitialized) {
+            addressSuggestionsLayer.layoutParams=FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,if(bottomBar)Gravity.BOTTOM else Gravity.TOP).apply {
+                if(bottomBar)bottomMargin=barHeight else topMargin=barHeight
+            }
+        }
     }
 
     private fun verifiedHost(url: String?): String? {
@@ -2038,6 +2058,8 @@ class MainActivity : ComponentActivity() {
     private fun showAppearanceOptions() = openSettingsPage(BrowserSettingsPage.APPEARANCE)
 
     private fun hideBrowserKeyboard() {
+        addressSuggestionsVisible=false;addressSuggestionQuery=""
+        if(::addressSuggestionsLayer.isInitialized)addressSuggestionsLayer.visibility=View.GONE
         addressEditing=false
         if (::toolbarMotion.isInitialized) toolbarMotion.show()
         currentFocus?.clearFocus()

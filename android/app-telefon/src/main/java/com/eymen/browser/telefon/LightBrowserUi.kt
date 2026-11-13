@@ -224,7 +224,7 @@ internal fun LightBrowserToolbar(
     dayMode: Boolean = true,
     homeButtonEnabled: Boolean = true,
     privateMode: Boolean = false,
-    addressSuggestions: List<AddressSuggestion> = emptyList(),
+    onAddressQuery: (String) -> Unit = {},
     onEditingChanged: (Boolean) -> Unit = {}
 ) {
     val palette=browserListPalette(dayMode)
@@ -249,7 +249,6 @@ internal fun LightBrowserToolbar(
         onGo(entered)
         keyboard?.hide()
     }
-    Column(Modifier.fillMaxWidth()) {
     Row(
         Modifier.fillMaxWidth()
             .background(if(privateMode)T.gizli_yuzey1 else if(dayMode)Color(0xFFF3F7FD) else palette.background)
@@ -272,7 +271,7 @@ internal fun LightBrowserToolbar(
             Spacer(Modifier.width(6.dp))
             BasicTextField(
                 value = input,
-                onValueChange = editor::update,
+                onValueChange = {editor.update(it);onAddressQuery(editor.value.text)},
                 modifier = Modifier.weight(1f).fillMaxHeight().focusRequester(requester)
                     .pointerInput(editor) {
                         // Observe the entire physical tap without consuming it.
@@ -286,7 +285,8 @@ internal fun LightBrowserToolbar(
                             } finally { editor.pointerUp() }
                         }
                     }
-                    .onFocusChanged { editor.focusChanged(it.isFocused);onEditingChanged(it.isFocused) }
+                    .onFocusChanged { editor.focusChanged(it.isFocused);onEditingChanged(it.isFocused)
+                        if(it.isFocused)onAddressQuery(editor.value.text) }
                     .semantics { contentDescription = addressLabel },
                 singleLine = true,
                 textStyle = TextStyle(color = toolbarInk, fontSize = T.telefon_liste_yazi.sp),
@@ -340,20 +340,6 @@ internal fun LightBrowserToolbar(
             contentAlignment = Alignment.Center
         ) { LightText("⋮", 26, toolbarInk) }
     }
-    val suggested=if(editor.focused)AddressSuggestionPolicy.find(draft,addressSuggestions,privateMode) else emptyList()
-    if(suggested.isNotEmpty()) {
-        Column(Modifier.fillMaxWidth().background(palette.background)
-            .heightIn(max=T.telefon_liste_satir.dp*3).verticalScroll(rememberScrollState())) {
-            suggested.forEach {item ->
-                val suggestionLabel=stringResource(R.string.address_suggestion_action,item.title)
-                SettingsActionRow(item.title,palette,{
-                    focus.clearFocus();keyboard?.hide();onGo(item.url)
-                },modifier=Modifier.semantics {contentDescription=suggestionLabel},note=item.url,icon=EymenPaths.ara)
-            }
-        }
-    }
-    }
-
 }
 
 private data class LightShortcut(

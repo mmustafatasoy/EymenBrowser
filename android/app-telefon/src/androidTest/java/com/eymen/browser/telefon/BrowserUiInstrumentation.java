@@ -669,6 +669,8 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         tap(field(label(R.string.address_edit_label)));
         await(this::softwareKeyboardVisible,"real keyboard opened for local address suggestions");
         search(label(R.string.address_edit_label),edited);
+        await(() -> find(activity.getString(R.string.address_suggestion_action,edited),false)!=null,"local suggestion row has actual accessible touch bounds");
+        capture("address-suggestions.png",true);
         click(activity.getString(R.string.address_suggestion_action,edited));
         await(() -> editedUrl.equals(text(field(label(R.string.address_edit_label)))) && !softwareKeyboardVisible(),
             "local bookmark suggestion navigates to its stored address and closes the keyboard");
@@ -729,6 +731,24 @@ public final class BrowserUiInstrumentation extends Instrumentation {
             "real VP8/Vorbis playback produces Gecko events and an Android media notification");
         return page;
     }
+    private void dismissFullscreenEducation() throws Exception {
+        long deadline=SystemClock.uptimeMillis()+1500;
+        while(SystemClock.uptimeMillis()<deadline){
+            for(android.view.accessibility.AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+                AccessibilityNodeInfo root=window.getRoot();
+                if(root==null || !root.refresh() || !"com.android.systemui".contentEquals(root.getPackageName()))continue;
+                ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();queue.add(root);
+                while(!queue.isEmpty()){
+                    AccessibilityNodeInfo node=queue.removeFirst();if(!node.refresh())continue;
+                    if(node.isVisibleToUser() && node.isClickable() && matches(node,"Got it")){
+                        tap(node);waitForIdleSync();return;
+                    }
+                    for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null)queue.add(child);}
+                }
+            }
+            Thread.sleep(50);
+        }
+    }
     private void mediaAndSystemTheme() throws Exception {
         openSettingsItem(R.string.settings_appearance);click(label(R.string.theme_system));
         await(() -> "system".equals(prefs().getString("theme_mode","")),"follow-system is an actual persisted theme choice");
@@ -751,9 +771,12 @@ public final class BrowserUiInstrumentation extends Instrumentation {
         capture("media-background.png",null);
         foregroundBrowser();click("Eymen media fullscreen");
         await(() -> uiCheck(() -> Boolean.TRUE.equals(controller("videoFullScreen"))),"real DOM fullscreen reaches the production video callback");
+        dismissFullscreenEducation();
         require(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME),"Home leaves a playing fullscreen video");
         await(() -> uiCheck(() -> activity.isInPictureInPictureMode()) && uiCheck(() -> mediaController().isPlaying(page)),"actual Android PiP keeps the fullscreen video playing");
-        capture("media-pip.png",null);foregroundBrowser();systemBack();
+        capture("media-pip.png",null);foregroundBrowser();dismissFullscreenEducation();systemBack();
+        await(() -> uiCheck(() -> !Boolean.TRUE.equals(controller("videoFullScreen"))) && find(label(R.string.browser_menu),false)!=null,
+            "actual Android Back exits DOM fullscreen and restores usable browser controls after PiP");
         nativeMedia.getTransportControls().stop();
         await(() -> uiCheck(() -> mediaController().getOwner()==null) && mediaNotification()==null,"Stop releases playback, service and its notification");
         prepareMedia(true,new java.util.concurrent.atomic.AtomicInteger());
