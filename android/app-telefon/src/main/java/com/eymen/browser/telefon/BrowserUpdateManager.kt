@@ -41,7 +41,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
     private var disposed = false
 
     fun checkOnForeground() {
-        if (disposed || isDebuggableInstall() ||
+        if (BuildConfig.EYMEN_GOOGLE_PLAY || disposed || isDebuggableInstall() ||
             !activity.getSharedPreferences("eymen_browser_setup", Activity.MODE_PRIVATE)
                 .getBoolean("setup_completed", false)) return
         if (System.currentTimeMillis() - prefs.getLong("last_check", 0L) < CHECK_INTERVAL_MS) return
@@ -49,6 +49,12 @@ internal class BrowserUpdateManager(private val activity: Activity) {
     }
 
     fun check(manual: Boolean) {
+        if (BuildConfig.EYMEN_GOOGLE_PLAY) {
+            // Play-distributed builds are updated by Google Play, not by
+            // downloading/installing an APK from GitHub Releases.
+            if (manual) showInfo(R.string.update_managed_by_google_play, R.string.settings_about_update)
+            return
+        }
         if (disposed || downloading.get()) return
         if (isDebuggableInstall()) {
             if (manual) showInfo(R.string.update_debug_build, R.string.settings_about_update)
@@ -288,6 +294,7 @@ internal class BrowserUpdateManager(private val activity: Activity) {
     }
 
     fun onResumed() {
+        if (BuildConfig.EYMEN_GOOGLE_PLAY) return
         val pending = pendingInstall
         if (pending != null) startInstallerOrRequestPermission(pending)
         else checkOnForeground()

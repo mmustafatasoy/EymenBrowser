@@ -571,5 +571,6 @@
   "webapp_confirm": "%1$s\n%2$s\n\nThis HTTPS web app opens in its own window. Android asks for final home-screen confirmation. Links outside its scope open in the browser.",
   "webapp_requested": "The home-screen request was sent to Android.",
   "webapp_failed": "Could not add the app. Check launcher support and the limit of 20 web apps.",
-  "webapp_unavailable": "This page has no installable, secure web app manifest from the same origin."
+  "webapp_unavailable": "This page has no installable, secure web app manifest from the same origin.",
+  "update_managed_by_google_play": "Updates for this edition are managed by Google Play. Check Google Play for available updates."
 }

@@ -2,6 +2,14 @@
 // GitHub Actions release workflow. No signing key is committed to git.
 val releaseVersion = providers.gradleProperty("eymenReleaseVersion").orNull
 val releaseCode = providers.gradleProperty("eymenReleaseCode").orNull?.toIntOrNull()
+// Only an explicitly requested Google Play bundle enables the new Play API and
+// version channel. Normal GitHub signed APKs keep their original settings.
+val googlePlayBuild = providers.gradleProperty("eymenGooglePlay").orNull == "true"
+if (googlePlayBuild) {
+    require(releaseVersion == "1.0.0" && releaseCode == 1000000) {
+        "Google Play first release requires versionName 1.0.0 and versionCode 1000000"
+    }
+}
 val signingPath = System.getenv("EY_SIGNING_KEYSTORE_FILE")
 val signingPassword = System.getenv("EY_SIGNING_STORE_PASSWORD")
 val signingAlias = System.getenv("EY_SIGNING_KEY_ALIAS")
@@ -19,9 +27,10 @@ android {
     defaultConfig {
         applicationId = "com.eymen.browser.telefon"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = if (googlePlayBuild) 36 else 35
         versionCode = 1
         versionName = "0.0.1"
+        buildConfigField("boolean", "EYMEN_GOOGLE_PLAY", googlePlayBuild.toString())
         testInstrumentationRunner = providers.gradleProperty("eymenTestRunner")
             .getOrElse("com.eymen.browser.telefon.DownloadServiceInstrumentation")
         if (releaseVersion != null) versionName = releaseVersion
@@ -52,7 +61,7 @@ android {
             isUniversalApk = false
         }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

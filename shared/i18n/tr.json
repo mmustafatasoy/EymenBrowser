@@ -571,5 +571,6 @@
   "webapp_confirm": "%1$s\n%2$s\n\nBu HTTPS web uygulaması kendi penceresinde açılır. Son ana ekran onayını Android sorar. Site kapsamı dışındaki bağlantılar tarayıcıda açılır.",
   "webapp_requested": "Ana ekrana ekleme isteği Android’e gönderildi.",
   "webapp_failed": "Ana ekrana eklenemedi. Başlatıcının desteklediğini ve en fazla 20 web uygulaması sınırını kontrol edin.",
-  "webapp_unavailable": "Bu sayfada kurulabilir, aynı kaynaktan güvenli bir web uygulaması manifesti yok."
+  "webapp_unavailable": "Bu sayfada kurulabilir, aynı kaynaktan güvenli bir web uygulaması manifesti yok.",
+  "update_managed_by_google_play": "Bu sürümün güncellemeleri Google Play tarafından yönetilir. Güncellemeleri Google Play üzerinden kontrol edin."
 }
