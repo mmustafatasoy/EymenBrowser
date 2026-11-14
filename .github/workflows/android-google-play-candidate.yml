@@ -1,0 +1,83 @@
+name: EymenBrowser Google Play API36 candidate AAB validation
+on:
+  push:
+    branches: [feat/google-play-v1]
+    paths:
+      - '.github/workflows/android-google-play-candidate.yml'
+      - 'android/app-telefon/**'
+      - 'android/core-motor/**'
+      - 'android/core-tema/**'
+      - 'shared/i18n/**'
+      - 'tools/prepare_google_play_manifest.py'
+      - 'tools/check_google_play_contract.py'
+      - 'tools/test_google_play_prep.py'
+      - 'tools/build_google_play_bundle.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eymen-google-play-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unsigned-play-aab-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.3.1'}
+      - name: Generate and validate Play configuration and permission isolation
+        run: |
+          python3 tools/generate.py
+          python3 tools/generate.py --check
+          python3 tools/verify.py
+          python3 tools/check_google_play_contract.py
+          python3 tools/test_google_play_prep.py
+          bash -n tools/build_google_play_bundle.sh
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ] && [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --channel=3 --install "platforms;android-37.0"
+          fi
+      - name: Remove package installation permission from temporary Play checkout
+        run: python3 tools/prepare_google_play_manifest.py --apply
+      - name: Compile Android API36 target and produce unpublishable test bundle
+        working-directory: android
+        run: gradle --no-daemon :app-telefon:bundleRelease -PeymenGooglePlay=true -PeymenReleaseVersion=1.0.0 -PeymenReleaseCode=1000000
+      - name: Validate AAB and merged Play manifest
+        run: |
+          set -euo pipefail
+          BUNDLE=android/app-telefon/build/outputs/bundle/release/app-telefon-release.aab
+          test -s "$BUNDLE"
+          unzip -tq "$BUNDLE" > /dev/null
+          unzip -Z1 "$BUNDLE" | grep -q '^base/manifest/AndroidManifest.xml$'
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          merged=Path('android/app-telefon/build/intermediates')
+          found=list(merged.glob('**/release/**/AndroidManifest.xml'))
+          assert found, 'Expected merged Play release manifest'
+          attr='{http://schemas.android.com/apk/res/android}name'
+          checked=0
+          for path in found:
+              try: tree=ET.parse(path)
+              except ET.ParseError: continue
+              permissions={e.get(attr) for e in tree.getroot().findall('uses-permission')}
+              assert 'android.permission.REQUEST_INSTALL_PACKAGES' not in permissions, str(path)
+              checked+=1
+          assert checked, 'No readable merged release manifests'
+          print(f'Validated {checked} merged Play manifest(s)')
+          PY
+          sha256sum "$BUNDLE"
+          echo 'UNSIGNED/UNPUBLISHED CANDIDATE ONLY; NOT A GOOGLE PLAY RELEASE'
+      - name: Preserve candidate build evidence (no private signing materials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GooglePlay-1.0.0-unsigned-validation
+          path: |
+            android/app-telefon/build/outputs/logs/manifest-merger-release-report.txt
+          if-no-files-found: ignore
