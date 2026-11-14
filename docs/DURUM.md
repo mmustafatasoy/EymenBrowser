@@ -2,6 +2,14 @@
 
 Son güncelleme: 2026-11-13
 
+## 2026-11-14 — Google Play 1.0.0 ayrı hazırlık dalı
+
+- Kullanıcı ilk Google Play sürümünü 1.0.0 olarak istedi; `feat/google-play-v1` dalı kuruldu. Kaynak GitHub sürümü/`main` ve geçmiş release etiketleri değişmedi.
+- Google Play için sabit `versionName=1.0.0`, `versionCode=1000000`, `targetSdk=36` seçildi. Normal GitHub APK derlemesi hedef API35 ve eski sürüm kimliğiyle devam eder. Paket adı `com.eymen.browser.telefon` aynıdır.
+- Play derlemesi GitHub APK öz-güncellemesini kod düzeyinde devre dışı bırakır ve manuel kontrolde yalnız Play tarafından yönetildiğini bildirir. `REQUEST_INSTALL_PACKAGES` izni AAB hazırlanırken geçici manifest dönüşümüyle çıkarılır; ana manifest GitHub dağıtımı için korunur.
+- `tools/build_google_play_bundle.sh` yerel kontrol/imza doğrulama/AAB ve birleştirilmiş manifest denetimi içindir. Üretim anahtarını/Secrets'ı değiştirmez veya yayın yapmaz. Play App Signing ve cihaz testleri açık, plan: `docs/ANDROID_GOOGLE_PLAY_1_0_0.md`.
+- Kaynak dal `a3a23d23` kapsamlı UI (API35/36) testinde başarısızdır. Bu yüzden Play 1.0.0 **henüz derlenmiş/sertifikalandırılmış veya yayınlanabilir sürüm değildir**; P0 ve gerçek cihaz kabul kapıları açık kalır.
+
 ## 2026-11-13 — v1.0.24 kararlı sürüm notu P0 kabul hata incelemesi
 
 - Kullanıcının yüklediği `EymenBrowser_KARARLI_SURUM_NOTU.md` kapsamı izlendi: yeni özellik yok, yalnız Android telefon, tasarım/imza/release workflow değişmedi.
